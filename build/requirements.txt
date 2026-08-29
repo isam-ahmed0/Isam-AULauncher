@@ -3,4 +3,5 @@ colorama
 pywin32
 Pillow
 pypresence
+customtkinter
 pyinstaller
