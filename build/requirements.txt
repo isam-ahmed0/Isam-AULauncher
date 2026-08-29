@@ -1,7 +1,6 @@
 requests
 colorama
 pywin32
-Pillow
 pypresence
-customtkinter
+dearpygui
 pyinstaller

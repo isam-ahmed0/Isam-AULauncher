@@ -1,4 +1,4 @@
 """
-ui package — Isam AULauncher interface components.
+ui package — Isam AULauncher Dear PyGui interface.
 """
-from .theme import Pal
+from .window import LauncherApp
