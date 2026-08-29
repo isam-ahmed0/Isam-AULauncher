@@ -376,6 +376,36 @@ QStatusBar::item {{
 QDialog {{
     background-color: {BG_SURFACE};
 }}
+
+/* ===== PROFILE CARD ===== */
+QFrame#profileCard {{
+    background-color: {BG_SURFACE};
+    border: 1px solid {BORDER_SUBTLE};
+    border-radius: 10px;
+    padding: 20px;
+}}
+
+QLabel#profileTitle {{
+    font-size: 11px;
+    font-weight: 600;
+    color: {TEXT_MUTED};
+}}
+
+QLabel#profileName {{
+    font-size: 16px;
+    font-weight: 700;
+    color: {TEXT_BRIGHT};
+}}
+
+QLabel#profileDetail {{
+    font-size: 13px;
+    color: {TEXT_SECONDARY};
+}}
+
+QLabel#profileStatus {{
+    font-size: 12px;
+    font-weight: 600;
+}}
 """
 
 

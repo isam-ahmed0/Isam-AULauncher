@@ -37,6 +37,24 @@ _ICON_PATH = _RESOURCES_DIR / "icon.ico"
 
 ITCH_FIXER_NAME = "Itch_Login_Fixer.exe"
 
+_ITCH_TOKEN_DIR = Path(os.environ.get("USERPROFILE", "")) / "AppData" / "LocalLow" / "Innersloth" / "Among Us"
+_ITCH_TOKEN_FILE = _ITCH_TOKEN_DIR / "itch"
+
+ITCHIO_API = "https://itch.io/api/1/key/me"
+EOS_AUTH_URL = "https://accounts.innersloth.com/eos-auth"
+BACKEND_API = "https://backend.innersloth.com/api"
+BACKEND_HEADERS = {
+    "Accept": "application/vnd.api+json",
+    "Origin": "https://accounts.innersloth.com",
+    "Referer": "https://accounts.innersloth.com/",
+}
+PLATFORM_LABELS = {
+    'itchio': 'itch.io', 'itch': 'itch.io',
+    'steam': 'Steam', 'epic': 'Epic Games', 'epicgames': 'Epic Games',
+    'microsoft': 'Microsoft Store', 'winstore': 'Microsoft Store',
+    'xbox': 'Xbox', 'xboxlive': 'Xbox',
+}
+
 SIDEBAR_W = 200
 
 
@@ -228,13 +246,15 @@ class LauncherApp:
         self.page_game = self._build_game_page()
         self.page_tools = self._build_tools_page()
         self.page_aunlocker = self._build_aunlocker_page()
+        self.page_profile = self._build_profile_page()
         self.pages.addWidget(self.page_game)
         self.pages.addWidget(self.page_tools)
         self.pages.addWidget(self.page_aunlocker)
+        self.pages.addWidget(self.page_profile)
 
         # Nav buttons
         self.nav_buttons = {}
-        for label, idx in [("Game", 0), ("Tools", 1), ("AUnlocker", 2)]:
+        for label, idx in [("Game", 0), ("Tools", 1), ("AUnlocker", 2), ("Profile", 3)]:
             btn = QPushButton(f"  {label}")
             btn.setCheckable(True)
             btn.setFixedHeight(40)
@@ -294,6 +314,23 @@ class LauncherApp:
             "Install, update, and manage your Among Us installation",
         )
         layout.addWidget(hero)
+
+        # Profile section (itch.io account info)
+        profile_widget = QWidget()
+        profile_layout = QHBoxLayout(profile_widget)
+        profile_layout.setContentsMargins(28, 12, 28, 0)
+        profile_icon = QLabel("●")
+        profile_icon.setObjectName("statusDot")
+        profile_icon.setStyleSheet(f"color: {TEXT_MUTED};")
+        profile_layout.addWidget(profile_icon)
+        self.profile_game_text = QLabel("Loading profile...")
+        self.profile_game_text.setObjectName("profileDetail")
+        profile_layout.addWidget(self.profile_game_text)
+        self.profile_game_detail = QLabel("")
+        self.profile_game_detail.setObjectName("profileDetail")
+        profile_layout.addWidget(self.profile_game_detail)
+        profile_layout.addStretch()
+        layout.addWidget(profile_widget)
 
         # Action buttons
         btn_row = QWidget()
@@ -434,6 +471,57 @@ class LauncherApp:
         self.aunlocker_btn.setFixedWidth(240)
         self.aunlocker_btn.clicked.connect(self._cb_install_aunlocker)
         layout.addWidget(self.aunlocker_btn)
+
+        layout.addStretch()
+        return page
+
+    def _build_profile_page(self):
+        page = QWidget()
+        layout = QVBoxLayout(page)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        hero = HeroBanner(
+            "ITCH.IO PROFILE",
+            "Your itch.io account and Among Us identity",
+        )
+        layout.addWidget(hero)
+
+        card = QFrame()
+        card.setObjectName("profileCard")
+        card_layout = QVBoxLayout(card)
+        card_layout.setContentsMargins(28, 24, 28, 24)
+        card_layout.setSpacing(12)
+
+        self.profile_page_name = QLabel("Loading...")
+        self.profile_page_name.setObjectName("profileName")
+        card_layout.addWidget(self.profile_page_name)
+
+        self.profile_page_status = QLabel("Checking login...")
+        self.profile_page_status.setObjectName("profileStatus")
+        card_layout.addWidget(self.profile_page_status)
+
+        card_layout.addSpacing(4)
+        sep = QFrame()
+        sep.setFrameShape(QFrame.Shape.HLine)
+        card_layout.addWidget(sep)
+        card_layout.addSpacing(4)
+
+        self.profile_page_au = QLabel("")
+        self.profile_page_au.setObjectName("profileDetail")
+        card_layout.addWidget(self.profile_page_au)
+
+        self.profile_page_platforms = QLabel("")
+        self.profile_page_platforms.setObjectName("profileDetail")
+        card_layout.addWidget(self.profile_page_platforms)
+
+        card_layout.addStretch()
+
+        card_wrapper = QWidget()
+        card_wrapper_layout = QVBoxLayout(card_wrapper)
+        card_wrapper_layout.setContentsMargins(28, 20, 28, 0)
+        card_wrapper_layout.addWidget(card)
+        layout.addWidget(card_wrapper)
 
         layout.addStretch()
         return page
@@ -994,10 +1082,130 @@ class LauncherApp:
         else:
             logging.warning(f"ItchFixer not found: {exe}")
 
+    # ------------------------------------------------------------------ itch profile (read-only)
+    def _read_itch_token(self):
+        """Read the itch.io token from ItchFixer's saved file. Read-only."""
+        try:
+            if _ITCH_TOKEN_FILE.exists():
+                token = _ITCH_TOKEN_FILE.read_text().strip()
+                if token:
+                    return token
+        except Exception:
+            pass
+        return None
+
+    def _fetch_itch_profile(self):
+        """Fetch itch.io account data using the saved token. All GET requests, no writes."""
+        import requests as _req
+
+        token = self._read_itch_token()
+        if not token:
+            return None
+
+        profile = {"token": True, "username": None, "among_us_name": None, "platforms": []}
+
+        # 1. Fetch itch.io username
+        try:
+            r = _req.get(ITCHIO_API, headers={"Authorization": token}, timeout=15)
+            if r.status_code == 200:
+                u = r.json().get("user", {})
+                profile["username"] = u.get("username")
+        except Exception:
+            pass
+
+        # 2. Fetch Among Us account data via EOS
+        try:
+            r = _req.get(EOS_AUTH_URL, params={"store": "itchio", "token": token},
+                         headers={"Accept": "application/json"}, timeout=20)
+            if r.status_code == 200:
+                eos = r.json()
+                if eos.get("token") and eos.get("id_token"):
+                    # Query primary account
+                    r2 = _req.get(f"{BACKEND_API}/user/query-primary-before-merge",
+                                  params={"access_token": eos["token"]},
+                                  headers={"Authorization": "Bearer " + eos["id_token"],
+                                           **BACKEND_HEADERS}, timeout=20)
+                    if r2.status_code == 200:
+                        data = r2.json().get("data", {})
+                        platforms = data.get("platforms") or []
+                        profile["platforms"] = [
+                            PLATFORM_LABELS.get(p.lower(), p) for p in platforms
+                        ]
+                    # Query Among Us username
+                    r3 = _req.get(f"{BACKEND_API}/user/username",
+                                  headers={"Authorization": "Bearer " + eos["id_token"],
+                                           **BACKEND_HEADERS}, timeout=15)
+                    if r3.status_code == 200:
+                        attrs = r3.json().get("data", {}).get("attributes", {})
+                        name = attrs.get("username")
+                        disc = attrs.get("discriminator")
+                        if name:
+                            profile["among_us_name"] = f"{name}#{disc}" if disc else name
+        except Exception:
+            pass
+
+        return profile
+
+    def _load_itch_profile(self):
+        """Fetch itch profile in background and update UI."""
+        def go():
+            profile = self._fetch_itch_profile()
+            self._itch_profile = profile
+            self._update_profile_ui(profile)
+        self._run(go)
+
+    def _update_profile_ui(self, profile):
+        """Update all profile-related UI elements."""
+        if not profile:
+            # Not logged in
+            self.profile_game_text.setText("Not logged in")
+            self.profile_game_text.setStyleSheet(f"color: {TEXT_MUTED};")
+            self.profile_game_detail.setText("ItchFixer will open on startup to log in")
+            self.profile_game_detail.setStyleSheet(f"color: {TEXT_MUTED};")
+            self.profile_page_status.setText("Not logged in")
+            self.profile_page_status.setStyleSheet(f"color: {TEXT_MUTED};")
+            self.profile_page_name.setText("")
+            self.profile_page_au.setText("")
+            self.profile_page_platforms.setText("")
+            return
+
+        username = profile.get("username") or "Unknown"
+        au_name = profile.get("among_us_name")
+        platforms = profile.get("platforms") or []
+
+        # Game page profile section
+        self.profile_game_text.setText(f"Logged in as {username}")
+        self.profile_game_text.setStyleSheet(f"color: {SUCCESS}; font-weight: 600;")
+        detail_parts = []
+        if au_name:
+            detail_parts.append(f"Among Us: {au_name}")
+        if platforms:
+            detail_parts.append(f"Linked: {', '.join(platforms)}")
+        self.profile_game_detail.setText(" — ".join(detail_parts) if detail_parts else "")
+        self.profile_game_detail.setStyleSheet(f"color: {TEXT_SECONDARY};")
+
+        # Profile page
+        self.profile_page_status.setText("Logged in")
+        self.profile_page_status.setStyleSheet(f"color: {SUCCESS}; font-weight: 600;")
+        self.profile_page_name.setText(username)
+        if au_name:
+            self.profile_page_au.setText(f"Among Us: {au_name}")
+            self.profile_page_au.setStyleSheet(f"color: {INFO};")
+        else:
+            self.profile_page_au.setText("No Among Us data yet")
+            self.profile_page_au.setStyleSheet(f"color: {TEXT_MUTED};")
+        if platforms:
+            self.profile_page_platforms.setText(f"Linked: {', '.join(platforms)}")
+            self.profile_page_platforms.setStyleSheet(f"color: {TEXT_SECONDARY};")
+        else:
+            self.profile_page_platforms.setText("No platforms linked")
+            self.profile_page_platforms.setStyleSheet(f"color: {TEXT_MUTED};")
+
     # ------------------------------------------------------------------ run
     def run(self):
         self.window.show()
         self._launch_itch_fixer()
+        self._load_itch_profile()
         exit_code = self.app.exec()
         self.discord.disconnect()
         sys.exit(exit_code)
