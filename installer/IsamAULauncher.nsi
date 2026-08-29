@@ -15,8 +15,10 @@
 !endif
 !define VERSION_DOT   "${VERSION}.0.0"
 
-; Repo root = folder above this script
-!define ROOT          "${__FILEDIR__}\.."
+; Repo root = folder above this script (overridden by /DROOT= in build_installer.bat)
+!ifndef ROOT
+  !define ROOT "${__FILEDIR__}\.."
+!endif
 !define SRC_ICON      "${ROOT}\src\launcher\resources\icon.ico"
 !define LAUNCHER_EXE  "${ROOT}\dist\IsamAULauncher.exe"
 !define FIXER_EXE     "${ROOT}\dist\Itch_Login_Fixer.exe"
