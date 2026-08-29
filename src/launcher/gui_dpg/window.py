@@ -20,7 +20,7 @@ from config import (
 )
 from network import NetworkManager, DiscordRPC, GameVersion
 from file_manager import FileManager
-from theme import (
+from gui_dpg.theme import (
     apply_theme, init_accent_themes, bind_accent,
     init_modal_theme, bind_modal, init_sidebar_theme, bind_sidebar,
     ACCENT, ACCENT_2,
@@ -31,7 +31,7 @@ from theme import (
     BORDER_SUBTLE,
 )
 
-_RESOURCES_DIR = Path(__file__).parent / "resources"
+_RESOURCES_DIR = Path(__file__).parent.parent / "resources"
 _HERO_IMAGE_PATH = _RESOURCES_DIR / "hero.png"
 _ICON_PATH = _RESOURCES_DIR / "icon.ico"
 

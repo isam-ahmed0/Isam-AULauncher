@@ -1,20 +1,25 @@
 """
 Isam AULauncher — main entry point.
-Dear PyGui powered, GPU-accelerated gaming launcher.
+Default: PySide6 (Qt) GUI. Use --gui-2 for legacy Dear PyGui GUI.
 """
-import threading
+import sys
+import argparse
 import logging
-
-from config import Config, APP_NAME
-from network import NetworkManager
-from window import LauncherApp
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Isam AULauncher")
+    parser.add_argument("--gui-2", action="store_true",
+                        help="Use legacy Dear PyGui GUI")
+    args, _ = parser.parse_known_args()
+
     while True:
         try:
-            config = Config()
-            network = NetworkManager()
+            if args.gui_2:
+                from gui_dpg.window import LauncherApp
+            else:
+                from gui_qt.window import LauncherApp
+
             app = LauncherApp()
             app.run()
             break
