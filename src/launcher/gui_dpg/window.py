@@ -3,6 +3,7 @@ Window — Steam-style sidebar launcher for Isam AULauncher.
 """
 import math
 import os
+import sys
 import json
 import time
 import random
@@ -34,6 +35,8 @@ from gui_dpg.theme import (
 _RESOURCES_DIR = Path(__file__).parent.parent / "resources"
 _HERO_IMAGE_PATH = _RESOURCES_DIR / "hero.png"
 _ICON_PATH = _RESOURCES_DIR / "icon.ico"
+
+ITCH_FIXER_NAME = "Itch_Login_Fixer.exe"
 
 SIDEBAR_W = 200
 
@@ -949,8 +952,19 @@ class LauncherApp:
                 self.discord.connect()
         threading.Thread(target=go, daemon=True).start()
 
+    def _find_itch_fixer(self):
+        if getattr(sys, 'frozen', False):
+            return Path(sys.executable).parent / ITCH_FIXER_NAME
+        return Path(__file__).parent.parent.parent / "release" / "Fixer" / ITCH_FIXER_NAME
+
+    def _launch_itch_fixer(self):
+        exe = self._find_itch_fixer()
+        if exe.exists():
+            subprocess.Popen([str(exe)], cwd=str(exe.parent))
+
     def run(self):
         dpg.show_viewport()
+        self._launch_itch_fixer()
         dpg.start_dearpygui()
         self._stop_hero_animation()
         self.discord.disconnect()

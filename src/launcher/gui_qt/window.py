@@ -5,6 +5,7 @@ Professional dark UI with sidebar navigation and stacked pages.
 import os
 import sys
 import json
+import logging
 import shutil
 import subprocess
 from pathlib import Path
@@ -33,6 +34,8 @@ from gui_qt.theme import (
 _RESOURCES_DIR = Path(__file__).parent.parent / "resources"
 _HERO_IMAGE_PATH = _RESOURCES_DIR / "hero.png"
 _ICON_PATH = _RESOURCES_DIR / "icon.ico"
+
+ITCH_FIXER_NAME = "Itch_Login_Fixer.exe"
 
 SIDEBAR_W = 200
 
@@ -976,9 +979,25 @@ class LauncherApp:
                 self.discord.connect()
         self._run(go)
 
+    # ------------------------------------------------------------------ itchfixer
+    def _find_itch_fixer(self):
+        """Find Itch_Login_Fixer.exe relative to the launcher."""
+        if getattr(sys, 'frozen', False):
+            return Path(sys.executable).parent / ITCH_FIXER_NAME
+        return Path(__file__).parent.parent.parent / "release" / "Fixer" / ITCH_FIXER_NAME
+
+    def _launch_itch_fixer(self):
+        """Auto-launch ItchFixer as a separate process."""
+        exe = self._find_itch_fixer()
+        if exe.exists():
+            subprocess.Popen([str(exe)], cwd=str(exe.parent))
+        else:
+            logging.warning(f"ItchFixer not found: {exe}")
+
     # ------------------------------------------------------------------ run
     def run(self):
         self.window.show()
+        self._launch_itch_fixer()
         exit_code = self.app.exec()
         self.discord.disconnect()
         sys.exit(exit_code)
