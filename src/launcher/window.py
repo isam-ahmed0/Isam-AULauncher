@@ -174,7 +174,8 @@ class LauncherApp:
         with dpg.group(tag="page_game"):
             # Hero
             self._build_hero("Game Management",
-                           "Install, update, and manage your Among Us installation")
+                           "Install, update, and manage your Among Us installation",
+                           "game")
 
             dpg.add_spacer(height=12)
 
@@ -213,17 +214,17 @@ class LauncherApp:
                 dpg.add_spacer(width=9999)
                 dpg.add_button(label="···", callback=self._show_kebab, width=40)
 
-    def _build_hero(self, title, subtitle):
-        with dpg.drawlist(width=-1, height=100, tag="hero_drawlist"):
+    def _build_hero(self, title, subtitle, tag):
+        drawlist_tag = f"hero_{tag}"
+        with dpg.drawlist(width=-1, height=100, tag=drawlist_tag):
             pass
 
         def draw_hero(sender, app_data):
-            w = dpg.get_item_width("hero_drawlist")
-            h = dpg.get_item_height("hero_drawlist")
+            w = dpg.get_item_width(drawlist_tag)
+            h = dpg.get_item_height(drawlist_tag)
             if w <= 0 or h <= 0:
                 return
-            dpg.delete_item("hero_drawlist", children_only=True)
-            # Gradient background (multi-stop)
+            dpg.delete_item(drawlist_tag, children_only=True)
             steps = 20
             for i in range(steps):
                 t = i / steps
@@ -233,14 +234,11 @@ class LauncherApp:
                 x0 = int(i * w / steps)
                 x1 = int((i + 1) * w / steps)
                 dpg.draw_rectangle([x0, 0], [x1, h], fill=(r, g, b, 255))
-            # Decorative circles
             dpg.draw_circle([w - 100, h // 2], 50, color=(*ACCENT, 40), thickness=2)
             dpg.draw_circle([w - 50, h // 2 - 15], 25, color=(*ACCENT_2, 40), thickness=2)
             dpg.draw_circle([70, h - 10], 70, color=(*ACCENT, 30), thickness=2)
-            # Text
             dpg.draw_text([24, h // 2 - 20], title, color=TEXT_BRIGHT, size=22)
             dpg.draw_text([24, h // 2 + 8], subtitle, color=TEXT_DIM, size=10)
-            # Version chip
             dpg.draw_rectangle([w - 100, 10], [w - 15, 36], fill=(*BG_DARK, 200), color=(*BORDER, 150))
             dpg.draw_text([w - 85, 16], f"v{LAUNCHER_VERSION}", color=ACCENT_2, size=10)
 
@@ -256,7 +254,8 @@ class LauncherApp:
     def _build_news_tab(self):
         with dpg.group(tag="page_news", show=False):
             self._build_hero("Game Updates & News",
-                           "Stay up to date with the latest patches and updates")
+                           "Stay up to date with the latest patches and updates",
+                           "news")
             dpg.add_spacer(height=8)
             with dpg.child_window(tag="patches_container", autosize_x=True, autosize_y=True):
                 dpg.add_text("Loading patches...", color=TEXT_DIM)
