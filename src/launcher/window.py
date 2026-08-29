@@ -75,8 +75,8 @@ class LauncherApp:
 
         dpg.create_viewport(
             title=f"{APP_NAME} v{LAUNCHER_VERSION}",
-            width=1366, height=768,
-            min_width=1024, min_height=600,
+            width=1200, height=700,
+            min_width=960, min_height=580,
             resizable=True,
         )
 
@@ -135,14 +135,15 @@ class LauncherApp:
             self._sidebar_btn("Tools", "tools", False)
             self._sidebar_btn("AUnlocker", "aunlocker", False)
 
-            # Push bottom items down
-            dpg.add_spacer(width=1, height=9999)
+            dpg.add_spacer(height=12)
             dpg.add_separator()
             dpg.add_spacer(height=12)
 
             self._sidebar_btn("Settings", "settings", False)
             self._sidebar_btn("About", "about", False)
-            dpg.add_spacer(height=20)
+
+            # Fill remaining space
+            dpg.add_spacer(width=1, height=9999)
 
     def _sidebar_btn(self, label, page_id, active=False):
         tag = f"nav_{page_id}"
