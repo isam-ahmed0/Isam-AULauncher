@@ -81,7 +81,7 @@ class LauncherApp:
 
     def _build_ui(self):
         with dpg.window(tag="main_window", no_scrollbar=True, no_collapse=True,
-                        no_title_bar=True):
+                        no_title_bar=True, width=-1, height=-1):
             self._build_top_bar()
             self._build_content()
             self._build_status_bar()
