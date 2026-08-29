@@ -187,15 +187,15 @@ class LauncherApp:
                     bind_card("version_card")
                     dpg.add_text("VERSION", color=TEXT_MUTED)
                     dpg.add_spacer(height=12)
-                    dpg.add_text("Installed", color=TEXT_SECONDARY, size=FONT_LABEL)
+                    dpg.add_text("Installed", color=TEXT_SECONDARY)
                     dpg.add_spacer(height=2)
                     dpg.add_text("Not Installed", tag="ver_installed",
-                                 color=SUCCESS, size=FONT_HEADING)
+                                 color=SUCCESS)
                     dpg.add_spacer(height=16)
-                    dpg.add_text("Latest", color=TEXT_SECONDARY, size=FONT_LABEL)
+                    dpg.add_text("Latest", color=TEXT_SECONDARY)
                     dpg.add_spacer(height=2)
                     dpg.add_text("Checking...", tag="ver_latest",
-                                 color=INFO, size=FONT_HEADING)
+                                 color=INFO)
 
                 dpg.add_spacer(width=12)
 
@@ -209,7 +209,7 @@ class LauncherApp:
                     with dpg.group(horizontal=True):
                         dpg.add_text("●", color=SUCCESS, tag="game_status_icon")
                         dpg.add_text("Starting...", tag="game_status_text",
-                                     color=TEXT_SECONDARY, size=FONT_BODY)
+                                     color=TEXT_SECONDARY)
                     dpg.add_spacer(height=12)
                     dpg.add_progress_bar(tag="progress_bar", default_value=0,
                                          width=-1, height=20, overlay="0%")
@@ -221,7 +221,7 @@ class LauncherApp:
             dpg.add_spacer(height=20)
 
             # Quick actions row
-            dpg.add_text("QUICK ACTIONS", color=TEXT_MUTED, size=FONT_LABEL)
+            dpg.add_text("QUICK ACTIONS", color=TEXT_MUTED)
             dpg.add_spacer(height=8)
             with dpg.group(horizontal=True, tag="quick_actions_row"):
                 dpg.add_spacer(width=4)
@@ -247,10 +247,10 @@ class LauncherApp:
                 bind_card("aunlocker_card")
                 with dpg.group(horizontal=True):
                     with dpg.group():
-                        dpg.add_text("AUnlocker", size=FONT_SUBHEADING, color=TEXT_PRIMARY)
+                        dpg.add_text("AUnlocker", color=TEXT_PRIMARY)
                         dpg.add_spacer(height=2)
                         dpg.add_text("Install the Among Us unlocker for this version",
-                                     color=TEXT_MUTED, size=FONT_SMALL)
+                                     color=TEXT_MUTED)
                     dpg.add_spacer(width=9999)
                     dpg.add_button(label="Install AUnlocker", callback=self._cb_install_aunlocker,
                                    width=180, height=36)
@@ -388,9 +388,9 @@ class LauncherApp:
             dpg.draw_rectangle([x0, line_y], [x1, line_y + 2], fill=(r, g, b, 180))
 
         # Title
-        dpg.draw_text([28, h // 2 - 36], title, color=TEXT_BRIGHT, size=FONT_TITLE)
+        dpg.draw_text([28, h // 2 - 36], title, color=TEXT_BRIGHT)
         # Subtitle
-        dpg.draw_text([28, h // 2 + 4], subtitle, color=TEXT_SECONDARY, size=FONT_BODY)
+        dpg.draw_text([28, h // 2 + 4], subtitle, color=TEXT_SECONDARY)
 
         # Version badge (rounded pill)
         chip_text = f"v{LAUNCHER_VERSION}"
@@ -403,7 +403,7 @@ class LauncherApp:
         dpg.draw_rectangle([chip_x, chip_y], [chip_x + chip_w, chip_y + chip_h],
                            color=(*ACCENT, 100), rounding=13, thickness=1)
         dpg.draw_text([chip_x + 16, chip_y + 5], chip_text,
-                      color=ACCENT_2, size=FONT_SMALL)
+                      color=ACCENT_2)
 
     # ------------------------------------------------------------------ news tab
     def _build_news_tab(self):
@@ -529,7 +529,7 @@ class LauncherApp:
             dpg.add_spacer(height=8)
 
             # Game tools section
-            dpg.add_text("GAME", color=TEXT_MUTED, size=FONT_LABEL)
+            dpg.add_text("GAME", color=TEXT_MUTED)
             dpg.add_spacer(height=6)
             dpg.add_button(label="Verify Game Files", callback=self._cb_verify,
                            width=-1, height=36)
@@ -542,7 +542,7 @@ class LauncherApp:
             dpg.add_spacer(height=12)
 
             # Shortcuts section
-            dpg.add_text("SHORTCUTS", color=TEXT_MUTED, size=FONT_LABEL)
+            dpg.add_text("SHORTCUTS", color=TEXT_MUTED)
             dpg.add_spacer(height=6)
             dpg.add_button(label="Create Desktop Shortcut", callback=self._cb_create_shortcut,
                            width=-1, height=36)
@@ -555,7 +555,7 @@ class LauncherApp:
             dpg.add_spacer(height=12)
 
             # Misc section
-            dpg.add_text("OTHER", color=TEXT_MUTED, size=FONT_LABEL)
+            dpg.add_text("OTHER", color=TEXT_MUTED)
             dpg.add_spacer(height=6)
             dpg.add_button(label="View Logs", callback=self._view_logs, width=-1, height=36)
             dpg.add_spacer(height=4)
@@ -580,7 +580,7 @@ class LauncherApp:
             dpg.add_separator()
             dpg.add_spacer(height=12)
 
-            dpg.add_text(f"{APP_NAME}", size=FONT_HEADING, color=TEXT_BRIGHT)
+            dpg.add_text(f"{APP_NAME}", color=TEXT_BRIGHT)
             dpg.add_spacer(height=2)
             dpg.add_text(f"Version {LAUNCHER_VERSION}", color=TEXT_SECONDARY)
             dpg.add_spacer(height=4)
@@ -644,7 +644,7 @@ class LauncherApp:
                                  tag="sett_discord_rpc",
                                  default_value=settings.get("discord_rpc", True))
                 dpg.add_text("  Show your activity on Discord", color=TEXT_MUTED,
-                             size=FONT_SMALL)
+                             )
                 dpg.add_spacer(height=12)
 
             # Auto update
@@ -653,7 +653,7 @@ class LauncherApp:
                                  tag="sett_auto_update",
                                  default_value=settings.get("auto_update", True))
                 dpg.add_text("  Download game updates automatically", color=TEXT_MUTED,
-                             size=FONT_SMALL)
+                             )
                 dpg.add_spacer(height=12)
 
             # File integrity
@@ -662,7 +662,7 @@ class LauncherApp:
                                  tag="sett_check_integrity",
                                  default_value=settings.get("check_integrity", True))
                 dpg.add_text("  Check checksums after download", color=TEXT_MUTED,
-                             size=FONT_SMALL)
+                             )
 
             dpg.add_spacer(height=20)
             dpg.add_separator()
@@ -1025,7 +1025,7 @@ class LauncherApp:
     # ------------------------------------------------------------------ modals
     def _show_modal_header(self, title, accent_color=None):
         color = accent_color or TEXT_PRIMARY
-        dpg.add_text(title, size=FONT_SUBHEADING, color=color)
+        dpg.add_text(title, color=color)
         dpg.add_spacer(height=4)
         dpg.add_separator()
         dpg.add_spacer(height=12)
