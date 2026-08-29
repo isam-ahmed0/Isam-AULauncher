@@ -20,6 +20,7 @@ pyinstaller --noconfirm --onefile --windowed ^
   --icon src\launcher\resources\icon.ico ^
   --paths src\launcher ^
   --collect-all dearpygui ^
+  --collect-submodules ui ^
   src\launcher\main.py || exit /b 1
 
 echo.

@@ -11,6 +11,7 @@ pyinstaller --noconfirm --onefile --windowed ^
   --add-data "src\launcher\resources\icon.ico;resources" ^
   --paths src\launcher ^
   --collect-all dearpygui ^
+  --collect-submodules ui ^
   src\launcher\main.py
 
 echo.
