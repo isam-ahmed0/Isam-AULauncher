@@ -41,8 +41,8 @@ class NewsTab:
             c.create_image(0, 0, image=photo, anchor="nw")
             # Decorative shapes
             for cx, cy, rad, col in [
-                (w - 100, h // 2 + 10, 50, "#3b82f610"),
-                (60, h - 10, 70, "#a855f708"),
+                (w - 100, h // 2 + 10, 50, "#1a2840"),
+                (60, h - 10, 70, "#1a1830"),
             ]:
                 c.create_arc(cx - rad, cy - rad, cx + rad, cy + rad,
                              start=0, extent=359, style="arc",

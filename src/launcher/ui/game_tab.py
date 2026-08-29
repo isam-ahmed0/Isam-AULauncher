@@ -48,9 +48,9 @@ class GameTab:
             c.create_image(0, 0, image=photo, anchor="nw")
             # Decorative circles
             for cx, cy, rad, col in [
-                (w - 120, h // 2, 60, "#8b5cf610"),
-                (w - 60, h // 2 - 20, 30, "#06b6d410"),
-                (80, h + 20, 90, "#8b5cf608"),
+                (w - 120, h // 2, 60, "#2a2048"),
+                (w - 60, h // 2 - 20, 30, "#1a3040"),
+                (80, h + 20, 90, "#1a1830"),
             ]:
                 c.create_arc(cx - rad, cy - rad, cx + rad, cy + rad,
                              start=0, extent=359, style="arc",
