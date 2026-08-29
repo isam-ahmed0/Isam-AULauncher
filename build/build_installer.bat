@@ -18,6 +18,7 @@ echo ============================================================
 pyinstaller --noconfirm --onefile --windowed ^
   --name IsamAULauncher ^
   --icon src\launcher\resources\icon.ico ^
+  --paths src\launcher ^
   --collect-all dearpygui ^
   src\launcher\main.py || exit /b 1
 

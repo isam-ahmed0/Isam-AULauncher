@@ -9,6 +9,7 @@ pyinstaller --noconfirm --onefile --windowed ^
   --name IsamAULauncher ^
   --icon src\launcher\resources\icon.ico ^
   --add-data "src\launcher\resources\icon.ico;resources" ^
+  --paths src\launcher ^
   --collect-all dearpygui ^
   src\launcher\main.py
 
