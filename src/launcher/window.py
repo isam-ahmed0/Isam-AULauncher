@@ -107,19 +107,6 @@ class LauncherApp:
         dpg.setup_dearpygui()
         bind_default_font()
 
-        # Remove OS title bar for borderless look
-        try:
-            import ctypes
-            hwnd = ctypes.windll.user32.GetForegroundWindow()
-            style = ctypes.windll.user32.GetWindowLongW(hwnd, -16)
-            style &= ~(0x00C00000)  # Remove WS_CAPTION
-            style &= ~(0x00040000)  # Remove WS_SIZEBOX
-            ctypes.windll.user32.SetWindowLongW(hwnd, -16, style)
-            ctypes.windll.user32.SetWindowPos(hwnd, None, 0, 0, 0, 0,
-                                               0x0027)  # SWP_FRAMECHANGED
-        except Exception:
-            pass
-
     def _build_ui(self):
         # Enable viewport drag for custom title bar
         with dpg.handler_registry():
@@ -1046,6 +1033,16 @@ class LauncherApp:
 
     def run(self):
         dpg.show_viewport()
+        try:
+            import ctypes
+            hwnd = ctypes.windll.user32.GetForegroundWindow()
+            style = ctypes.windll.user32.GetWindowLongW(hwnd, -16)
+            style &= ~(0x00C00000)
+            style &= ~(0x00040000)
+            ctypes.windll.user32.SetWindowLongW(hwnd, -16, style)
+            ctypes.windll.user32.SetWindowPos(hwnd, None, 0, 0, 0, 0, 0x0027)
+        except Exception:
+            pass
         dpg.start_dearpygui()
         self._stop_hero_animation()
         self.discord.disconnect()
