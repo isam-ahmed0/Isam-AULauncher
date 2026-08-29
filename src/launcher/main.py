@@ -37,14 +37,7 @@ class LaunchWindow:
         self.network = NetworkManager()
         self.discord = DiscordRPC()
 
-        # Variables shared across UI components
-        self.current_version = tk.StringVar(value="Not Installed")
-        self.latest_version = tk.StringVar(value="Checking...")
-        self.status_text = tk.StringVar(value="Starting...")
-        self.progress_var = tk.DoubleVar(value=0)
-        self._busy = False
-
-        # --- root (borderless) ---
+        # --- root must exist before any tk.StringVar ---
         self.root = tk.Tk()
         self.root.withdraw()
         self.root.overrideredirect(True)
@@ -52,6 +45,13 @@ class LaunchWindow:
         self.root.minsize(1024, 660)
         self.root.configure(bg=Pal.ACCENT)
         self.root.attributes("-topmost", False)
+
+        # Variables shared across UI components (require root window)
+        self.current_version = tk.StringVar(value="Not Installed")
+        self.latest_version = tk.StringVar(value="Checking...")
+        self.status_text = tk.StringVar(value="Starting...")
+        self.progress_var = tk.DoubleVar(value=0)
+        self._busy = False
 
         # Outer frame
         bw = Pal.BORDER_W
