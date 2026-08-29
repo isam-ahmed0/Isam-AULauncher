@@ -1,9 +1,10 @@
 @echo off
-REM Build the Isam AULauncher installer with NSIS.
+REM Build the Isam AULauncher installer with Nuitka + NSIS.
 REM
 REM Requirements:
-REM   1. Python on PATH (or activate your venv) with build\requirements.txt installed
-REM   2. NSIS (Unicode) installed from https://nsis.sourceforge.io/Download
+REM   1. Python on PATH with build\requirements.txt installed
+REM   2. MSVC (Visual Studio) or MinGW64 C compiler
+REM   3. NSIS (Unicode) installed from https://nsis.sourceforge.io/Download
 REM
 REM Produces: dist\IsamAULauncher-Setup-0.1.exe
 setlocal
@@ -13,25 +14,28 @@ set "ROOT=%CD%"
 if not exist "dist" mkdir dist
 
 echo ============================================================
-echo  [1/3] Building IsamAULauncher.exe
+echo  [1/3] Building IsamAULauncher.exe with Nuitka
 echo ============================================================
-pyinstaller --noconfirm --onefile --windowed ^
-  --name IsamAULauncher ^
-  --icon src\launcher\resources\icon.ico ^
-  --paths src\launcher ^
-  --collect-all dearpygui ^
-  --collect-submodules ui ^
+python -m nuitka --mode=onefile ^
+  --include-package=ui ^
+  --include-package=config ^
+  --include-package=network ^
+  --include-package=file_manager ^
+  --windows-disable-console ^
+  --windows-icon-from-ico=src\launcher\resources\icon.ico ^
+  --output-dir=dist ^
+  --output-filename=IsamAULauncher.exe ^
   src\launcher\main.py || exit /b 1
 
 echo.
 echo ============================================================
 echo  [2/3] Building Itch_Login_Fixer.exe
 echo ============================================================
-pyinstaller --noconfirm --onefile --windowed ^
-  --name Itch_Login_Fixer ^
-  --icon src\fixer\assets\icon.ico ^
-  --hidden-import customtkinter ^
-  --collect-submodules customtkinter ^
+python -m nuitka --mode=onefile ^
+  --windows-disable-console ^
+  --windows-icon-from-ico=src\fixer\assets\icon.ico ^
+  --output-dir=dist ^
+  --output-filename=Itch_Login_Fixer.exe ^
   src\fixer\Itch_Login_Fixer.py || exit /b 1
 
 echo.

@@ -3,4 +3,4 @@ colorama
 pywin32
 pypresence
 dearpygui
-pyinstaller
+nuitka
