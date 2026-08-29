@@ -16,6 +16,8 @@ FONT_SUBHEADING = 16
 FONT_BODY = 14
 FONT_SMALL = 12
 FONT_LABEL = 11
+FONT_BRAND = 24
+FONT_BRAND_SUB = 12
 
 # ---------------------------------------------------------------------------
 # Palette — Steam-like minimal dark
@@ -83,32 +85,39 @@ def _safe_add_font(path, size, tag):
 
 
 def load_fonts():
-    """Load Inter font family into Dear PyGui."""
+    """Load Nunito Sans font family into Dear PyGui."""
     if not _FONTS_DIR.exists():
         return
 
-    regular = str(_FONTS_DIR / "Inter-Regular.ttf")
-    medium = str(_FONTS_DIR / "Inter-Medium.ttf")
-    semibold = str(_FONTS_DIR / "Inter-SemiBold.ttf")
-    bold = str(_FONTS_DIR / "Inter-Bold.ttf")
+    regular = str(_FONTS_DIR / "NunitoSans-Regular.ttf")
+    medium = str(_FONTS_DIR / "NunitoSans-Medium.ttf")
+    semibold = str(_FONTS_DIR / "NunitoSans-SemiBold.ttf")
+    bold = str(_FONTS_DIR / "NunitoSans-Bold.ttf")
 
+    # Regular at different sizes
     if os.path.exists(regular):
         _safe_add_font(regular, FONT_BODY, "font_regular")
         _safe_add_font(regular, FONT_SMALL, "font_regular_small")
         _safe_add_font(regular, FONT_LABEL, "font_regular_label")
+    # Medium
     if os.path.exists(medium):
         _safe_add_font(medium, FONT_BODY, "font_medium")
         _safe_add_font(medium, FONT_SMALL, "font_medium_small")
         _safe_add_font(medium, FONT_LABEL, "font_medium_label")
+    # Semibold
     if os.path.exists(semibold):
         _safe_add_font(semibold, FONT_BODY, "font_semibold")
         _safe_add_font(semibold, FONT_HEADING, "font_semibold_heading")
-        _safe_add_font(semibold, FONT_TITLE, "font_semibold_title")
         _safe_add_font(semibold, FONT_SUBHEADING, "font_semibold_subheading")
         _safe_add_font(semibold, FONT_SMALL, "font_semibold_small")
+    # Bold
     if os.path.exists(bold):
         _safe_add_font(bold, FONT_BODY, "font_bold")
         _safe_add_font(bold, FONT_HEADING, "font_bold_heading")
+        _safe_add_font(bold, FONT_BRAND, "font_brand")
+    # Medium at subtitle size
+    if os.path.exists(medium):
+        _safe_add_font(medium, FONT_BRAND_SUB, "font_brand_sub")
 
 
 def bind_default_font():

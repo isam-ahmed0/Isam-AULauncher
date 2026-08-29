@@ -24,6 +24,7 @@ from theme import (
     load_fonts, bind_default_font,
     apply_theme, init_accent_themes, bind_accent,
     init_modal_theme, bind_modal, init_sidebar_theme, bind_sidebar,
+    _fonts_loaded,
     ACCENT, ACCENT_2,
     SUCCESS, SUCCESS_HOVER, INFO, INFO_HOVER, DANGER, DANGER_HOVER,
     WARNING, PURPLE,
@@ -126,9 +127,15 @@ class LauncherApp:
             bind_sidebar("sidebar")
             # Brand
             dpg.add_spacer(height=16)
+            if "font_brand" in _fonts_loaded:
+                dpg.bind_font("font_brand")
             dpg.add_text(BRAND_SHORT, color=ACCENT)
+            dpg.bind_font("font_regular")
             dpg.add_spacer(height=2)
+            if "font_brand_sub" in _fonts_loaded:
+                dpg.bind_font("font_brand_sub")
             dpg.add_text(APP_NAME, color=TEXT_MUTED)
+            dpg.bind_font("font_regular")
             dpg.add_spacer(height=16)
             dpg.add_separator()
             dpg.add_spacer(height=8)
