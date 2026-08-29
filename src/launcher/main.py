@@ -60,7 +60,7 @@ class LaunchWindow:
         self.outer.pack(fill=tk.BOTH, expand=True, padx=bw, pady=bw)
 
         # Build UI components
-        self.titlebar = TitleBar(self.outer, self.root, self._close, self._minimize)
+        self.titlebar = TitleBar(self.outer, self.root, self._close)
 
         # Content area (sidebar + main)
         body = tk.Frame(self.outer, bg=Pal.BG_DARK)
@@ -106,11 +106,6 @@ class LaunchWindow:
         self.root.after(100, self._load_initial_data)
 
     # ------------------------------------------------------------------ window
-    def _minimize(self):
-        self.root.overrideredirect(False)
-        self.root.state("iconic")
-        self.root.after(60, lambda: self.root.overrideredirect(True))
-
     def _close(self):
         self.titlebar.stop_animation()
         self.discord.disconnect()
@@ -318,8 +313,6 @@ class LaunchWindow:
         try:
             subprocess.Popen([str(exe)], cwd=str(gp))
             self._set_status("Game launched!", Pal.GREEN)
-            if self.config.settings.get("minimize_on_game_start"):
-                self.root.after(500, self._minimize)
         except PermissionError:
             messagebox.showerror("Error", "Permission denied. Try running as administrator.")
         except FileNotFoundError:

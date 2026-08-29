@@ -3,7 +3,7 @@ Sidebar — navigation tabs, tools, settings, footer links.
 """
 import os
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 
 from config import DISCORD_INVITE, YOUTUBE_CHANNEL, SOURCE_CODE_URL, APP_NAME, BRAND_SHORT, LAUNCHER_VERSION, MAKER
 from .theme import Pal, make_side_button, make_divider, make_section_label
@@ -160,7 +160,10 @@ class SideBar:
             ("YouTube", YOUTUBE_CHANNEL, Pal.RED),
             ("Source Code", SOURCE_CODE_URL, Pal.ORANGE),
         ]:
-            make_side_button(footer, text, lambda u=url: os.system(f"start {u}"), accent).pack(fill=tk.X, pady=3)
+            if url:
+                make_side_button(footer, text, lambda u=url: os.system(f"start {u}"), accent).pack(fill=tk.X, pady=3)
+            else:
+                make_side_button(footer, text + " (Coming soon)", lambda: messagebox.showinfo("Discord", "Discord server coming soon!"), accent).pack(fill=tk.X, pady=3)
         tk.Label(footer, text=f"Made by {MAKER}", font=(Pal.FONT, 8),
                  bg=Pal.BG_SIDEBAR, fg=Pal.TEXT_MUTED).pack(pady=(8, 0))
 

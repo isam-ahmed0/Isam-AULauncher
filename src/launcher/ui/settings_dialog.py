@@ -40,7 +40,6 @@ class SettingsDialog:
             ("Auto-update game", "auto_update", "Download game updates automatically"),
             ("Discord Rich Presence", "discord_rpc", "Show activity on Discord"),
             ("Verify file integrity", "check_integrity", "Check checksums after download"),
-            ("Minimize on game start", "minimize_on_game_start", "Hide launcher when game starts"),
         ]
         for label, key, desc in opts:
             self._option_row(ct, label, key, desc, settings.get(key, False))

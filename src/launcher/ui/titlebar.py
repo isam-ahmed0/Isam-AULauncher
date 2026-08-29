@@ -6,7 +6,7 @@ from .theme import Pal, HueAnimator, make_title_button
 
 
 class TitleBar:
-    def __init__(self, parent, root, on_close, on_minimize):
+    def __init__(self, parent, root, on_close):
         self.root = root
         self._drag_x = 0
         self._drag_y = 0
@@ -35,8 +35,7 @@ class TitleBar:
             bg=Pal.BG_DARK, fg=Pal.TEXT_MUTED,
         ).pack(side=tk.LEFT)
 
-        # Window controls
-        make_title_button(row, "\u2014", on_minimize, Pal.BG_HOVER, font_size=12)
+        # Window controls — close only
         make_title_button(row, "\u00d7", on_close, Pal.RED, font_size=14)
 
         # Drag bindings

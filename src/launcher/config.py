@@ -22,12 +22,12 @@ LAUNCHER_DOWNLOAD_URL = "https://raw.githubusercontent.com/jogamerforgames2021/A
 VERSION_URL = "https://raw.githubusercontent.com/jogamerforgames2021/BootstrapperTEST/main/Version.txt"
 MESSAGE_URL = "https://raw.githubusercontent.com/jogamerforgames2021/AmongUsLauncherNew/refs/heads/main/message.txt"
 PATCHES_URL = "https://raw.githubusercontent.com/jogamerforgames2021/AmongUsLauncherNew/refs/heads/main/Patches.xml"
-SOURCE_CODE_URL = "https://github.com/jogamerforgames2021/BootstrapperTEST/blob/main/my_script.py"
+SOURCE_CODE_URL = "https://github.com/isam-ahmed0/Isam-AULauncher"
 GITHUB_REPO = "jogamerforgames2021/AmongUsLauncherNew"
 AUNLOCKER_JSON_URL = "https://raw.githubusercontent.com/jogamerforgames2021/AmongUsLauncherNew/refs/heads/main/AUnlockerStuff/Versions.json"
 DISCORD_CLIENT_ID = "1378503147768647821"
-DISCORD_INVITE = "https://discord.gg/7Vvj2vpT6S"
-YOUTUBE_CHANNEL = "https://www.youtube.com/@ShadowSlimeDEV"
+DISCORD_INVITE = ""
+YOUTUBE_CHANNEL = "https://www.youtube.com/@isam0ahmed"
 REQUEST_TIMEOUT = 10
 CHUNK_SIZE = 8192
 
@@ -47,8 +47,7 @@ class Config:
     def _load_settings(self) -> Dict:
         defaults = {
             "auto_update": True, "create_shortcuts": True,
-            "discord_rpc": True, "minimize_on_game_start": False,
-            "check_integrity": True, "ui_mode": "gui"
+            "discord_rpc": True, "check_integrity": True, "ui_mode": "gui"
         }
         try:
             if self.config_file.exists():
