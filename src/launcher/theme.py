@@ -175,7 +175,6 @@ def apply_theme():
 
             # Progress bar
             dpg.add_theme_color(dpg.mvThemeCol_PlotHistogram, (*ACCENT, 255))
-            dpg.add_theme_color(dpg.mvThemeCol_PlotHistogramFrame, (*BG_ELEVATED, 255))
 
             # Check mark
             dpg.add_theme_color(dpg.mvThemeCol_CheckMark, (*ACCENT, 255))
