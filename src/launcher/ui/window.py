@@ -208,7 +208,7 @@ class LauncherApp:
                 dpg.add_text("Starting...", tag="status_text")
 
             # Kebab menu (bottom right)
-            dpg.add_spacer(height=1, height=9999)
+            dpg.add_spacer(height=9999)
             with dpg.group(horizontal=True):
                 dpg.add_spacer(width=9999)
                 dpg.add_button(label="···", callback=lambda s, a, u: self._show_kebab(s, a, u), width=40)
