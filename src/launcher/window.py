@@ -281,15 +281,15 @@ class LauncherApp:
                 "x": random.uniform(0.05, 0.95),
                 "y": random.uniform(0.0, 1.0),
                 "speed": random.uniform(0.0003, 0.001),
-                "size": random.uniform(1.5, 3.5),
-                "alpha": random.uniform(15, 40),
+                "size": random.uniform(2.0, 4.0),
+                "alpha": random.uniform(30, 60),
                 "drift": random.uniform(-0.0002, 0.0002),
             })
 
         self._glow_orbs = [
-            {"cx": 0.75, "cy": 0.35, "r": 70, "base_alpha": 25, "phase": 0.0},
-            {"cx": 0.85, "cy": 0.6, "r": 50, "base_alpha": 18, "phase": 1.5},
-            {"cx": 0.15, "cy": 0.7, "r": 55, "base_alpha": 15, "phase": 3.0},
+            {"cx": 0.75, "cy": 0.35, "r": 80, "base_alpha": 40, "phase": 0.0},
+            {"cx": 0.85, "cy": 0.6, "r": 60, "base_alpha": 30, "phase": 1.5},
+            {"cx": 0.15, "cy": 0.7, "r": 65, "base_alpha": 25, "phase": 3.0},
         ]
 
     def _start_hero_animation(self):
@@ -332,20 +332,20 @@ class LauncherApp:
         dpg.delete_item(drawlist_tag, children_only=True)
         elapsed = time.time() - self._hero_time
 
-        # Background gradient (vertical, subtle)
+        # Background gradient (vertical, visible contrast)
         steps = 20
         for i in range(steps):
             t = i / steps
-            r = int(BG_BASE[0] + (BG_SURFACE[0] - BG_BASE[0]) * t)
-            g = int(BG_BASE[1] + (BG_SURFACE[1] - BG_BASE[1]) * t)
-            b = int(BG_BASE[2] + (BG_SURFACE[2] - BG_BASE[2]) * t)
+            r = int(14 + (40 - 14) * t)
+            g = int(16 + (44 - 16) * t)
+            b = int(28 + (68 - 28) * t)
             y0 = int(i * h / steps)
             y1 = int((i + 1) * h / steps)
             dpg.draw_rectangle([0, y0], [w, y1], fill=(r, g, b, 255))
 
         # Animated glow orbs
         for orb in self._glow_orbs:
-            alpha = orb["base_alpha"] + 12 * math.sin(elapsed * 1.2 + orb["phase"])
+            alpha = orb["base_alpha"] + 20 * math.sin(elapsed * 1.2 + orb["phase"])
             cx = int(orb["cx"] * w)
             cy = int(orb["cy"] * h)
             dpg.draw_circle([cx, cy], orb["r"],
@@ -364,7 +364,7 @@ class LauncherApp:
             px = int(p["x"] * w)
             py = int(p["y"] * h)
             dpg.draw_circle([px, py], p["size"],
-                            fill=(*ACCENT, int(p["alpha"])))
+                            fill=(*ACCENT, int(min(p["alpha"] + 30, 80))))
 
         # Bottom accent line (2px gradient)
         line_y = h - 2
