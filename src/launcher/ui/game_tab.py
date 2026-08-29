@@ -52,8 +52,9 @@ class GameTab:
                 (w - 60, h // 2 - 20, 30, "#06b6d410"),
                 (80, h + 20, 90, "#8b5cf608"),
             ]:
-                c.create_ellipse(cx - rad, cy - rad, cx + rad, cy + rad,
-                                 fill="", outline=col, width=2)
+                c.create_arc(cx - rad, cy - rad, cx + rad, cy + rad,
+                             start=0, extent=359, style="arc",
+                             outline=col, width=2)
             # Title
             c.create_text(30, h // 2 - 18, text="Game Management",
                           font=(Pal.FONT, 24, "bold"), fill=Pal.TEXT_BRIGHT, anchor="w")

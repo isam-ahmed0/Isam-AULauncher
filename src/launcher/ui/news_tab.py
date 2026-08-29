@@ -44,8 +44,9 @@ class NewsTab:
                 (w - 100, h // 2 + 10, 50, "#3b82f610"),
                 (60, h - 10, 70, "#a855f708"),
             ]:
-                c.create_ellipse(cx - rad, cy - rad, cx + rad, cy + rad,
-                                 fill="", outline=col, width=2)
+                c.create_arc(cx - rad, cy - rad, cx + rad, cy + rad,
+                             start=0, extent=359, style="arc",
+                             outline=col, width=2)
             c.create_text(30, h // 2 - 14, text="Game Updates & News",
                           font=(Pal.FONT, 22, "bold"), fill=Pal.TEXT_BRIGHT, anchor="w")
             c.create_text(30, h // 2 + 14,
