@@ -37,8 +37,11 @@ class LaunchWindow:
         self.network = NetworkManager()
         self.discord = DiscordRPC()
 
-        # --- root must exist before any tk.StringVar ---
-        self.root = tk.Tk()
+        # --- root (borderless) with hidden parent for taskbar icon ---
+        self._root_hidden = tk.Tk()
+        self._root_hidden.withdraw()
+
+        self.root = tk.Toplevel(self._root_hidden)
         self.root.withdraw()
         self.root.overrideredirect(True)
         self.root.geometry("1150x740")
@@ -110,6 +113,7 @@ class LaunchWindow:
         self.titlebar.stop_animation()
         self.discord.disconnect()
         self.root.destroy()
+        self._root_hidden.destroy()
 
     def _on_mousewheel(self, event):
         try:
@@ -470,7 +474,7 @@ class LaunchWindow:
         self.root.after(0, self._update_btn)
 
     def run(self):
-        self.root.mainloop()
+        self._root_hidden.mainloop()
         self.titlebar.stop_animation()
         self.discord.disconnect()
 
