@@ -146,8 +146,6 @@ class LauncherApp:
                     dpg.add_text("Checking...", tag="ver_latest", color=BLUE)
 
                 dpg.add_spacer(width=16)
-                dpg.add_separator(shape=dpg.mvShape_Vertical)
-                dpg.add_spacer(width=16)
 
                 # Right column: actions
                 with dpg.group():
