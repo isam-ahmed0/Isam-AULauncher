@@ -61,6 +61,9 @@ class LauncherApp:
         self._hero_texture = None
         self._hero_has_image = _HERO_IMAGE_PATH.exists()
         self._locate_pending = False
+        self._change_location_pending = False
+        self._install_folder_pending = False
+        self._pending_install_path = None
 
         self._setup_dpg()
         self._build_ui()
@@ -449,7 +452,8 @@ class LauncherApp:
             self._show_error("Game not installed!")
 
     def _cb_change_location(self, sender, app_data):
-        self._change_location()
+        self._change_location_pending = True
+        dpg.show_item("folder_dialog")
 
     def _cb_locate_game(self, sender, app_data):
         self._locate_pending = True
@@ -579,9 +583,12 @@ class LauncherApp:
                         return
                 gp = self.config.get_game_path()
                 if not gp:
-                    gp = self._select_folder()
+                    gp = self._pending_install_path
                     if not gp:
-                        self._set_status("Installation cancelled", TEXT_MUTED)
+                        self._busy_off()
+                        self._install_folder_pending = True
+                        self._set_status("Select a folder to install into", INFO)
+                        dpg.show_item("folder_dialog")
                         return
                 url = f"https://github.com/{GITHUB_REPO}/releases/download/{latest}/app.zip"
                 zf = Path("game.zip")
@@ -605,6 +612,7 @@ class LauncherApp:
                 FileManager.safe_delete(zf)
                 self.config.set_version(latest)
                 self.config.set_game_path(gp)
+                self._pending_install_path = None
                 self.current_version = latest
                 self._update_version_display()
                 self._update_progress(100)
@@ -689,10 +697,7 @@ class LauncherApp:
         except Exception as e:
             self._show_error(f"Failed: {e}")
 
-    def _change_location(self):
-        new_path = self._select_folder()
-        if not new_path:
-            return
+    def _change_location(self, new_path):
         self._set_status("Verifying game files...", INFO)
         result = FileManager.verify_game_folder(new_path)
         if not result["exe_found"]:
@@ -743,6 +748,8 @@ class LauncherApp:
     def _reinstall_game(self):
         if self._ask_yes_no("Delete and reinstall the game?"):
             gp = self.config.get_game_path()
+            if gp:
+                self._pending_install_path = gp
             if gp and gp.exists():
                 FileManager.safe_delete(gp)
             self.current_version = "Not Installed"
@@ -769,6 +776,15 @@ class LauncherApp:
     def _folder_selected(self, sender, app_data):
         if app_data and app_data.get("file_path_name"):
             path = Path(app_data["file_path_name"])
+            if self._install_folder_pending:
+                self._install_folder_pending = False
+                self._pending_install_path = path
+                self._download_latest()
+                return
+            if self._change_location_pending:
+                self._change_location_pending = False
+                self._change_location(path)
+                return
             if self._locate_pending:
                 self._locate_pending = False
                 result = FileManager.verify_game_folder(path)
@@ -786,7 +802,12 @@ class LauncherApp:
                 return
             self._set_status(f"Selected: {path}", SUCCESS)
             return path
-        if self._locate_pending:
+        if self._install_folder_pending:
+            self._install_folder_pending = False
+            self._set_status("Installation cancelled", TEXT_MUTED)
+        elif self._change_location_pending:
+            self._change_location_pending = False
+        elif self._locate_pending:
             self._locate_pending = False
             self._set_status("Location cancelled", TEXT_MUTED)
         return None
