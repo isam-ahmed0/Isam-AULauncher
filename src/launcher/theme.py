@@ -343,3 +343,25 @@ def init_modal_theme():
 def bind_modal(tag):
     if MODAL_THEME:
         dpg.bind_item_theme(tag, MODAL_THEME)
+
+
+# ---------------------------------------------------------------------------
+# Sidebar theme
+# ---------------------------------------------------------------------------
+SIDEBAR_THEME = None
+
+
+def init_sidebar_theme():
+    global SIDEBAR_THEME
+    with dpg.theme() as theme:
+        with dpg.theme_component(dpg.mvGroup):
+            dpg.add_theme_color(dpg.mvThemeCol_ChildBg, (*BG_SURFACE, 255))
+            dpg.add_theme_color(dpg.mvThemeCol_Border, (*BORDER_SUBTLE, 200))
+            dpg.add_theme_style(dpg.mvStyleVar_ChildBorderSize, 1)
+            dpg.add_theme_style(dpg.mvStyleVar_ChildRounding, 0)
+    SIDEBAR_THEME = theme
+
+
+def bind_sidebar(tag):
+    if SIDEBAR_THEME:
+        dpg.bind_item_theme(tag, SIDEBAR_THEME)

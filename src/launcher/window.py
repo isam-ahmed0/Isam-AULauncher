@@ -1,6 +1,5 @@
 """
-Window — Premium Steam/Epic-style Dear PyGui launcher.
-Image hero with animated overlay, clean layout, game-client sizing.
+Window — Steam-style sidebar launcher for Isam AULauncher.
 """
 import math
 import os
@@ -24,7 +23,7 @@ from file_manager import FileManager
 from theme import (
     load_fonts, bind_default_font,
     apply_theme, init_accent_themes, bind_accent,
-    init_modal_theme, bind_modal,
+    init_modal_theme, bind_modal, init_sidebar_theme, bind_sidebar,
     ACCENT, ACCENT_2,
     SUCCESS, SUCCESS_HOVER, INFO, INFO_HOVER, DANGER, DANGER_HOVER,
     WARNING, PURPLE,
@@ -36,6 +35,8 @@ from theme import (
 _RESOURCES_DIR = Path(__file__).parent / "resources"
 _HERO_IMAGE_PATH = _RESOURCES_DIR / "hero.png"
 _ICON_PATH = _RESOURCES_DIR / "icon.ico"
+
+SIDEBAR_W = 200
 
 
 class LauncherApp:
@@ -49,6 +50,7 @@ class LauncherApp:
         self.status_text = "Starting..."
         self.progress = 0.0
         self._busy = False
+        self._active_page = "game"
 
         # Animation state
         self._particles = []
@@ -69,6 +71,7 @@ class LauncherApp:
         apply_theme()
         init_accent_themes()
         init_modal_theme()
+        init_sidebar_theme()
 
         dpg.create_viewport(
             title=f"{APP_NAME} v{LAUNCHER_VERSION}",
@@ -77,7 +80,6 @@ class LauncherApp:
             resizable=True,
         )
 
-        # Set window icon
         if _ICON_PATH.exists():
             try:
                 dpg.set_viewport_large_icon(str(_ICON_PATH))
@@ -85,7 +87,6 @@ class LauncherApp:
             except Exception:
                 pass
 
-        # Load hero image texture
         if self._hero_has_image:
             try:
                 dpg.add_texture_registry(tag="hero_tex_registry")
@@ -102,8 +103,10 @@ class LauncherApp:
     def _build_ui(self):
         with dpg.window(tag="main_window", no_scrollbar=True, no_collapse=True,
                         no_title_bar=True, width=-1, height=-1):
-            self._build_top_bar()
-            self._build_content()
+            # Horizontal: sidebar | content
+            with dpg.group(horizontal=True):
+                self._build_sidebar()
+                self._build_content_area()
             self._build_status_bar()
 
         dpg.set_primary_window("main_window", True)
@@ -115,59 +118,104 @@ class LauncherApp:
             dpg.add_file_extension(".exe", color=(150, 255, 150, 255))
             dpg.add_file_extension(".*")
 
-    # ------------------------------------------------------------------ top bar
-    def _build_top_bar(self):
-        with dpg.group(horizontal=True, tag="top_bar"):
-            dpg.add_spacer(width=20)
+    # ------------------------------------------------------------------ sidebar
+    def _build_sidebar(self):
+        with dpg.group(width=SIDEBAR_W, tag="sidebar"):
+            bind_sidebar("sidebar")
+            # Brand
+            dpg.add_spacer(height=24)
             dpg.add_text(BRAND_SHORT, color=ACCENT)
-            dpg.add_spacer(width=6)
-            dpg.add_text("|", color=BORDER_SUBTLE)
-            dpg.add_spacer(width=6)
-            dpg.add_text(APP_NAME, color=TEXT_SECONDARY)
+            dpg.add_text(APP_NAME, color=TEXT_MUTED)
+            dpg.add_spacer(height=20)
+            dpg.add_separator()
+            dpg.add_spacer(height=12)
 
-            dpg.add_spacer(width=9999)
+            # Nav items
+            self._sidebar_btn("Game", "game", True)
+            self._sidebar_btn("Tools", "tools", False)
+            self._sidebar_btn("AUnlocker", "aunlocker", False)
 
-            dpg.add_button(label="Settings", callback=self._cb_settings, width=82, height=32)
-            dpg.add_spacer(width=6)
-            dpg.add_button(label="...", callback=self._show_kebab, width=36, height=32)
-            dpg.add_spacer(width=20)
+            # Push bottom items down
+            dpg.add_spacer(width=1, height=9999)
+            dpg.add_separator()
+            dpg.add_spacer(height=12)
 
-        dpg.add_spacer(height=4)
-        dpg.add_separator()
-        dpg.add_spacer(height=8)
+            self._sidebar_btn("Settings", "settings", False)
+            self._sidebar_btn("About", "about", False)
+            dpg.add_spacer(height=20)
 
-    # ------------------------------------------------------------------ content
-    def _build_content(self):
-        self._build_game_page()
+    def _sidebar_btn(self, label, page_id, active=False):
+        tag = f"nav_{page_id}"
+        if page_id in ("settings", "about"):
+            # These open modals, not pages
+            if page_id == "settings":
+                dpg.add_button(label=f"  {label}", tag=tag,
+                               callback=self._cb_settings,
+                               width=SIDEBAR_W - 20, height=36)
+            elif page_id == "about":
+                dpg.add_button(label=f"  {label}", tag=tag,
+                               callback=self._cb_show_about,
+                               width=SIDEBAR_W - 20, height=36)
+        else:
+            dpg.add_button(label=f"  {label}", tag=tag,
+                           callback=self._switch_page,
+                           width=SIDEBAR_W - 20, height=36)
+        if active:
+            bind_accent(tag, "accent")
+            dpg.set_item_user_data(tag, True)
+        else:
+            dpg.set_item_user_data(tag, False)
 
+    def _switch_page(self, sender, app_data):
+        page_id = sender.replace("nav_", "")
+        self._active_page = page_id
+
+        for p in ("game", "tools", "aunlocker"):
+            tag = f"nav_{p}"
+            if p == page_id:
+                bind_accent(tag, "accent")
+                dpg.set_item_user_data(tag, True)
+            else:
+                dpg.bind_item_theme(tag, 0)
+                dpg.set_item_user_data(tag, False)
+
+        dpg.show_item("page_game") if page_id == "game" else dpg.hide_item("page_game")
+        dpg.show_item("page_tools") if page_id == "tools" else dpg.hide_item("page_tools")
+        dpg.show_item("page_aunlocker") if page_id == "aunlocker" else dpg.hide_item("page_aunlocker")
+
+        if page_id == "game":
+            self._start_hero_animation()
+        else:
+            self._stop_hero_animation()
+
+    # ------------------------------------------------------------------ content area
+    def _build_content_area(self):
+        with dpg.group(tag="content_area"):
+            self._build_game_page()
+            self._build_tools_page()
+            self._build_aunlocker_page()
+
+    # ------------------------------------------------------------------ game page
     def _build_game_page(self):
         with dpg.group(tag="page_game"):
-
-            # Hero banner (image + animated overlay)
             self._build_hero("Game Management",
                              "Install, update, and manage your Among Us installation")
 
             dpg.add_spacer(height=16)
 
-            # Action buttons row: Install + AUnlocker side by side
+            # Action buttons
             with dpg.group(horizontal=True):
-                dpg.add_spacer(width=4)
+                dpg.add_spacer(width=8)
                 dpg.add_button(label="INSTALL GAME", tag="main_action_btn",
                                callback=self._cb_main_action, width=-1, height=52)
                 bind_accent("main_action_btn", "btn_success")
                 dpg.add_spacer(width=8)
-                dpg.add_button(label="Install AUnlocker", tag="aunlocker_btn",
-                               callback=self._cb_install_aunlocker, width=200, height=52)
-                bind_accent("aunlocker_btn", "btn_primary")
-                dpg.add_spacer(width=4)
 
             dpg.add_spacer(height=16)
 
-            # Info row: version + status (no cards, just groups)
+            # Info row
             with dpg.group(horizontal=True):
-                dpg.add_spacer(width=4)
-
-                # Version info
+                dpg.add_spacer(width=8)
                 with dpg.group():
                     dpg.add_text("INSTALLED", color=TEXT_MUTED)
                     dpg.add_spacer(height=2)
@@ -176,10 +224,7 @@ class LauncherApp:
                     dpg.add_text("LATEST", color=TEXT_MUTED)
                     dpg.add_spacer(height=2)
                     dpg.add_text("Checking...", tag="ver_latest", color=INFO)
-
                 dpg.add_spacer(width=32)
-
-                # Status + progress
                 with dpg.group():
                     dpg.add_text("STATUS", color=TEXT_MUTED)
                     dpg.add_spacer(height=2)
@@ -192,45 +237,60 @@ class LauncherApp:
                                          width=360, height=20, overlay="0%")
                     dpg.add_spacer(height=4)
                     dpg.add_text("Ready", tag="game_ready_text", color=TEXT_MUTED)
+                dpg.add_spacer(width=8)
 
-                dpg.add_spacer(width=4)
-
-            dpg.add_spacer(height=16)
-
-            # Quick actions
-            dpg.add_text("QUICK ACTIONS", color=TEXT_MUTED)
-            dpg.add_spacer(height=6)
+    # ------------------------------------------------------------------ tools page
+    def _build_tools_page(self):
+        with dpg.group(tag="page_tools", show=False):
+            dpg.add_spacer(height=20)
+            dpg.add_text("TOOLS", color=TEXT_MUTED)
+            dpg.add_spacer(height=12)
             with dpg.group(horizontal=True):
-                dpg.add_spacer(width=4)
+                dpg.add_spacer(width=8)
                 dpg.add_button(label="Open Folder", callback=self._cb_open_folder,
-                               width=160, height=36)
+                               width=180, height=44)
                 dpg.add_spacer(width=8)
                 dpg.add_button(label="Change Location", callback=self._cb_change_location,
-                               width=160, height=36)
+                               width=180, height=44)
                 dpg.add_spacer(width=8)
                 dpg.add_button(label="Verify Files", callback=self._cb_verify,
-                               width=160, height=36)
+                               width=180, height=44)
+                dpg.add_spacer(width=8)
+            dpg.add_spacer(height=8)
+            with dpg.group(horizontal=True):
                 dpg.add_spacer(width=8)
                 dpg.add_button(label="Create Shortcut", callback=self._cb_create_shortcut,
-                               width=160, height=36)
-                dpg.add_spacer(width=4)
+                               width=180, height=44)
+                dpg.add_spacer(width=8)
+                dpg.add_button(label="Reinstall Game", callback=self._cb_reinstall,
+                               width=180, height=44)
+                dpg.add_spacer(width=8)
+                dpg.add_button(label="Uninstall", callback=self._cb_uninstall,
+                               width=180, height=44)
+                bind_accent(dpg.last_item(), "btn_danger")
+                dpg.add_spacer(width=8)
 
+    # ------------------------------------------------------------------ aunlocker page
+    def _build_aunlocker_page(self):
+        with dpg.group(tag="page_aunlocker", show=False):
             dpg.add_spacer(height=20)
+            dpg.add_text("AUNLOCKER", color=TEXT_MUTED)
+            dpg.add_spacer(height=12)
+            dpg.add_text("Install the Among Us unlocker for your game version.",
+                         color=TEXT_SECONDARY)
+            dpg.add_spacer(height=16)
+            with dpg.group(horizontal=True):
+                dpg.add_spacer(width=8)
+                dpg.add_button(label="Install AUnlocker", tag="aunlocker_btn",
+                               callback=self._cb_install_aunlocker, width=240, height=52)
+                bind_accent("aunlocker_btn", "btn_primary")
+                dpg.add_spacer(width=8)
 
     # ------------------------------------------------------------------ hero banner
     def _build_hero(self, title, subtitle):
         hero_h = 220
-
-        if self._hero_has_image and self._hero_texture:
-            # Image background + animated overlay
-            with dpg.group():
-                with dpg.drawlist(width=-1, height=hero_h, tag="hero_drawlist"):
-                    pass
-        else:
-            # Procedural gradient + animated overlay
-            with dpg.drawlist(width=-1, height=hero_h, tag="hero_drawlist"):
-                pass
-
+        with dpg.drawlist(width=-1, height=hero_h, tag="hero_drawlist"):
+            pass
         self._hero_title = title
         self._hero_subtitle = subtitle
         self._init_particles()
@@ -249,7 +309,6 @@ class LauncherApp:
                 "alpha": random.uniform(30, 60),
                 "drift": random.uniform(-0.0002, 0.0002),
             })
-
         self._glow_orbs = [
             {"cx": 0.75, "cy": 0.35, "r": 80, "base_alpha": 40, "phase": 0.0},
             {"cx": 0.85, "cy": 0.6, "r": 60, "base_alpha": 30, "phase": 1.5},
@@ -284,11 +343,10 @@ class LauncherApp:
         h = dpg.get_item_height(drawlist_tag)
         if w <= 0 or h <= 0:
             return
-
         dpg.delete_item(drawlist_tag, children_only=True)
         elapsed = time.time() - self._hero_time
 
-        # Background: hero image or plain dark
+        # Background
         if self._hero_has_image and self._hero_texture:
             dpg.draw_image(self._hero_texture, [0, 0], [w, h])
             dpg.draw_rectangle([0, 0], [w, h], fill=(12, 14, 20, 140))
@@ -328,7 +386,7 @@ class LauncherApp:
             x1 = int((i + 1) * w / line_steps)
             dpg.draw_rectangle([x0, h - 2], [x1, h], fill=(r, g, b, 180))
 
-        # Title + subtitle
+        # Text
         dpg.draw_text([28, h // 2 - 36], title, color=TEXT_BRIGHT, size=28)
         dpg.draw_text([28, h // 2 + 4], subtitle, color=TEXT_SECONDARY, size=14)
 
@@ -341,6 +399,20 @@ class LauncherApp:
                            color=(*ACCENT, 100), rounding=13, thickness=1)
         dpg.draw_text([chip_x + 16, chip_y + 5], f"v{LAUNCHER_VERSION}",
                       color=ACCENT_2, size=12)
+
+    # ------------------------------------------------------------------ status bar
+    def _build_status_bar(self):
+        dpg.add_spacer(height=4)
+        dpg.add_separator()
+        dpg.add_spacer(height=6)
+        with dpg.group(horizontal=True):
+            dpg.add_spacer(width=16)
+            dpg.add_text("●", color=SUCCESS, tag="sb_status_icon")
+            dpg.add_text("Starting...", tag="sb_status_text", color=TEXT_SECONDARY)
+            dpg.add_spacer(width=9999)
+            dpg.add_text(f"{APP_NAME} v{LAUNCHER_VERSION} — Made by {MAKER}",
+                         color=TEXT_MUTED)
+            dpg.add_spacer(width=16)
 
     # ------------------------------------------------------------------ callbacks
     def _cb_main_action(self, sender, app_data):
@@ -369,7 +441,7 @@ class LauncherApp:
     def _cb_verify(self, sender, app_data):
         self._verify_files()
 
-    def _cb_settings(self, sender, app_data):
+    def _cb_settings(self, sender=None, app_data=None):
         self._show_settings()
 
     def _cb_reinstall(self, sender, app_data):
@@ -378,6 +450,9 @@ class LauncherApp:
     def _cb_uninstall(self, sender, app_data):
         self._uninstall_game()
 
+    def _cb_show_about(self, sender=None, app_data=None):
+        self._show_about()
+
     def _cb_coming_soon(self, sender, app_data):
         self._safe_delete("discord_modal")
         with dpg.window(label="Discord", modal=True, tag="discord_modal",
@@ -385,63 +460,13 @@ class LauncherApp:
             bind_modal("discord_modal")
             dpg.add_text("Discord server coming soon!")
             dpg.add_spacer(height=10)
-            with dpg.group(horizontal=True):
-                dpg.add_spacer(width=9999)
-                dpg.add_button(label="OK", callback=lambda: dpg.delete_item(
-                    "discord_modal"), width=80, height=36)
-                bind_accent(dpg.last_item(), "modal_primary")
-                dpg.add_spacer(width=9999)
+            dpg.add_button(label="OK", callback=lambda: dpg.delete_item(
+                "discord_modal"), width=-1)
+            bind_accent(dpg.last_item(), "modal_primary")
         dpg.split_frame()
 
-    def _show_kebab(self, sender, app_data):
-        self._safe_delete("kebab_modal")
-        with dpg.window(label="Tools", modal=True, tag="kebab_modal",
-                        width=340, height=380, no_resize=True):
-            bind_modal("kebab_modal")
-            dpg.add_text("Tools")
-            dpg.add_spacer(height=4)
-            dpg.add_separator()
-            dpg.add_spacer(height=8)
-
-            dpg.add_text("GAME", color=TEXT_MUTED)
-            dpg.add_spacer(height=6)
-            dpg.add_button(label="Verify Game Files", callback=self._cb_verify,
-                           width=-1, height=36)
-            dpg.add_spacer(height=4)
-            dpg.add_button(label="Reinstall Game", callback=self._cb_reinstall,
-                           width=-1, height=36)
-            dpg.add_spacer(height=4)
-            dpg.add_button(label="Uninstall", callback=self._cb_uninstall, width=-1, height=36)
-            bind_accent(dpg.last_item(), "btn_danger")
-            dpg.add_spacer(height=12)
-
-            dpg.add_text("SHORTCUTS", color=TEXT_MUTED)
-            dpg.add_spacer(height=6)
-            dpg.add_button(label="Create Desktop Shortcut", callback=self._cb_create_shortcut,
-                           width=-1, height=36)
-            dpg.add_spacer(height=4)
-            dpg.add_button(label="Open Game Folder", callback=self._cb_open_folder,
-                           width=-1, height=36)
-            dpg.add_spacer(height=4)
-            dpg.add_button(label="Change Install Location", callback=self._cb_change_location,
-                           width=-1, height=36)
-            dpg.add_spacer(height=12)
-
-            dpg.add_text("OTHER", color=TEXT_MUTED)
-            dpg.add_spacer(height=6)
-            dpg.add_button(label="View Logs", callback=self._view_logs, width=-1, height=36)
-            dpg.add_spacer(height=4)
-            dpg.add_button(label="About", callback=self._show_about, width=-1, height=36)
-            dpg.add_spacer(height=16)
-
-            dpg.add_separator()
-            dpg.add_spacer(height=8)
-            dpg.add_button(label="Close", callback=lambda: dpg.delete_item(
-                "kebab_modal"), width=-1, height=36)
-            bind_accent(dpg.last_item(), "btn_secondary")
-
-    def _show_about(self, sender, app_data):
-        self._safe_delete("kebab_modal")
+    def _show_about(self):
+        self._safe_delete("about_modal")
         with dpg.window(label="About", modal=True, tag="about_modal",
                         width=460, height=360, no_resize=True):
             bind_modal("about_modal")
@@ -483,12 +508,6 @@ class LauncherApp:
                 "about_modal"), width=-1, height=36)
             bind_accent(dpg.last_item(), "modal_primary")
 
-    def _view_logs(self, sender, app_data):
-        self._safe_delete("kebab_modal")
-        lf = Path("launcher.log")
-        if lf.exists():
-            os.startfile(lf)
-
     def _show_settings(self, sender=None, app_data=None):
         settings = self.config.settings
         self._safe_delete("settings_modal")
@@ -499,23 +518,20 @@ class LauncherApp:
             dpg.add_spacer(height=4)
             dpg.add_separator()
             dpg.add_spacer(height=12)
-            with dpg.group():
-                dpg.add_checkbox(label="Discord Rich Presence",
-                                 tag="sett_discord_rpc",
-                                 default_value=settings.get("discord_rpc", True))
-                dpg.add_text("  Show your activity on Discord", color=TEXT_MUTED)
-                dpg.add_spacer(height=12)
-            with dpg.group():
-                dpg.add_checkbox(label="Auto-update game",
-                                 tag="sett_auto_update",
-                                 default_value=settings.get("auto_update", True))
-                dpg.add_text("  Download game updates automatically", color=TEXT_MUTED)
-                dpg.add_spacer(height=12)
-            with dpg.group():
-                dpg.add_checkbox(label="Verify file integrity",
-                                 tag="sett_check_integrity",
-                                 default_value=settings.get("check_integrity", True))
-                dpg.add_text("  Check checksums after download", color=TEXT_MUTED)
+            dpg.add_checkbox(label="Discord Rich Presence",
+                             tag="sett_discord_rpc",
+                             default_value=settings.get("discord_rpc", True))
+            dpg.add_text("  Show your activity on Discord", color=TEXT_MUTED)
+            dpg.add_spacer(height=12)
+            dpg.add_checkbox(label="Auto-update game",
+                             tag="sett_auto_update",
+                             default_value=settings.get("auto_update", True))
+            dpg.add_text("  Download game updates automatically", color=TEXT_MUTED)
+            dpg.add_spacer(height=12)
+            dpg.add_checkbox(label="Verify file integrity",
+                             tag="sett_check_integrity",
+                             default_value=settings.get("check_integrity", True))
+            dpg.add_text("  Check checksums after download", color=TEXT_MUTED)
             dpg.add_spacer(height=20)
             dpg.add_separator()
             dpg.add_spacer(height=12)
@@ -708,8 +724,6 @@ class LauncherApp:
         self._set_status("Ready")
 
     def _reinstall_game(self):
-        if dpg.does_item_exist("kebab_modal"):
-            self._safe_delete("kebab_modal")
         if self._ask_yes_no("Delete and reinstall the game?"):
             gp = self.config.get_game_path()
             if gp and gp.exists():
@@ -719,8 +733,6 @@ class LauncherApp:
             self._download_latest()
 
     def _uninstall_game(self):
-        if dpg.does_item_exist("kebab_modal"):
-            self._safe_delete("kebab_modal")
         if self._ask_yes_no("Remove all game files and launcher data?"):
             gp = self.config.get_game_path()
             if gp and gp.exists():
@@ -784,12 +796,14 @@ class LauncherApp:
     def _busy_on(self):
         self._busy = True
         dpg.configure_item("main_action_btn", enabled=False)
-        dpg.configure_item("aunlocker_btn", enabled=False)
+        if dpg.does_item_exist("aunlocker_btn"):
+            dpg.configure_item("aunlocker_btn", enabled=False)
 
     def _busy_off(self):
         self._busy = False
         dpg.configure_item("main_action_btn", enabled=True)
-        dpg.configure_item("aunlocker_btn", enabled=True)
+        if dpg.does_item_exist("aunlocker_btn"):
+            dpg.configure_item("aunlocker_btn", enabled=True)
 
     # ------------------------------------------------------------------ modals
     def _show_modal_header(self, title, accent_color=None):
@@ -867,20 +881,6 @@ class LauncherApp:
                 dpg.add_spacer(width=9999)
         dpg.split_frame()
         return result[0]
-
-    # ------------------------------------------------------------------ status bar
-    def _build_status_bar(self):
-        dpg.add_spacer(height=4)
-        dpg.add_separator()
-        dpg.add_spacer(height=6)
-        with dpg.group(horizontal=True, tag="status_bar"):
-            dpg.add_spacer(width=16)
-            dpg.add_text("●", color=SUCCESS, tag="sb_status_icon")
-            dpg.add_text("Starting...", tag="sb_status_text", color=TEXT_SECONDARY)
-            dpg.add_spacer(width=9999)
-            dpg.add_text(f"{APP_NAME} v{LAUNCHER_VERSION} — Made by {MAKER}",
-                         color=TEXT_MUTED)
-            dpg.add_spacer(width=16)
 
     # ------------------------------------------------------------------ initial data
     def _load_initial_data(self):
