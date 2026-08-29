@@ -25,7 +25,7 @@ from file_manager import FileManager
 from theme import (
     load_fonts, bind_default_font,
     apply_theme, init_accent_themes, bind_accent,
-    init_card_theme, init_modal_theme, bind_card, bind_modal,
+    init_card_theme, init_modal_theme, bind_modal,
     ACCENT, ACCENT_2,
     SUCCESS, SUCCESS_HOVER, INFO, INFO_HOVER, DANGER, DANGER_HOVER,
     WARNING, PURPLE,
@@ -181,10 +181,7 @@ class LauncherApp:
                 dpg.add_spacer(width=4)
 
                 # Version card
-                with dpg.child_window(tag="version_card", width=280, height=160,
-                                      autosize_x=False, autosize_y=False,
-                                      no_scrollbar=True):
-                    bind_card("version_card")
+                with dpg.group(tag="version_card"):
                     dpg.add_text("VERSION", color=TEXT_MUTED)
                     dpg.add_spacer(height=12)
                     dpg.add_text("Installed", color=TEXT_SECONDARY)
@@ -200,10 +197,7 @@ class LauncherApp:
                 dpg.add_spacer(width=12)
 
                 # Status card
-                with dpg.child_window(tag="status_card", width=-1, height=160,
-                                      autosize_x=False, autosize_y=False,
-                                      no_scrollbar=True):
-                    bind_card("status_card")
+                with dpg.group(tag="status_card"):
                     dpg.add_text("STATUS", color=TEXT_MUTED)
                     dpg.add_spacer(height=12)
                     with dpg.group(horizontal=True):
@@ -241,10 +235,7 @@ class LauncherApp:
             dpg.add_spacer(height=20)
 
             # AUnlocker section
-            with dpg.child_window(tag="aunlocker_card", width=-1, height=80,
-                                  autosize_x=True, autosize_y=False,
-                                  no_scrollbar=True):
-                bind_card("aunlocker_card")
+            with dpg.group(tag="aunlocker_card"):
                 with dpg.group(horizontal=True):
                     with dpg.group():
                         dpg.add_text("AUnlocker", color=TEXT_PRIMARY)
@@ -388,9 +379,9 @@ class LauncherApp:
             dpg.draw_rectangle([x0, line_y], [x1, line_y + 2], fill=(r, g, b, 180))
 
         # Title
-        dpg.draw_text([28, h // 2 - 36], title, color=TEXT_BRIGHT)
+        dpg.draw_text([28, h // 2 - 36], title, color=TEXT_BRIGHT, size=28)
         # Subtitle
-        dpg.draw_text([28, h // 2 + 4], subtitle, color=TEXT_SECONDARY)
+        dpg.draw_text([28, h // 2 + 4], subtitle, color=TEXT_SECONDARY, size=14)
 
         # Version badge (rounded pill)
         chip_text = f"v{LAUNCHER_VERSION}"
@@ -403,7 +394,7 @@ class LauncherApp:
         dpg.draw_rectangle([chip_x, chip_y], [chip_x + chip_w, chip_y + chip_h],
                            color=(*ACCENT, 100), rounding=13, thickness=1)
         dpg.draw_text([chip_x + 16, chip_y + 5], chip_text,
-                      color=ACCENT_2)
+                      color=ACCENT_2, size=12)
 
     # ------------------------------------------------------------------ news tab
     def _build_news_tab(self):
