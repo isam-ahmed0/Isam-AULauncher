@@ -1,23 +1,9 @@
 """
 Theme — Premium Steam-like dark theme for Isam AULauncher.
 GPU-accelerated, fully customizable via DPG theme API.
+Uses DPG built-in font — no custom fonts needed.
 """
-import os
-from pathlib import Path
-
 import dearpygui.dearpygui as dpg
-
-# ---------------------------------------------------------------------------
-# Font sizes
-# ---------------------------------------------------------------------------
-FONT_TITLE = 32
-FONT_HEADING = 24
-FONT_SUBHEADING = 18
-FONT_BODY = 16
-FONT_SMALL = 14
-FONT_LABEL = 12
-FONT_BRAND = 28
-FONT_BRAND_SUB = 14
 
 # ---------------------------------------------------------------------------
 # Palette — Steam-like minimal dark
@@ -44,7 +30,6 @@ WARNING_HOVER = (245, 158, 11)
 DANGER = (248, 113, 113)
 DANGER_HOVER = (239, 68, 68)
 
-# Legacy aliases for backward compat
 GREEN = SUCCESS
 GREEN_HOVER = SUCCESS_HOVER
 BLUE = INFO
@@ -61,141 +46,47 @@ TEXT_SECONDARY = (156, 163, 175)
 TEXT_MUTED = (107, 114, 128)
 TEXT_BRIGHT = (255, 255, 255)
 
-# Legacy aliases
 TEXT = TEXT_PRIMARY
 TEXT_DIM = TEXT_SECONDARY
-
-# ---------------------------------------------------------------------------
-# Font paths
-# ---------------------------------------------------------------------------
-_FONTS_DIR = Path(__file__).parent / "resources" / "fonts"
-
-
-_fonts_loaded = []
-
-
-def _safe_add_font(path, size, tag):
-    """Load a font, returning True on success."""
-    try:
-        dpg.add_font(path, size, tag=tag)
-        _fonts_loaded.append(tag)
-        return True
-    except Exception:
-        return False
-
-
-def load_fonts():
-    """Load Nunito Sans font family into Dear PyGui."""
-    if not _FONTS_DIR.exists():
-        return
-
-    regular = str(_FONTS_DIR / "NunitoSans-Regular.ttf")
-    medium = str(_FONTS_DIR / "NunitoSans-Medium.ttf")
-    semibold = str(_FONTS_DIR / "NunitoSans-SemiBold.ttf")
-    bold = str(_FONTS_DIR / "NunitoSans-Bold.ttf")
-
-    # Regular at different sizes
-    if os.path.exists(regular):
-        _safe_add_font(regular, FONT_BODY, "font_regular")
-        _safe_add_font(regular, FONT_SMALL, "font_regular_small")
-        _safe_add_font(regular, FONT_LABEL, "font_regular_label")
-    # Medium
-    if os.path.exists(medium):
-        _safe_add_font(medium, FONT_BODY, "font_medium")
-        _safe_add_font(medium, FONT_SMALL, "font_medium_small")
-        _safe_add_font(medium, FONT_LABEL, "font_medium_label")
-    # Semibold
-    if os.path.exists(semibold):
-        _safe_add_font(semibold, FONT_BODY, "font_semibold")
-        _safe_add_font(semibold, FONT_HEADING, "font_semibold_heading")
-        _safe_add_font(semibold, FONT_SUBHEADING, "font_semibold_subheading")
-        _safe_add_font(semibold, FONT_SMALL, "font_semibold_small")
-    # Bold
-    if os.path.exists(bold):
-        _safe_add_font(bold, FONT_BODY, "font_bold")
-        _safe_add_font(bold, FONT_HEADING, "font_bold_heading")
-        _safe_add_font(bold, FONT_BRAND, "font_brand")
-    # Medium at subtitle size
-    if os.path.exists(medium):
-        _safe_add_font(medium, FONT_BRAND_SUB, "font_brand_sub")
-
-
-def bind_default_font():
-    """Bind Nunito Sans Semibold as the default font, fall back to regular."""
-    if "font_semibold" in _fonts_loaded:
-        dpg.bind_font("font_semibold")
-    elif "font_regular" in _fonts_loaded:
-        dpg.bind_font("font_regular")
-
 
 # ---------------------------------------------------------------------------
 # Global theme
 # ---------------------------------------------------------------------------
 def apply_theme():
-    """Apply the premium dark theme to DPG."""
     with dpg.theme() as theme:
         with dpg.theme_component(dpg.mvAll):
-            # Backgrounds
             dpg.add_theme_color(dpg.mvThemeCol_WindowBg, (*BG_BASE, 255))
             dpg.add_theme_color(dpg.mvThemeCol_ChildBg, (*BG_SURFACE, 255))
             dpg.add_theme_color(dpg.mvThemeCol_PopupBg, (*BG_SURFACE, 255))
-
-            # Text
             dpg.add_theme_color(dpg.mvThemeCol_Text, (*TEXT_PRIMARY, 255))
             dpg.add_theme_color(dpg.mvThemeCol_TextDisabled, (*TEXT_MUTED, 255))
-
-            # Buttons
             dpg.add_theme_color(dpg.mvThemeCol_Button, (*BG_ELEVATED, 255))
             dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (*BG_HOVER, 255))
             dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (*BG_ACTIVE, 255))
-
-            # Frames / inputs
             dpg.add_theme_color(dpg.mvThemeCol_FrameBg, (*BG_ELEVATED, 255))
             dpg.add_theme_color(dpg.mvThemeCol_FrameBgHovered, (*BG_HOVER, 255))
             dpg.add_theme_color(dpg.mvThemeCol_FrameBgActive, (*BG_ACTIVE, 255))
-
-            # Title bar
             dpg.add_theme_color(dpg.mvThemeCol_TitleBg, (*BG_BASE, 255))
             dpg.add_theme_color(dpg.mvThemeCol_TitleBgActive, (*BG_SURFACE, 255))
-
-            # Headers
             dpg.add_theme_color(dpg.mvThemeCol_Header, (*BG_ELEVATED, 255))
             dpg.add_theme_color(dpg.mvThemeCol_HeaderHovered, (*BG_HOVER, 255))
             dpg.add_theme_color(dpg.mvThemeCol_HeaderActive, (*ACCENT, 255))
-
-            # Borders
             dpg.add_theme_color(dpg.mvThemeCol_Border, (*BORDER_SUBTLE, 200))
-
-            # Tabs
             dpg.add_theme_color(dpg.mvThemeCol_Tab, (*BG_ELEVATED, 255))
             dpg.add_theme_color(dpg.mvThemeCol_TabHovered, (*BG_HOVER, 255))
             dpg.add_theme_color(dpg.mvThemeCol_TabActive, (*ACCENT, 255))
-
-            # Scrollbar
             dpg.add_theme_color(dpg.mvThemeCol_ScrollbarBg, (*BG_BASE, 255))
             dpg.add_theme_color(dpg.mvThemeCol_ScrollbarGrab, (*BG_HOVER, 255))
             dpg.add_theme_color(dpg.mvThemeCol_ScrollbarGrabHovered, (*BG_ACTIVE, 255))
             dpg.add_theme_color(dpg.mvThemeCol_ScrollbarGrabActive, (*ACCENT, 255))
-
-            # Separator
             dpg.add_theme_color(dpg.mvThemeCol_Separator, (*BORDER_SUBTLE, 255))
-
-            # Slider / grab
             dpg.add_theme_color(dpg.mvThemeCol_SliderGrab, (*ACCENT, 255))
             dpg.add_theme_color(dpg.mvThemeCol_SliderGrabActive, (*ACCENT_2, 255))
-
-            # Progress bar
             dpg.add_theme_color(dpg.mvThemeCol_PlotHistogram, (*ACCENT, 255))
-
-            # Check mark
             dpg.add_theme_color(dpg.mvThemeCol_CheckMark, (*ACCENT, 255))
-
-            # Resize grip
             dpg.add_theme_color(dpg.mvThemeCol_ResizeGrip, (*ACCENT, 40))
             dpg.add_theme_color(dpg.mvThemeCol_ResizeGripHovered, (*ACCENT, 100))
             dpg.add_theme_color(dpg.mvThemeCol_ResizeGripActive, (*ACCENT, 200))
-
-            # Styles
             dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 8)
             dpg.add_theme_style(dpg.mvStyleVar_WindowRounding, 10)
             dpg.add_theme_style(dpg.mvStyleVar_GrabRounding, 6)
@@ -205,35 +96,11 @@ def apply_theme():
             dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 10, 8)
             dpg.add_theme_style(dpg.mvStyleVar_ScrollbarSize, 8)
             dpg.add_theme_style(dpg.mvStyleVar_ScrollbarRounding, 4)
-
     dpg.bind_theme(theme)
 
 
 # ---------------------------------------------------------------------------
-# Card theme (for info panels)
-# ---------------------------------------------------------------------------
-CARD_THEME = None
-
-
-def init_card_theme():
-    global CARD_THEME
-    with dpg.theme() as theme:
-        with dpg.theme_component(dpg.mvChildWindow):
-            dpg.add_theme_color(dpg.mvThemeCol_ChildBg, (*BG_SURFACE, 255))
-            dpg.add_theme_color(dpg.mvThemeCol_Border, (*BORDER_SUBTLE, 180))
-            dpg.add_theme_style(dpg.mvStyleVar_ChildRounding, 10)
-            dpg.add_theme_style(dpg.mvStyleVar_ChildBorderSize, 1)
-            dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 24, 24)
-    CARD_THEME = theme
-
-
-def bind_card(tag):
-    if CARD_THEME:
-        dpg.bind_item_theme(tag, CARD_THEME)
-
-
-# ---------------------------------------------------------------------------
-# Accent buttons (colored variants)
+# Accent buttons
 # ---------------------------------------------------------------------------
 ACCENT_THEMES = {}
 
@@ -247,11 +114,9 @@ def _make_accent_theme(name, color, hover_color):
             dpg.add_theme_color(dpg.mvThemeCol_Text, (255, 255, 255, 255))
             dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 8)
     ACCENT_THEMES[name] = theme
-    return theme
 
 
 def _make_ghost_theme(name, color):
-    """Text-only button with no background."""
     with dpg.theme() as theme:
         with dpg.theme_component(dpg.mvButton):
             dpg.add_theme_color(dpg.mvThemeCol_Button, (0, 0, 0, 0))
@@ -260,11 +125,9 @@ def _make_ghost_theme(name, color):
             dpg.add_theme_color(dpg.mvThemeCol_Text, (*color, 255))
             dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 8)
     ACCENT_THEMES[name] = theme
-    return theme
 
 
 def _make_large_accent_theme(name, color, hover_color):
-    """Large primary action button."""
     with dpg.theme() as theme:
         with dpg.theme_component(dpg.mvButton):
             dpg.add_theme_color(dpg.mvThemeCol_Button, (*color, 255))
@@ -273,11 +136,9 @@ def _make_large_accent_theme(name, color, hover_color):
             dpg.add_theme_color(dpg.mvThemeCol_Text, (255, 255, 255, 255))
             dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 10)
     ACCENT_THEMES[name] = theme
-    return theme
 
 
 def _make_modal_button_theme(name, color, hover_color):
-    """Button for modal dialogs."""
     with dpg.theme() as theme:
         with dpg.theme_component(dpg.mvButton):
             dpg.add_theme_color(dpg.mvThemeCol_Button, (*color, 255))
@@ -286,11 +147,9 @@ def _make_modal_button_theme(name, color, hover_color):
             dpg.add_theme_color(dpg.mvThemeCol_Text, (255, 255, 255, 255))
             dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 8)
     ACCENT_THEMES[name] = theme
-    return theme
 
 
 def _make_secondary_button_theme(name):
-    """Secondary/outline button."""
     with dpg.theme() as theme:
         with dpg.theme_component(dpg.mvButton):
             dpg.add_theme_color(dpg.mvThemeCol_Button, (*BG_ELEVATED, 255))
@@ -299,7 +158,6 @@ def _make_secondary_button_theme(name):
             dpg.add_theme_color(dpg.mvThemeCol_Text, (*TEXT_PRIMARY, 255))
             dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 8)
     ACCENT_THEMES[name] = theme
-    return theme
 
 
 def init_accent_themes():
@@ -310,18 +168,14 @@ def init_accent_themes():
     _make_accent_theme("accent", ACCENT, ACCENT_HOVER)
     _make_accent_theme("orange", WARNING, WARNING_HOVER)
     _make_accent_theme("cyan", ACCENT_2, (5, 150, 180))
-
     _make_large_accent_theme("btn_primary", ACCENT, ACCENT_HOVER)
     _make_large_accent_theme("btn_success", SUCCESS, SUCCESS_HOVER)
     _make_large_accent_theme("btn_info", INFO, INFO_HOVER)
     _make_large_accent_theme("btn_danger", DANGER, DANGER_HOVER)
     _make_large_accent_theme("btn_warning", WARNING, WARNING_HOVER)
-
     _make_secondary_button_theme("btn_secondary")
-
     _make_ghost_theme("ghost_accent", ACCENT)
     _make_ghost_theme("ghost_text", TEXT_SECONDARY)
-
     _make_modal_button_theme("modal_primary", ACCENT, ACCENT_HOVER)
     _make_modal_button_theme("modal_success", SUCCESS, SUCCESS_HOVER)
     _make_modal_button_theme("modal_danger", DANGER, DANGER_HOVER)
@@ -378,29 +232,3 @@ def init_sidebar_theme():
 def bind_sidebar(tag):
     if SIDEBAR_THEME:
         dpg.bind_item_theme(tag, SIDEBAR_THEME)
-
-
-# ---------------------------------------------------------------------------
-# Title bar button themes
-# ---------------------------------------------------------------------------
-def init_titlebar_themes():
-    # Close button - red hover
-    with dpg.theme() as theme:
-        with dpg.theme_component(dpg.mvButton):
-            dpg.add_theme_color(dpg.mvThemeCol_Button, (*BG_HOVER, 255))
-            dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (*DANGER, 255))
-            dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (*DANGER_HOVER, 255))
-            dpg.add_theme_color(dpg.mvThemeCol_Text, (*TEXT_MUTED, 255))
-            dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 4)
-    dpg.bind_item_theme("btn_close", theme)
-
-    # Minimize / maximize buttons
-    with dpg.theme() as theme:
-        with dpg.theme_component(dpg.mvButton):
-            dpg.add_theme_color(dpg.mvThemeCol_Button, (*BG_HOVER, 255))
-            dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (*BG_ACTIVE, 255))
-            dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (*ACCENT, 255))
-            dpg.add_theme_color(dpg.mvThemeCol_Text, (*TEXT_SECONDARY, 255))
-            dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 4)
-    dpg.bind_item_theme("btn_minimize", theme)
-    dpg.bind_item_theme("btn_maximize", theme)

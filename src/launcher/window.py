@@ -21,11 +21,8 @@ from config import (
 from network import NetworkManager, DiscordRPC, GameVersion
 from file_manager import FileManager
 from theme import (
-    load_fonts, bind_default_font,
     apply_theme, init_accent_themes, bind_accent,
     init_modal_theme, bind_modal, init_sidebar_theme, bind_sidebar,
-    init_titlebar_themes,
-    _fonts_loaded,
     ACCENT, ACCENT_2,
     SUCCESS, SUCCESS_HOVER, INFO, INFO_HOVER, DANGER, DANGER_HOVER,
     WARNING, PURPLE,
@@ -68,13 +65,11 @@ class LauncherApp:
 
         self._setup_dpg()
         self._build_ui()
-        init_titlebar_themes()
         self._load_initial_data()
 
     # ------------------------------------------------------------------ setup
     def _setup_dpg(self):
         dpg.create_context()
-        load_fonts()
         apply_theme()
         init_accent_themes()
         init_modal_theme()
@@ -105,19 +100,10 @@ class LauncherApp:
                 self._hero_has_image = False
 
         dpg.setup_dearpygui()
-        bind_default_font()
 
     def _build_ui(self):
-        # Enable viewport drag for custom title bar
-        with dpg.handler_registry():
-            dpg.add_mouse_drag_handler(button=0, threshold=1.0,
-                                       callback=self._on_drag)
-
         with dpg.window(tag="main_window", no_scrollbar=True, no_collapse=True,
-                        no_title_bar=True, width=-1, height=-1):
-            # Custom title bar (thin, sleek)
-            self._build_title_bar()
-            # Horizontal: sidebar | content
+                        width=-1, height=-1):
             with dpg.group(horizontal=True):
                 self._build_sidebar()
                 self._build_content_area()
@@ -132,88 +118,15 @@ class LauncherApp:
             dpg.add_file_extension(".exe", color=(150, 255, 150, 255))
             dpg.add_file_extension(".*")
 
-    # ------------------------------------------------------------------ custom title bar
-    def _build_title_bar(self):
-        with dpg.group(horizontal=True, tag="title_bar", height=32):
-            dpg.add_spacer(width=12)
-            dpg.add_text(APP_NAME, color=TEXT_SECONDARY)
-            dpg.add_spacer(width=9999)
-            # Minimize
-            dpg.add_button(label="_", tag="btn_minimize", width=36, height=24,
-                           callback=self._on_minimize)
-            dpg.add_spacer(width=2)
-            # Maximize
-            dpg.add_button(label="[]", tag="btn_maximize", width=36, height=24,
-                           callback=self._on_maximize)
-            dpg.add_spacer(width=2)
-            # Close
-            dpg.add_button(label="X", tag="btn_close", width=36, height=24,
-                           callback=self._on_close)
-            dpg.add_spacer(width=4)
-        dpg.add_separator()
-
-    def _on_minimize(self, sender, app_data):
-        try:
-            import ctypes
-            hwnd = ctypes.windll.user32.GetForegroundWindow()
-            ctypes.windll.user32.ShowWindow(hwnd, 6)  # SW_MINIMIZE
-        except Exception:
-            pass
-
-    def _on_maximize(self, sender, app_data):
-        try:
-            import ctypes
-            hwnd = ctypes.windll.user32.GetForegroundWindow()
-            style = ctypes.windll.user32.GetWindowLongW(hwnd, -16)  # GWL_STYLE
-            if style & 0x01000000:  # WS_MAXIMIZE
-                ctypes.windll.user32.ShowWindow(hwnd, 9)  # SW_RESTORE
-            else:
-                ctypes.windll.user32.ShowWindow(hwnd, 3)  # SW_MAXIMIZE
-        except Exception:
-            pass
-
-    def _on_close(self, sender, app_data):
-        dpg.stop_dearpygui()
-
-    _dragging = False
-    _drag_start = [0, 0]
-
-    def _on_drag(self, sender, app_data):
-        # Only drag if dragging on the title bar area
-        mouse_y = dpg.get_mouse_pos()[1]
-        if mouse_y > 30:
-            return
-        if not self._dragging:
-            self._dragging = True
-            self._drag_start = list(dpg.get_viewport_pos())
-        else:
-            dx = dpg.get_mouse_delta()[0]
-            dy = dpg.get_mouse_delta()[1]
-            pos = dpg.get_viewport_pos()
-            dpg.set_viewport_pos([pos[0] + dx, pos[1] + dy])
-
     # ------------------------------------------------------------------ sidebar
     def _build_sidebar(self):
         with dpg.child_window(width=SIDEBAR_W, tag="sidebar",
                               no_scrollbar=True):
             bind_sidebar("sidebar")
-            # Brand
             dpg.add_spacer(height=16)
-            if "font_brand" in _fonts_loaded:
-                dpg.bind_font("font_brand")
             dpg.add_text(BRAND_SHORT, color=ACCENT)
-            if "font_semibold" in _fonts_loaded:
-                dpg.bind_font("font_semibold")
-            else:
-                dpg.bind_font("font_regular")
             dpg.add_spacer(height=2)
-            if "font_brand_sub" in _fonts_loaded:
-                dpg.bind_font("font_brand_sub")
             dpg.add_text(APP_NAME, color=TEXT_MUTED)
-            if "font_semibold" in _fonts_loaded:
-                dpg.bind_font("font_semibold")
-            else:
-                dpg.bind_font("font_regular")
             dpg.add_spacer(height=16)
             dpg.add_separator()
             dpg.add_spacer(height=8)
@@ -1033,16 +946,6 @@ class LauncherApp:
 
     def run(self):
         dpg.show_viewport()
-        try:
-            import ctypes
-            hwnd = ctypes.windll.user32.GetForegroundWindow()
-            style = ctypes.windll.user32.GetWindowLongW(hwnd, -16)
-            style &= ~(0x00C00000)
-            style &= ~(0x00040000)
-            ctypes.windll.user32.SetWindowLongW(hwnd, -16, style)
-            ctypes.windll.user32.SetWindowPos(hwnd, None, 0, 0, 0, 0, 0x0027)
-        except Exception:
-            pass
         dpg.start_dearpygui()
         self._stop_hero_animation()
         self.discord.disconnect()
