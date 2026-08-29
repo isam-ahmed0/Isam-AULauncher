@@ -147,23 +147,23 @@ class LauncherApp:
 
     # ------------------------------------------------------------------ custom title bar
     def _build_title_bar(self):
-        with dpg.group(horizontal=True, tag="title_bar"):
-            dpg.add_spacer(width=8)
+        with dpg.group(horizontal=True, tag="title_bar", height=32):
+            dpg.add_spacer(width=12)
             dpg.add_text(APP_NAME, color=TEXT_SECONDARY)
             dpg.add_spacer(width=9999)
             # Minimize
-            dpg.add_button(label="-", tag="btn_minimize", width=32, height=24,
+            dpg.add_button(label="_", tag="btn_minimize", width=36, height=24,
                            callback=self._on_minimize)
             dpg.add_spacer(width=2)
             # Maximize
-            dpg.add_button(label="\u25a1", tag="btn_maximize", width=32, height=24,
+            dpg.add_button(label="[]", tag="btn_maximize", width=36, height=24,
                            callback=self._on_maximize)
             dpg.add_spacer(width=2)
             # Close
-            dpg.add_button(label="x", tag="btn_close", width=32, height=24,
+            dpg.add_button(label="X", tag="btn_close", width=36, height=24,
                            callback=self._on_close)
             dpg.add_spacer(width=4)
-        dpg.add_spacer(height=2)
+        dpg.add_separator()
 
     def _on_minimize(self, sender, app_data):
         try:
@@ -215,12 +215,18 @@ class LauncherApp:
             if "font_brand" in _fonts_loaded:
                 dpg.bind_font("font_brand")
             dpg.add_text(BRAND_SHORT, color=ACCENT)
-            dpg.bind_font("font_regular")
+            if "font_semibold" in _fonts_loaded:
+                dpg.bind_font("font_semibold")
+            else:
+                dpg.bind_font("font_regular")
             dpg.add_spacer(height=2)
             if "font_brand_sub" in _fonts_loaded:
                 dpg.bind_font("font_brand_sub")
             dpg.add_text(APP_NAME, color=TEXT_MUTED)
-            dpg.bind_font("font_regular")
+            if "font_semibold" in _fonts_loaded:
+                dpg.bind_font("font_semibold")
+            else:
+                dpg.bind_font("font_regular")
             dpg.add_spacer(height=16)
             dpg.add_separator()
             dpg.add_spacer(height=8)

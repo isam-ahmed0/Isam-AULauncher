@@ -10,14 +10,14 @@ import dearpygui.dearpygui as dpg
 # ---------------------------------------------------------------------------
 # Font sizes
 # ---------------------------------------------------------------------------
-FONT_TITLE = 28
-FONT_HEADING = 20
-FONT_SUBHEADING = 16
-FONT_BODY = 14
-FONT_SMALL = 12
-FONT_LABEL = 11
-FONT_BRAND = 24
-FONT_BRAND_SUB = 12
+FONT_TITLE = 32
+FONT_HEADING = 24
+FONT_SUBHEADING = 18
+FONT_BODY = 16
+FONT_SMALL = 14
+FONT_LABEL = 12
+FONT_BRAND = 28
+FONT_BRAND_SUB = 14
 
 # ---------------------------------------------------------------------------
 # Palette — Steam-like minimal dark
@@ -121,8 +121,10 @@ def load_fonts():
 
 
 def bind_default_font():
-    """Bind Inter Regular as the default font, or fall back to DPG built-in."""
-    if "font_regular" in _fonts_loaded:
+    """Bind Nunito Sans Semibold as the default font, fall back to regular."""
+    if "font_semibold" in _fonts_loaded:
+        dpg.bind_font("font_semibold")
+    elif "font_regular" in _fonts_loaded:
         dpg.bind_font("font_regular")
 
 
@@ -385,7 +387,7 @@ def init_titlebar_themes():
     # Close button - red hover
     with dpg.theme() as theme:
         with dpg.theme_component(dpg.mvButton):
-            dpg.add_theme_color(dpg.mvThemeCol_Button, (*BG_SIDEBAR, 0))
+            dpg.add_theme_color(dpg.mvThemeCol_Button, (*BG_HOVER, 255))
             dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (*DANGER, 255))
             dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (*DANGER_HOVER, 255))
             dpg.add_theme_color(dpg.mvThemeCol_Text, (*TEXT_MUTED, 255))
@@ -395,10 +397,10 @@ def init_titlebar_themes():
     # Minimize / maximize buttons
     with dpg.theme() as theme:
         with dpg.theme_component(dpg.mvButton):
-            dpg.add_theme_color(dpg.mvThemeCol_Button, (*BG_SIDEBAR, 0))
-            dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (*BG_HOVER, 255))
-            dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (*BG_ACTIVE, 255))
-            dpg.add_theme_color(dpg.mvThemeCol_Text, (*TEXT_MUTED, 255))
+            dpg.add_theme_color(dpg.mvThemeCol_Button, (*BG_HOVER, 255))
+            dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (*BG_ACTIVE, 255))
+            dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (*ACCENT, 255))
+            dpg.add_theme_color(dpg.mvThemeCol_Text, (*TEXT_SECONDARY, 255))
             dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 4)
     dpg.bind_item_theme("btn_minimize", theme)
     dpg.bind_item_theme("btn_maximize", theme)
