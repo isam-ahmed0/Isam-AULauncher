@@ -43,7 +43,7 @@ if not defined MAKENSIS (
 )
 
 echo Using: %MAKENSIS%
-"%MAKENSIS%" "installer\IsamAULauncher.nsi"
+"%MAKENSIS%" "/DROOT=%ROOT%" "installer\IsamAULauncher.nsi"
 if errorlevel 1 (
   echo.
   echo Installer build FAILED.
