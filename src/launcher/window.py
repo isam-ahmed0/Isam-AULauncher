@@ -59,6 +59,7 @@ class LauncherApp:
         self._hero_active = False
         self._hero_texture = None
         self._hero_has_image = _HERO_IMAGE_PATH.exists()
+        self._locate_pending = False
 
         self._setup_dpg()
         self._build_ui()
@@ -209,6 +210,11 @@ class LauncherApp:
                 dpg.add_button(label="INSTALL GAME", tag="main_action_btn",
                                callback=self._cb_main_action, width=-1, height=52)
                 bind_accent("main_action_btn", "btn_success")
+                dpg.add_spacer(width=8)
+            with dpg.group(horizontal=True):
+                dpg.add_spacer(width=8)
+                dpg.add_button(label="LOCATE GAME", tag="locate_game_btn",
+                               callback=self._cb_locate_game, width=-1, height=36, show=False)
                 dpg.add_spacer(width=8)
 
             dpg.add_spacer(height=16)
@@ -437,6 +443,10 @@ class LauncherApp:
 
     def _cb_change_location(self, sender, app_data):
         self._change_location()
+
+    def _cb_locate_game(self, sender, app_data):
+        self._locate_pending = True
+        dpg.show_item("folder_dialog")
 
     def _cb_verify(self, sender, app_data):
         self._verify_files()
@@ -752,8 +762,26 @@ class LauncherApp:
     def _folder_selected(self, sender, app_data):
         if app_data and app_data.get("file_path_name"):
             path = Path(app_data["file_path_name"])
+            if self._locate_pending:
+                self._locate_pending = False
+                result = FileManager.verify_game_folder(path)
+                if not result["exe_found"]:
+                    self._set_status("Among Us.exe not found in this folder", DANGER)
+                    self._show_error("Among Us.exe not found.\nSelect a valid Among Us installation.")
+                    return
+                self.config.set_game_path(path)
+                ver = self.latest_version if self.latest_version != "Checking..." else "Unknown"
+                self.config.set_version(ver)
+                self.current_version = ver
+                self._update_version_display()
+                self._update_main_btn()
+                self._set_status(f"Game located at {path}", SUCCESS)
+                return
             self._set_status(f"Selected: {path}", SUCCESS)
             return path
+        if self._locate_pending:
+            self._locate_pending = False
+            self._set_status("Location cancelled", TEXT_MUTED)
         return None
 
     def _safe_delete(self, tag):
@@ -786,12 +814,15 @@ class LauncherApp:
         if cur == "Not Installed" or not gp or not (gp / "Among Us.exe").exists():
             dpg.configure_item("main_action_btn", label="INSTALL GAME")
             bind_accent("main_action_btn", "btn_success")
+            dpg.show_item("locate_game_btn")
         elif cur != lat and lat != "Checking...":
             dpg.configure_item("main_action_btn", label="UPDATE AVAILABLE")
             bind_accent("main_action_btn", "btn_info")
+            dpg.hide_item("locate_game_btn")
         else:
             dpg.configure_item("main_action_btn", label="LAUNCH GAME")
             bind_accent("main_action_btn", "btn_success")
+            dpg.hide_item("locate_game_btn")
 
     def _busy_on(self):
         self._busy = True
