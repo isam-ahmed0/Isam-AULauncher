@@ -27,6 +27,8 @@ echo ============================================================
 pyinstaller --noconfirm --onefile --windowed ^
   --name Itch_Login_Fixer ^
   --icon src\fixer\assets\icon.ico ^
+  --hidden-import customtkinter ^
+  --collect-submodules customtkinter ^
   src\fixer\Itch_Login_Fixer.py || exit /b 1
 
 echo.
