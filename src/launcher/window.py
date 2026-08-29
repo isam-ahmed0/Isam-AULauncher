@@ -244,7 +244,7 @@ class LauncherApp:
             dpg.draw_rectangle([w - 100, 10], [w - 15, 36], fill=(*BG_DARK, 200), color=(*BORDER, 150))
             dpg.draw_text([w - 85, 16], f"v{LAUNCHER_VERSION}", color=ACCENT_2, size=10)
 
-        dpg.set_item_resize_callback("hero_drawlist", draw_hero)
+        draw_hero(None, None)
 
     def _ver_card(self, label, var_tag, accent):
         with dpg.group():
