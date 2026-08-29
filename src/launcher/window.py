@@ -24,6 +24,7 @@ from theme import (
     load_fonts, bind_default_font,
     apply_theme, init_accent_themes, bind_accent,
     init_modal_theme, bind_modal, init_sidebar_theme, bind_sidebar,
+    init_titlebar_themes,
     _fonts_loaded,
     ACCENT, ACCENT_2,
     SUCCESS, SUCCESS_HOVER, INFO, INFO_HOVER, DANGER, DANGER_HOVER,
@@ -67,6 +68,7 @@ class LauncherApp:
 
         self._setup_dpg()
         self._build_ui()
+        init_titlebar_themes()
         self._load_initial_data()
 
     # ------------------------------------------------------------------ setup
@@ -105,9 +107,29 @@ class LauncherApp:
         dpg.setup_dearpygui()
         bind_default_font()
 
+        # Remove OS title bar for borderless look
+        try:
+            import ctypes
+            hwnd = ctypes.windll.user32.GetForegroundWindow()
+            style = ctypes.windll.user32.GetWindowLongW(hwnd, -16)
+            style &= ~(0x00C00000)  # Remove WS_CAPTION
+            style &= ~(0x00040000)  # Remove WS_SIZEBOX
+            ctypes.windll.user32.SetWindowLongW(hwnd, -16, style)
+            ctypes.windll.user32.SetWindowPos(hwnd, None, 0, 0, 0, 0,
+                                               0x0027)  # SWP_FRAMECHANGED
+        except Exception:
+            pass
+
     def _build_ui(self):
+        # Enable viewport drag for custom title bar
+        with dpg.handler_registry():
+            dpg.add_mouse_drag_handler(button=0, threshold=1.0,
+                                       callback=self._on_drag)
+
         with dpg.window(tag="main_window", no_scrollbar=True, no_collapse=True,
                         no_title_bar=True, width=-1, height=-1):
+            # Custom title bar (thin, sleek)
+            self._build_title_bar()
             # Horizontal: sidebar | content
             with dpg.group(horizontal=True):
                 self._build_sidebar()
@@ -122,6 +144,66 @@ class LauncherApp:
                              modal=True):
             dpg.add_file_extension(".exe", color=(150, 255, 150, 255))
             dpg.add_file_extension(".*")
+
+    # ------------------------------------------------------------------ custom title bar
+    def _build_title_bar(self):
+        with dpg.group(horizontal=True, tag="title_bar"):
+            dpg.add_spacer(width=8)
+            dpg.add_text(APP_NAME, color=TEXT_SECONDARY)
+            dpg.add_spacer(width=9999)
+            # Minimize
+            dpg.add_button(label="-", tag="btn_minimize", width=32, height=24,
+                           callback=self._on_minimize)
+            dpg.add_spacer(width=2)
+            # Maximize
+            dpg.add_button(label="\u25a1", tag="btn_maximize", width=32, height=24,
+                           callback=self._on_maximize)
+            dpg.add_spacer(width=2)
+            # Close
+            dpg.add_button(label="x", tag="btn_close", width=32, height=24,
+                           callback=self._on_close)
+            dpg.add_spacer(width=4)
+        dpg.add_spacer(height=2)
+
+    def _on_minimize(self, sender, app_data):
+        try:
+            import ctypes
+            hwnd = ctypes.windll.user32.GetForegroundWindow()
+            ctypes.windll.user32.ShowWindow(hwnd, 6)  # SW_MINIMIZE
+        except Exception:
+            pass
+
+    def _on_maximize(self, sender, app_data):
+        try:
+            import ctypes
+            hwnd = ctypes.windll.user32.GetForegroundWindow()
+            style = ctypes.windll.user32.GetWindowLongW(hwnd, -16)  # GWL_STYLE
+            if style & 0x01000000:  # WS_MAXIMIZE
+                ctypes.windll.user32.ShowWindow(hwnd, 9)  # SW_RESTORE
+            else:
+                ctypes.windll.user32.ShowWindow(hwnd, 3)  # SW_MAXIMIZE
+        except Exception:
+            pass
+
+    def _on_close(self, sender, app_data):
+        dpg.stop_dearpygui()
+
+    _dragging = False
+    _drag_start = [0, 0]
+
+    def _on_drag(self, sender, app_data):
+        # Only drag if dragging on the title bar area
+        mouse_y = dpg.get_mouse_pos()[1]
+        if mouse_y > 30:
+            return
+        if not self._dragging:
+            self._dragging = True
+            self._drag_start = list(dpg.get_viewport_pos())
+        else:
+            dx = dpg.get_mouse_delta()[0]
+            dy = dpg.get_mouse_delta()[1]
+            pos = dpg.get_viewport_pos()
+            dpg.set_viewport_pos([pos[0] + dx, pos[1] + dy])
 
     # ------------------------------------------------------------------ sidebar
     def _build_sidebar(self):

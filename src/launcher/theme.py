@@ -376,3 +376,29 @@ def init_sidebar_theme():
 def bind_sidebar(tag):
     if SIDEBAR_THEME:
         dpg.bind_item_theme(tag, SIDEBAR_THEME)
+
+
+# ---------------------------------------------------------------------------
+# Title bar button themes
+# ---------------------------------------------------------------------------
+def init_titlebar_themes():
+    # Close button - red hover
+    with dpg.theme() as theme:
+        with dpg.theme_component(dpg.mvButton):
+            dpg.add_theme_color(dpg.mvThemeCol_Button, (*BG_SIDEBAR, 0))
+            dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (*DANGER, 255))
+            dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (*DANGER_HOVER, 255))
+            dpg.add_theme_color(dpg.mvThemeCol_Text, (*TEXT_MUTED, 255))
+            dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 4)
+    dpg.bind_item_theme("btn_close", theme)
+
+    # Minimize / maximize buttons
+    with dpg.theme() as theme:
+        with dpg.theme_component(dpg.mvButton):
+            dpg.add_theme_color(dpg.mvThemeCol_Button, (*BG_SIDEBAR, 0))
+            dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (*BG_HOVER, 255))
+            dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (*BG_ACTIVE, 255))
+            dpg.add_theme_color(dpg.mvThemeCol_Text, (*TEXT_MUTED, 255))
+            dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 4)
+    dpg.bind_item_theme("btn_minimize", theme)
+    dpg.bind_item_theme("btn_maximize", theme)
