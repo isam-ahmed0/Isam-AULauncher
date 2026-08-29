@@ -7,7 +7,7 @@ import logging
 
 from config import Config, APP_NAME
 from network import NetworkManager
-from ui.window import LauncherApp
+from window import LauncherApp
 
 
 def check_launcher_update(network):

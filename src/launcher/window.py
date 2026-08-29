@@ -18,7 +18,7 @@ from config import (
 )
 from network import NetworkManager, DiscordRPC, GameVersion
 from file_manager import FileManager
-from ui.theme import (
+from theme import (
     apply_theme, init_accent_themes, bind_accent,
     ACCENT, ACCENT_2, GREEN, GREEN_HOVER, BLUE, BLUE_HOVER,
     RED, RED_HOVER, PURPLE, ORANGE, CYAN,
@@ -102,10 +102,10 @@ class LauncherApp:
             # Tools
             dpg.add_text("  TOOLS")
             dpg.add_spacer(height=4)
-            dpg.add_button(label="Install AUnlocker", callback=lambda s, a, u: self._cb_install_aunlocker(s, a, u), width=-1)
-            dpg.add_button(label="Create Shortcut", callback=lambda s, a, u: self._cb_create_shortcut(s, a, u), width=-1)
-            dpg.add_button(label="Open Folder", callback=lambda s, a, u: self._cb_open_folder(s, a, u), width=-1)
-            dpg.add_button(label="Change Location", callback=lambda s, a, u: self._cb_change_location(s, a, u), width=-1)
+            dpg.add_button(label="Install AUnlocker", callback=self._cb_install_aunlocker, width=-1)
+            dpg.add_button(label="Create Shortcut", callback=self._cb_create_shortcut, width=-1)
+            dpg.add_button(label="Open Folder", callback=self._cb_open_folder, width=-1)
+            dpg.add_button(label="Change Location", callback=self._cb_change_location, width=-1)
 
             dpg.add_spacer(height=8)
             dpg.add_separator()
@@ -114,9 +114,9 @@ class LauncherApp:
             # Settings
             dpg.add_text("  SETTINGS")
             dpg.add_spacer(height=4)
-            dpg.add_button(label="Preferences", callback=lambda s, a, u: self._cb_settings(s, a, u), width=-1)
-            dpg.add_button(label="Reinstall Game", callback=lambda s, a, u: self._cb_reinstall(s, a, u), width=-1)
-            dpg.add_button(label="Uninstall", callback=lambda s, a, u: self._cb_uninstall(s, a, u), width=-1)
+            dpg.add_button(label="Preferences", callback=self._cb_settings, width=-1)
+            dpg.add_button(label="Reinstall Game", callback=self._cb_reinstall, width=-1)
+            dpg.add_button(label="Uninstall", callback=self._cb_uninstall, width=-1)
 
             # Footer (push to bottom via spacer)
             dpg.add_spacer(width=1, height=9999)
@@ -126,7 +126,7 @@ class LauncherApp:
             if DISCORD_INVITE:
                 dpg.add_button(label="Discord", callback=lambda: os.system(f"start {DISCORD_INVITE}"), width=-1)
             else:
-                dpg.add_button(label="Discord (Coming soon)", callback=lambda s, a, u: self._cb_coming_soon(s, a, u), width=-1)
+                dpg.add_button(label="Discord (Coming soon)", callback=self._cb_coming_soon, width=-1)
 
             dpg.add_button(label="YouTube", callback=lambda: os.system(f"start {YOUTUBE_CHANNEL}"), width=-1)
             dpg.add_button(label="Source Code", callback=lambda: os.system(f"start {SOURCE_CODE_URL}"), width=-1)
@@ -135,7 +135,7 @@ class LauncherApp:
 
     def _nav_btn(self, label, tab_id):
         tag = f"nav_{tab_id}"
-        dpg.add_button(label=label, tag=tag, callback=lambda s, a, u: self._switch_tab(s, a), width=-1, height=30)
+        dpg.add_button(label=label, tag=tag, callback=self._switch_tab, width=-1, height=30)
         if tab_id == self._active_tab:
             bind_accent(tag, "accent")
 
@@ -189,11 +189,11 @@ class LauncherApp:
             # Action buttons
             with dpg.group(horizontal=True):
                 dpg.add_button(label="INSTALL GAME", tag="main_action_btn",
-                             callback=lambda s, a, u: self._cb_main_action(s, a, u), width=180, height=45)
+                             callback=self._cb_main_action, width=180, height=45)
                 bind_accent("main_action_btn", "green")
 
-                dpg.add_button(label="Check Updates", callback=lambda s, a, u: self._cb_check_updates(s, a, u), width=130, height=45)
-                dpg.add_button(label="Install Specific", callback=lambda s, a, u: self._cb_install_specific(s, a, u), width=130, height=45)
+                dpg.add_button(label="Check Updates", callback=self._cb_check_updates, width=130, height=45)
+                dpg.add_button(label="Install Specific", callback=self._cb_install_specific, width=130, height=45)
 
             dpg.add_spacer(height=16)
 
@@ -211,7 +211,7 @@ class LauncherApp:
             dpg.add_spacer(height=9999)
             with dpg.group(horizontal=True):
                 dpg.add_spacer(width=9999)
-                dpg.add_button(label="···", callback=lambda s, a, u: self._show_kebab(s, a, u), width=40)
+                dpg.add_button(label="···", callback=self._show_kebab, width=40)
 
     def _build_hero(self, title, subtitle):
         with dpg.drawlist(width=-1, height=100, tag="hero_drawlist"):
@@ -351,10 +351,10 @@ class LauncherApp:
     def _show_kebab(self, sender, app_data):
         with dpg.window(label="Options", modal=True, tag="kebab_modal",
                        width=280, height=200, no_resize=True):
-            dpg.add_button(label="Verify Game Files", callback=lambda s, a, u: self._verify_files(s, a, u), width=-1)
-            dpg.add_button(label="View Logs", callback=lambda s, a, u: self._view_logs(s, a, u), width=-1)
+            dpg.add_button(label="Verify Game Files", callback=self._verify_files, width=-1)
+            dpg.add_button(label="View Logs", callback=self._view_logs, width=-1)
             dpg.add_separator()
-            dpg.add_button(label="About", callback=lambda s, a, u: self._show_about(s, a, u), width=-1)
+            dpg.add_button(label="About", callback=self._show_about, width=-1)
             dpg.add_button(label="Close", callback=lambda: dpg.delete_item("kebab_modal"), width=-1)
 
     def _show_about(self, sender, app_data):
