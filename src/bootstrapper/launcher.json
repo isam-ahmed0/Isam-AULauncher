@@ -1,0 +1,13 @@
+{
+  "launcherVer": 1,
+  "launcherUrl": "https://your-server.com/launcher.exe",
+  "games": [
+    {
+      "name": "Among Us",
+      "startCmd": "start Among Us.exe",
+      "clientVer": 1,
+      "clientUrl": "https://www.dropbox.com/scl/fo/exm6gldgju7ad2xvg5zma/AMbpjSFHEjdNW9i22HGksg0?rlkey=quybmdqt69klke2xcwhiba75u&st=jr8ahi3o&dl=1",
+      "patchUrls": []
+    },
+  ]
+}

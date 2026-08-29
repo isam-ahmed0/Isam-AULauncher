@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Build outputs
+build/dist/
+dist/
+*.spec
+*.log
+
+# Local scratch / staging
+scratch/

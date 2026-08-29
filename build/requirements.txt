@@ -1,0 +1,6 @@
+requests
+colorama
+pywin32
+Pillow
+pypresence
+pyinstaller
