@@ -75,7 +75,7 @@ class LauncherApp:
 
         dpg.create_viewport(
             title=f"{APP_NAME} v{LAUNCHER_VERSION}",
-            width=1200, height=700,
+            width=1100, height=680,
             min_width=960, min_height=580,
             resizable=True,
         )
@@ -120,30 +120,29 @@ class LauncherApp:
 
     # ------------------------------------------------------------------ sidebar
     def _build_sidebar(self):
-        with dpg.group(width=SIDEBAR_W, tag="sidebar"):
+        with dpg.child_window(width=SIDEBAR_W, tag="sidebar",
+                              no_scrollbar=True):
             bind_sidebar("sidebar")
             # Brand
-            dpg.add_spacer(height=24)
+            dpg.add_spacer(height=16)
             dpg.add_text(BRAND_SHORT, color=ACCENT)
+            dpg.add_spacer(height=2)
             dpg.add_text(APP_NAME, color=TEXT_MUTED)
-            dpg.add_spacer(height=20)
+            dpg.add_spacer(height=16)
             dpg.add_separator()
-            dpg.add_spacer(height=12)
+            dpg.add_spacer(height=8)
 
             # Nav items
             self._sidebar_btn("Game", "game", True)
             self._sidebar_btn("Tools", "tools", False)
             self._sidebar_btn("AUnlocker", "aunlocker", False)
 
-            dpg.add_spacer(height=12)
+            dpg.add_spacer(height=8)
             dpg.add_separator()
-            dpg.add_spacer(height=12)
+            dpg.add_spacer(height=8)
 
             self._sidebar_btn("Settings", "settings", False)
             self._sidebar_btn("About", "about", False)
-
-            # Fill remaining space
-            dpg.add_spacer(width=1, height=9999)
 
     def _sidebar_btn(self, label, page_id, active=False):
         tag = f"nav_{page_id}"
@@ -403,9 +402,9 @@ class LauncherApp:
 
     # ------------------------------------------------------------------ status bar
     def _build_status_bar(self):
-        dpg.add_spacer(height=4)
+        dpg.add_spacer(height=2)
         dpg.add_separator()
-        dpg.add_spacer(height=6)
+        dpg.add_spacer(height=4)
         with dpg.group(horizontal=True):
             dpg.add_spacer(width=16)
             dpg.add_text("●", color=SUCCESS, tag="sb_status_icon")

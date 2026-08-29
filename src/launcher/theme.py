@@ -348,17 +348,19 @@ def bind_modal(tag):
 # ---------------------------------------------------------------------------
 # Sidebar theme
 # ---------------------------------------------------------------------------
+BG_SIDEBAR = (14, 16, 22)
 SIDEBAR_THEME = None
 
 
 def init_sidebar_theme():
     global SIDEBAR_THEME
     with dpg.theme() as theme:
-        with dpg.theme_component(dpg.mvGroup):
-            dpg.add_theme_color(dpg.mvThemeCol_ChildBg, (*BG_SURFACE, 255))
+        with dpg.theme_component(dpg.mvChildWindow):
+            dpg.add_theme_color(dpg.mvThemeCol_ChildBg, (*BG_SIDEBAR, 255))
             dpg.add_theme_color(dpg.mvThemeCol_Border, (*BORDER_SUBTLE, 200))
             dpg.add_theme_style(dpg.mvStyleVar_ChildBorderSize, 1)
             dpg.add_theme_style(dpg.mvStyleVar_ChildRounding, 0)
+            dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 12, 8)
     SIDEBAR_THEME = theme
 
 
