@@ -689,16 +689,13 @@ class LauncherApp:
         self._set_status("Verifying game files...", INFO)
         result = FileManager.verify_game_folder(new_path)
         if not result["exe_found"]:
-            if self._ask_yes_no("Among Us not found here.\nUse this folder for a fresh install?"):
-                self.config.set_game_path(new_path)
-                self.config.set_version("Not Installed")
-                self.current_version = "Not Installed"
-                self._update_version_display()
-                self._update_main_btn()
-                self._set_status(f"Location set to {new_path}", SUCCESS)
-                self._show_info(f"Location: {new_path}\nClick INSTALL GAME to download.")
-            else:
-                self._set_status("Ready")
+            self.config.set_game_path(new_path)
+            self.config.set_version("Not Installed")
+            self.current_version = "Not Installed"
+            self._update_version_display()
+            self._update_main_btn()
+            self._set_status(f"Location set to {new_path}", SUCCESS)
+            self._show_info(f"Location: {new_path}\nClick INSTALL GAME to download.")
             return
         if result["missing"]:
             self._set_status("Some files missing", WARNING)
