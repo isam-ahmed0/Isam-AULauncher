@@ -69,6 +69,19 @@ TEXT_DIM = TEXT_SECONDARY
 _FONTS_DIR = Path(__file__).parent / "resources" / "fonts"
 
 
+_fonts_loaded = []
+
+
+def _safe_add_font(path, size, tag):
+    """Load a font, returning True on success."""
+    try:
+        dpg.add_font(path, size, tag=tag)
+        _fonts_loaded.append(tag)
+        return True
+    except Exception:
+        return False
+
+
 def load_fonts():
     """Load Inter font family into Dear PyGui."""
     if not _FONTS_DIR.exists():
@@ -80,27 +93,27 @@ def load_fonts():
     bold = str(_FONTS_DIR / "Inter-Bold.ttf")
 
     if os.path.exists(regular):
-        dpg.add_font(regular, FONT_BODY, tag="font_regular")
-        dpg.add_font(regular, FONT_SMALL, tag="font_regular_small")
-        dpg.add_font(regular, FONT_LABEL, tag="font_regular_label")
+        _safe_add_font(regular, FONT_BODY, "font_regular")
+        _safe_add_font(regular, FONT_SMALL, "font_regular_small")
+        _safe_add_font(regular, FONT_LABEL, "font_regular_label")
     if os.path.exists(medium):
-        dpg.add_font(medium, FONT_BODY, tag="font_medium")
-        dpg.add_font(medium, FONT_SMALL, tag="font_medium_small")
-        dpg.add_font(medium, FONT_LABEL, tag="font_medium_label")
+        _safe_add_font(medium, FONT_BODY, "font_medium")
+        _safe_add_font(medium, FONT_SMALL, "font_medium_small")
+        _safe_add_font(medium, FONT_LABEL, "font_medium_label")
     if os.path.exists(semibold):
-        dpg.add_font(semibold, FONT_BODY, tag="font_semibold")
-        dpg.add_font(semibold, FONT_HEADING, tag="font_semibold_heading")
-        dpg.add_font(semibold, FONT_TITLE, tag="font_semibold_title")
-        dpg.add_font(semibold, FONT_SUBHEADING, tag="font_semibold_subheading")
-        dpg.add_font(semibold, FONT_SMALL, tag="font_semibold_small")
+        _safe_add_font(semibold, FONT_BODY, "font_semibold")
+        _safe_add_font(semibold, FONT_HEADING, "font_semibold_heading")
+        _safe_add_font(semibold, FONT_TITLE, "font_semibold_title")
+        _safe_add_font(semibold, FONT_SUBHEADING, "font_semibold_subheading")
+        _safe_add_font(semibold, FONT_SMALL, "font_semibold_small")
     if os.path.exists(bold):
-        dpg.add_font(bold, FONT_BODY, tag="font_bold")
-        dpg.add_font(bold, FONT_HEADING, tag="font_bold_heading")
+        _safe_add_font(bold, FONT_BODY, "font_bold")
+        _safe_add_font(bold, FONT_HEADING, "font_bold_heading")
 
 
 def bind_default_font():
-    """Bind Inter Regular as the default font."""
-    if dpg.does_item_exist("font_regular"):
+    """Bind Inter Regular as the default font, or fall back to DPG built-in."""
+    if "font_regular" in _fonts_loaded:
         dpg.bind_font("font_regular")
 
 
