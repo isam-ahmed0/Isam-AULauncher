@@ -10,6 +10,7 @@ build/IsamAULauncher_Lite/
 build/IsamAULauncherBootstrapper/
 build/Itch_Login_Fixer/
 build/error.txt
+build/exe.*/
 dist/
 *.spec
 *.log

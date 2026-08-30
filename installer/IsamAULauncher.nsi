@@ -2,6 +2,10 @@
 ; Isam AULauncher - NSIS installer
 ; Compile with: makensis.exe installer\IsamAULauncher.nsi
 ; Paths are resolved relative to this script, so it builds from anywhere.
+;
+; Supports two build modes:
+;   PyInstaller (default): packages single .exe files
+;   Cx_Freeze (/DBUILD_CX=1): packages folder with shared lib/
 ;-------------------------------------------------------------------------------
 
 !include "MUI2.nsh"
@@ -15,13 +19,20 @@
 !endif
 !define VERSION_DOT   "${VERSION}.0.0"
 
-; Repo root = folder above this script (overridden by /DROOT= in build_installer.bat)
+; Repo root = folder above this script (overridden by /DROOT= in build scripts)
 !ifndef ROOT
   !define ROOT "${__FILEDIR__}\.."
 !endif
 !define SRC_ICON      "${ROOT}\src\launcher\resources\icon.ico"
-!define LAUNCHER_EXE  "${ROOT}\dist\IsamAULauncher.exe"
-!define FIXER_EXE     "${ROOT}\dist\Itch_Login_Fixer.exe"
+
+; --- Build mode: Cx_Freeze or PyInstaller ---
+!ifdef BUILD_CX
+  !define CX_DIR     "${ROOT}\dist\IsamAULauncher_cx"
+!else
+  !define LAUNCHER_EXE  "${ROOT}\dist\IsamAULauncher.exe"
+  !define FIXER_EXE     "${ROOT}\dist\Itch_Login_Fixer.exe"
+!endif
+
 !define SEVENZ_EXE    "${ROOT}\release\7z.exe"
 !define BEPMODS_ZIP   "${ROOT}\release\bepmods.zip"
 
@@ -70,8 +81,15 @@ Section "Isam AULauncher (required)" SecMain
   SectionIn RO
 
   SetOutPath "$INSTDIR"
+
+!ifdef BUILD_CX
+  ; Cx_Freeze: install entire build folder (exes + lib/ + other files)
+  File /r "${CX_DIR}\*.*"
+!else
+  ; PyInstaller: install single exe files
   File /oname=IsamAULauncher.exe "${LAUNCHER_EXE}"
   File /oname=icon.ico "${SRC_ICON}"
+!endif
 
   WriteUninstaller "$INSTDIR\Uninstall.exe"
 
@@ -94,8 +112,13 @@ Section "Isam AULauncher (required)" SecMain
 SectionEnd
 
 Section "Itch Login Fixer" SecFixer
+!ifdef BUILD_CX
+  ; Cx_Freeze: Itch_Login_Fixer.exe already installed with folder copy above
+!else
+  ; PyInstaller: install fixer as separate exe
   SetOutPath "$INSTDIR"
   File /oname=Itch_Login_Fixer.exe "${FIXER_EXE}"
+!endif
   CreateShortcut "$SMPROGRAMS\${APP_SHORT}\Itch Login Fixer.lnk" "$INSTDIR\Itch_Login_Fixer.exe"
 SectionEnd
 
@@ -120,7 +143,7 @@ Section "Uninstall"
   ; Desktop
   Delete "$DESKTOP\${APP_SHORT}.lnk"
 
-  ; Files + folder
+  ; Files + folder (RMDir /r handles all files including Cx_Freeze lib/ folder)
   Delete "$INSTDIR\IsamAULauncher.exe"
   Delete "$INSTDIR\Itch_Login_Fixer.exe"
   Delete "$INSTDIR\icon.ico"
