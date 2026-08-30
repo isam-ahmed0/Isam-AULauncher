@@ -843,13 +843,20 @@ class LauncherApp:
         name, ok = QInputDialog.getText(self.window, "Add Region", "Region name:")
         if not ok or not name.strip():
             return
-        ip, ok = QInputDialog.getText(self.window, "Add Region", "Server IP/URL:")
+        ip, ok = QInputDialog.getText(self.window, "Add Region", "Server URL (e.g. https://play.skeld.net):")
         if not ok or not ip.strip():
             return
         port, ok = QInputDialog.getInt(self.window, "Add Region", "Port:", 443, 1, 65535)
         if not ok:
             return
-        if self.region_mgr.add(name.strip(), ip.strip(), port):
+        ping, ok = QInputDialog.getText(
+            self.window, "Add Region",
+            "Ping Server (IP/hostname, e.g. 159.223.173.35)\nLeave empty to use server URL:",
+        )
+        if not ok:
+            return
+        ping = ping.strip() or ip.strip()
+        if self.region_mgr.add(name.strip(), ping, ip.strip(), port):
             self.region_mgr.save()
             self._load_region_list()
             self._region_status.setText(f"Added region: {name.strip()}")

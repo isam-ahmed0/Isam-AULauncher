@@ -10,23 +10,40 @@ REGION_DIR = Path.home() / "AppData" / "LocalLow" / "Innersloth" / "Among Us"
 REGION_FILE = REGION_DIR / "regionInfo.json"
 
 OFFICIAL_REGIONS = [
-    {"Name": "North America", "PingServer": "https://among-us.mm.na.among.us", "Port": 443, "Ip": "https://among-us.mm.na.among.us"},
-    {"Name": "Asia", "PingServer": "https://among-us.mm.ap.among.us", "Port": 443, "Ip": "https://among-us.mm.ap.among.us"},
-    {"Name": "Europe", "PingServer": "https://among-us.mm.eu.among.us", "Port": 443, "Ip": "https://among-us.mm.eu.among.us"},
-    {"Name": "Japan", "PingServer": "https://among-us.mm.jp.among.us", "Port": 443, "Ip": "https://among-us.mm.jp.among.us"},
-    {"Name": "South America", "PingServer": "https://among-us.mm.sa.among.us", "Port": 443, "Ip": "https://among-us.mm.sa.among.us"},
+    {"Name": "North America", "PingServer": "matchmaker.among.us", "Ip": "https://matchmaker.among.us", "Port": 443},
+    {"Name": "Asia", "PingServer": "matchmaker-as.among.us", "Ip": "https://matchmaker-as.among.us", "Port": 443},
+    {"Name": "Europe", "PingServer": "matchmaker-eu.among.us", "Ip": "https://matchmaker-eu.among.us", "Port": 443},
+    {"Name": "Japan", "PingServer": "matchmaker-jp.among.us", "Ip": "https://matchmaker-jp.among.us", "Port": 443},
+    {"Name": "South America", "PingServer": "matchmaker-sa.among.us", "Ip": "https://matchmaker-sa.among.us", "Port": 443},
 ]
 
 
-def _make_region(name: str, ip: str, port: int = 443) -> Dict:
+def _normalize_ping(ping: str) -> str:
+    """Strip https:// prefix — PingServer is raw IP/hostname."""
+    ping = ping.strip()
+    for prefix in ("https://", "http://"):
+        if ping.lower().startswith(prefix):
+            ping = ping[len(prefix):]
+    return ping.strip("/")
+
+
+def _normalize_ip(ip: str) -> str:
+    """Ensure https:// prefix — Servers[].Ip is a full URL."""
+    ip = ip.strip()
+    if not ip.startswith(("http://", "https://")):
+        ip = "https://" + ip
+    return ip.rstrip("/")
+
+
+def _make_region(name: str, ping_server: str, server_ip: str, port: int = 443) -> Dict:
     return {
         "$type": "StaticHttpRegionInfo, Assembly-CSharp",
         "Name": name,
-        "PingServer": ip,
+        "PingServer": _normalize_ping(ping_server),
         "Servers": [
             {
                 "Name": "http-1",
-                "Ip": ip,
+                "Ip": _normalize_ip(server_ip),
                 "Port": port,
                 "UseDtls": False,
                 "Players": 0,
@@ -74,10 +91,10 @@ class RegionManager:
             log.error(f"Failed to save regions: {e}")
         return False
 
-    def add(self, name: str, ip: str, port: int = 443) -> bool:
+    def add(self, name: str, ping_server: str, server_ip: str, port: int = 443) -> bool:
         if any(r["Name"] == name for r in self.regions):
             return False
-        self.regions.append(_make_region(name, ip, port))
+        self.regions.append(_make_region(name, ping_server, server_ip, port))
         return True
 
     def remove(self, index: int) -> bool:
@@ -90,4 +107,4 @@ class RegionManager:
 
     def reset_official(self):
         self._data["CurrentRegionIdx"] = 0
-        self._data["Regions"] = [_make_region(r["Name"], r["Ip"], r["Port"]) for r in OFFICIAL_REGIONS]
+        self._data["Regions"] = [_make_region(r["Name"], r["PingServer"], r["Ip"], r["Port"]) for r in OFFICIAL_REGIONS]
