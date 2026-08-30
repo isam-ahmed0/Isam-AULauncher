@@ -16,11 +16,11 @@ from PySide6.QtWidgets import (
     QPushButton, QStackedWidget, QLabel, QFrame, QProgressBar,
     QCheckBox, QDialog, QFileDialog, QStatusBar, QMessageBox,
 )
-from PySide6.QtCore import Qt, QThread, Signal, QTimer
+from PySide6.QtCore import Qt, QThread, Signal, QTimer, QObject
 from PySide6.QtGui import QIcon, QPixmap, QPainter, QColor, QLinearGradient, QFont
 
 
-class _UISignaler(Qt.QObject):
+class _UISignaler(QObject):
     """Bridge to dispatch callables from background threads to the main thread."""
     invoke = Signal(object)
 
