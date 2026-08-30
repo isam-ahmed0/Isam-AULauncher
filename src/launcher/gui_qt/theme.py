@@ -121,6 +121,27 @@ QPushButton#successBtn:disabled {{
     color: #6b7280;
 }}
 
+/* ===== DANGER BUTTON ===== */
+QPushButton#dangerBtn {{
+    background-color: {DANGER};
+    color: {TEXT_BRIGHT};
+    border: none;
+    border-radius: 10px;
+    padding: 14px 24px;
+    font-size: 15px;
+    font-weight: 700;
+    min-height: 20px;
+}}
+
+QPushButton#dangerBtn:hover {{
+    background-color: #dc2626;
+}}
+
+QPushButton#dangerBtn:disabled {{
+    background-color: #374151;
+    color: #6b7280;
+}}
+
 /* ===== SECONDARY / TOOL BUTTONS ===== */
 QPushButton#toolBtn {{
     background-color: {BG_ELEVATED};
@@ -405,6 +426,18 @@ QLabel#profileDetail {{
 QLabel#profileStatus {{
     font-size: 12px;
     font-weight: 600;
+}}
+
+/* ===== MOD CARD ===== */
+QFrame#modCard {{
+    background-color: {BG_SURFACE};
+    border: 1px solid {BORDER_SUBTLE};
+    border-radius: 8px;
+}}
+
+QFrame#modCard:hover {{
+    border: 1px solid {ACCENT};
+    background-color: {BG_ELEVATED};
 }}
 """
 

@@ -16,7 +16,7 @@ from PySide6.QtWidgets import (
     QPushButton, QStackedWidget, QLabel, QFrame, QProgressBar,
     QCheckBox, QDialog, QFileDialog, QStatusBar, QMessageBox,
 )
-from PySide6.QtCore import Qt, QThread, Signal
+from PySide6.QtCore import Qt, QThread, Signal, QTimer
 from PySide6.QtGui import QIcon, QPixmap, QPainter, QColor, QLinearGradient, QFont
 
 from config import (
@@ -31,6 +31,8 @@ from gui_qt.theme import (
     INFO, DANGER, WARNING, TEXT_BRIGHT, TEXT_PRIMARY,
     TEXT_SECONDARY, TEXT_MUTED, BG_BASE, BG_SIDEBAR, BG_ELEVATED,
 )
+from gui_qt.game import GameManager
+from gui_qt.mods import ModStore, ModStorePage
 
 _RESOURCES_DIR = Path(__file__).parent.parent / "resources"
 _HERO_IMAGE_PATH = _RESOURCES_DIR / "hero.png"
@@ -168,6 +170,13 @@ class LauncherApp:
         self.config = Config()
         self.network = NetworkManager()
         self.discord = DiscordRPC()
+        self.game = GameManager(self.config, self.network)
+        self.mods = ModStore()
+
+        # Connect game manager signals
+        self.game.game_started.connect(lambda: self._update_main_btn())
+        self.game.game_stopped.connect(lambda: self._update_main_btn())
+        self.game.status_message.connect(lambda text, level: self._set_status(text, level))
 
         self.current_version = "Not Installed"
         self.latest_version = "Checking..."
@@ -186,6 +195,7 @@ class LauncherApp:
 
         self._setup_app()
         self._build_ui()
+        self._setup_game_timer()
         self._load_initial_data()
 
     # ------------------------------------------------------------------ setup
@@ -205,6 +215,22 @@ class LauncherApp:
     def _cleanup_worker(self, w):
         if w in self._workers:
             self._workers.remove(w)
+
+    def _setup_game_timer(self):
+        """Poll game process state every 2 seconds."""
+        self._game_timer = QTimer()
+        self._game_timer.timeout.connect(self._poll_game_state)
+        self._game_timer.start(2000)
+
+    def _poll_game_state(self):
+        """Check if game is still running, update button accordingly."""
+        was_running = self.game.is_running
+        self.game.poll()
+        if was_running and not self.game.is_running:
+            self._update_main_btn()
+        elif self.game.is_running:
+            if self.main_action_btn.text() != "PLAYING":
+                self._update_main_btn()
 
     # ------------------------------------------------------------------ build UI
     def _build_ui(self):
@@ -247,17 +273,19 @@ class LauncherApp:
         # Stacked pages
         self.pages = QStackedWidget()
         self.page_game = self._build_game_page()
+        self.page_mods = ModStorePage(self.mods, self.config)
         self.page_tools = self._build_tools_page()
         self.page_aunlocker = self._build_aunlocker_page()
         self.page_profile = self._build_profile_page()
         self.pages.addWidget(self.page_game)
+        self.pages.addWidget(self.page_mods)
         self.pages.addWidget(self.page_tools)
         self.pages.addWidget(self.page_aunlocker)
         self.pages.addWidget(self.page_profile)
 
         # Nav buttons
         self.nav_buttons = {}
-        for label, idx in [("Game", 0), ("Tools", 1), ("AUnlocker", 2), ("Profile", 3)]:
+        for label, idx in [("Game", 0), ("Mods", 1), ("Tools", 2), ("AUnlocker", 3), ("Profile", 4)]:
             btn = QPushButton(f"  {label}")
             btn.setCheckable(True)
             btn.setFixedHeight(40)
@@ -540,6 +568,9 @@ class LauncherApp:
         self._active_page = label.lower()
         for name, btn in self.nav_buttons.items():
             btn.setChecked(name == label)
+        # Auto-load mods when navigating to Mods page
+        if label == "Mods" and not self.page_mods._all_mods:
+            self.page_mods._load_mods()
 
     # ------------------------------------------------------------------ status
     def _set_status(self, text, color_name=None):
@@ -569,6 +600,13 @@ class LauncherApp:
         self.ver_latest.setText(self.latest_version)
 
     def _update_main_btn(self):
+        if self.game.is_running:
+            self.main_action_btn.setText("PLAYING")
+            self.main_action_btn.setObjectName("dangerBtn")
+            self.main_action_btn.style().polish(self.main_action_btn)
+            self.locate_btn.hide()
+            return
+
         cur = self.current_version
         lat = self.latest_version
         gp = self.config.get_game_path()
@@ -592,11 +630,13 @@ class LauncherApp:
         self._busy = True
         self.main_action_btn.setEnabled(False)
         self.aunlocker_btn.setEnabled(False)
+        self.page_mods.refresh_btn.setEnabled(False)
 
     def _busy_off(self):
         self._busy = False
         self.main_action_btn.setEnabled(True)
         self.aunlocker_btn.setEnabled(True)
+        self.page_mods.refresh_btn.setEnabled(True)
 
     # ------------------------------------------------------------------ callbacks
     def _cb_main_action(self):
@@ -605,6 +645,9 @@ class LauncherApp:
             self._download_latest()
         elif "LAUNCH" in txt:
             self._launch_game()
+        elif "PLAYING" in txt:
+            self.game.stop()
+            self._update_main_btn()
 
     def _cb_install_aunlocker(self):
         self._install_aunlocker()
@@ -698,39 +741,26 @@ class LauncherApp:
                         if folder:
                             self._folder_selected(folder)
                         return
-                url = f"https://github.com/{GITHUB_REPO}/releases/download/{latest}/app.zip"
-                zf = Path("game.zip")
-                self._set_status(f"Downloading v{latest}...", "info")
 
-                def prog(cur, total, spd):
-                    pct = cur / total * 100 if total else 0
+                # Wire up progress signals from GameManager
+                def on_progress(pct):
                     self._update_progress(pct)
-                    self._set_status(
-                        f"Downloading: {pct:.1f}% — {FileManager.format_size(spd)}/s"
-                    )
 
-                if not self.network.download_file(url, zf, prog):
-                    self._set_status("Download failed!", "danger")
-                    return
-                self._set_status("Extracting...", "info")
-                gp.mkdir(parents=True, exist_ok=True)
+                def on_status(text, level):
+                    self._set_status(text, level)
 
-                def xp(cur, total):
-                    pct = cur / total * 100 if total else 0
-                    self._update_progress(pct)
-                    self._set_status(f"Extracting: {pct:.0f}%")
-
-                if not FileManager.extract_zip(zf, gp, xp):
-                    self._set_status("Extraction failed!", "danger")
-                    return
-                FileManager.safe_delete(zf)
-                self.config.set_version(latest)
-                self.config.set_game_path(gp)
-                self._pending_install_path = None
-                self.current_version = latest
-                self._update_version_display()
-                self._update_progress(100)
-                self._set_status("Installation complete!", "success")
+                self.game.update_progress.connect(on_progress)
+                self.game.status_message.connect(on_status)
+                try:
+                    ok = self.game.download_update(latest, gp)
+                    if ok:
+                        self._pending_install_path = None
+                        self.current_version = latest
+                        self._update_version_display()
+                        self._update_progress(100)
+                finally:
+                    self.game.update_progress.disconnect(on_progress)
+                    self.game.status_message.disconnect(on_status)
             except Exception as e:
                 self._set_status(f"Error: {e}", "danger")
             finally:
@@ -774,22 +804,9 @@ class LauncherApp:
         self._run(go)
 
     def _launch_game(self):
-        gp = self.config.get_game_path()
-        if not gp:
-            QMessageBox.warning(self.window, "Error", "Game not installed!")
-            return
-        exe = gp / "Among Us.exe"
-        if not exe.exists():
-            QMessageBox.warning(self.window, "Error", "Among Us.exe not found!")
-            return
-        try:
-            subprocess.Popen([str(exe)], cwd=str(gp))
-            self._set_status("Game launched!", "success")
-        except PermissionError:
-            QMessageBox.warning(self.window, "Error",
-                                "Permission denied. Try running as administrator.")
-        except OSError as e:
-            QMessageBox.warning(self.window, "Error", f"Failed to launch: {e}")
+        ok = self.game.launch()
+        if ok:
+            self._update_main_btn()
 
     def _create_shortcut(self):
         gp = self.config.get_game_path()
