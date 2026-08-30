@@ -5,7 +5,7 @@ Frameless, semi-transparent window with brand logo and loading status.
 import sys
 from PySide6.QtCore import Qt, QTimer, QPropertyAnimation, QEasingCurve, Signal
 from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout
-from PySide6.QtGui import QPainter, QColor, QFont, QPen, QLinearGradient, QFontMetrics
+from PySide6.QtGui import QPainter, QColor, QFont, QPen, QBrush, QLinearGradient, QFontMetrics
 
 from config import APP_NAME, BRAND_SHORT, LAUNCHER_VERSION
 
