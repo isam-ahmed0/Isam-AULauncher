@@ -9,6 +9,8 @@ This is the continuation of my Among Us launcher project.
 I changed everything, logic, language
 carries the **Isam AULauncher** identity with a fresh, sleek interface.
 
+### The itch login and game files are from Shadow Slime.
+
 ## Install
 
 The easiest way to use is download the IsamAULauncher-Setup-0.1.exe from
