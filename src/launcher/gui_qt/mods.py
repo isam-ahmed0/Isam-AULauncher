@@ -21,7 +21,7 @@ from PySide6.QtGui import QFont, QPixmap
 from gui_qt.theme import (
     BG_BASE, BG_SURFACE, BG_ELEVATED, ACCENT, ACCENT_2,
     SUCCESS, DANGER, WARNING, TEXT_BRIGHT, TEXT_PRIMARY,
-    TEXT_SECONDARY, TEXT_MUTED, BORDER_SUBTLE, BORDER_STRONG,
+    TEXT_SECONDARY, TEXT_MUTED, BORDER_SUBTLE,
 )
 
 log = logging.getLogger(__name__)
