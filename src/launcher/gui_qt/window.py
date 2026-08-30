@@ -172,8 +172,8 @@ class LauncherApp:
         self.game = GameManager(self.config, self.network)
 
         # Connect game manager signals
-        self.game.game_started.connect(lambda: self._update_main_btn())
-        self.game.game_stopped.connect(lambda: self._update_main_btn())
+        self.game.game_started.connect(self._on_game_started)
+        self.game.game_stopped.connect(self._on_game_stopped)
         self.game.status_message.connect(lambda text, level: self._set_status(text, level))
 
         self.current_version = "Not Installed"
@@ -225,10 +225,22 @@ class LauncherApp:
         was_running = self.game.is_running
         self.game.poll()
         if was_running and not self.game.is_running:
-            self._update_main_btn()
+            self._on_game_stopped()
         elif self.game.is_running:
             if self.main_action_btn.text() != "PLAYING":
-                self._update_main_btn()
+                self._on_game_started()
+
+    def _on_game_started(self):
+        """Update UI and RPC when game launches."""
+        self._update_main_btn()
+        if self.discord.connected:
+            self.discord.update_status("Playing Among Us", "In Game")
+
+    def _on_game_stopped(self):
+        """Update UI and RPC when game closes."""
+        self._update_main_btn()
+        if self.discord.connected:
+            self.discord.update_status("In Launcher", "Browsing Menu")
 
     # ------------------------------------------------------------------ build UI
     def _build_ui(self):
@@ -564,6 +576,10 @@ class LauncherApp:
         self._active_page = label.lower()
         for name, btn in self.nav_buttons.items():
             btn.setChecked(name == label)
+        # Load itch profile on first visit to Profile page
+        if label == "Profile" and not hasattr(self, '_itch_profile_loaded'):
+            self._itch_profile_loaded = True
+            self._load_itch_profile()
 
     # ------------------------------------------------------------------ status
     def _set_status(self, text, color_name=None):
@@ -713,6 +729,8 @@ class LauncherApp:
             try:
                 self._busy_on()
                 self._set_status("Preparing download...", "info")
+                if self.discord.connected:
+                    self.discord.update_status("Updating Game", "Downloading...")
                 latest = self.latest_version
                 if latest == "Checking...":
                     latest = self.network.fetch_text(VERSION_URL)
@@ -757,6 +775,8 @@ class LauncherApp:
             finally:
                 self._busy_off()
                 self._update_main_btn()
+                if self.discord.connected:
+                    self.discord.update_status("In Launcher", "Browsing Menu")
         self._run(go)
 
     def _install_aunlocker(self):
@@ -1279,7 +1299,7 @@ class LauncherApp:
     # ------------------------------------------------------------------ run
     def run(self):
         self.window.show()
-        self._load_itch_profile()
+        self._load_initial_data()
         exit_code = self.app.exec()
         self.discord.disconnect()
         sys.exit(exit_code)
