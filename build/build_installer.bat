@@ -20,38 +20,28 @@ if not defined VERSION set "VERSION=0.1"
 echo Using version: %VERSION%
 
 echo ============================================================
-echo  [1/4] Building IsamAULauncher.exe
+echo  [1/3] Building IsamAULauncher.exe
 echo ============================================================
 pyinstaller --noconfirm --onefile --windowed --noupx ^
   --name IsamAULauncher ^
   --icon src\launcher\resources\icon.ico ^
-  --version-file build\version_info.txt ^
-  --manifest build\app.manifest ^
   --add-data "src\launcher\resources\icon.ico;resources" ^
   src\launcher\main.py || exit /b 1
 
 echo.
 echo ============================================================
-echo  [2/4] Building Itch_Login_Fixer.exe
+echo  [2/3] Building Itch_Login_Fixer.exe
 echo ============================================================
 pyinstaller --noconfirm --onefile --windowed --noupx ^
   --name Itch_Login_Fixer ^
   --icon src\fixer\assets\icon.ico ^
-  --version-file build\version_info_fixer.txt ^
-  --manifest build\app.manifest ^
   --hidden-import customtkinter ^
   --collect-submodules customtkinter ^
   src\fixer\Itch_Login_Fixer.py || exit /b 1
 
 echo.
 echo ============================================================
-echo  [3/4] Fixing PE checksums
-echo ============================================================
-python scripts\fix_pe_checksum.py dist\IsamAULauncher.exe dist\Itch_Login_Fixer.exe
-
-echo.
-echo ============================================================
-echo  [4/4] Locating NSIS and compiling installer
+echo  [3/3] Locating NSIS and compiling installer
 echo ============================================================
 set "MAKENSIS="
 if exist "%ProgramFiles(x86)%\NSIS\makensis.exe" set "MAKENSIS=%ProgramFiles(x86)%\NSIS\makensis.exe"

@@ -8,8 +8,6 @@ if not exist "dist" mkdir dist
 pyinstaller --noconfirm --onefile --windowed --noupx ^
   --name IsamAULauncher ^
   --icon src\launcher\resources\icon.ico ^
-  --version-file build\version_info.txt ^
-  --manifest build\app.manifest ^
   --add-data "src\launcher\resources\icon.ico;resources" ^
   src\launcher\main.py
 

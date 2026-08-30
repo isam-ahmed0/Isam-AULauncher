@@ -8,8 +8,6 @@ if not exist "dist" mkdir dist
 pyinstaller --noconfirm --onefile --windowed --noupx ^
   --name Itch_Login_Fixer ^
   --icon src\fixer\assets\icon.ico ^
-  --version-file build\version_info_fixer.txt ^
-  --manifest build\app.manifest ^
   --hidden-import customtkinter ^
   --collect-submodules customtkinter ^
   src\fixer\Itch_Login_Fixer.py
