@@ -37,7 +37,7 @@ def _check_launcher_update():
         if net.download_file(LAUNCHER_SETUP_URL, setup_path):
             print("Starting installer...")
             subprocess.Popen([str(setup_path), "/S"])
-            os._exit(0)
+            sys.exit(0)
         else:
             print("Download failed.")
     except Exception as e:

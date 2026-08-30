@@ -1392,7 +1392,7 @@ class LauncherApp:
                         return
                     self._invoke_main(lambda: self._set_status("Installing update...", "info"))
                     subprocess.Popen([str(setup_path), "/S"])
-                    os._exit(0)
+                    sys.exit(0)
                 except Exception as e:
                     logging.error(f"Launcher update failed: {e}")
                     self._invoke_main(lambda: self._set_status(f"Update failed: {e}", "danger"))

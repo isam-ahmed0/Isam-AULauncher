@@ -1,0 +1,274 @@
+('C:\\Users\\My PC\\Documents\\Isam-AULauncher\\dist\\IsamAULauncher_Lite.exe',
+ False,
+ False,
+ False,
+ ['C:\\Users\\My '
+  'PC\\Documents\\Isam-AULauncher\\src/launcher/resources/icon.ico'],
+ None,
+ False,
+ False,
+ b'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<assembly xmlns='
+ b'"urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">\n  <trustInfo x'
+ b'mlns="urn:schemas-microsoft-com:asm.v3">\n    <security>\n      <requested'
+ b'Privileges>\n        <requestedExecutionLevel level="asInvoker" uiAccess='
+ b'"false"/>\n      </requestedPrivileges>\n    </security>\n  </trustInfo>\n  '
+ b'<compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">\n    <'
+ b'application>\n      <supportedOS Id="{e2011457-1546-43c5-a5fe-008deee3d3f'
+ b'0}"/>\n      <supportedOS Id="{35138b9a-5d96-4fbd-8e2d-a2440225f93a}"/>\n '
+ b'     <supportedOS Id="{4a2f28e3-53b9-4441-ba9c-d69d4a4a6e38}"/>\n      <s'
+ b'upportedOS Id="{1f676c76-80e1-4239-95bb-83d0f6d0da78}"/>\n      <supporte'
+ b'dOS Id="{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}"/>\n    </application>\n  <'
+ b'/compatibility>\n  <application xmlns="urn:schemas-microsoft-com:asm.v3">'
+ b'\n    <windowsSettings>\n      <longPathAware xmlns="http://schemas.micros'
+ b'oft.com/SMI/2016/WindowsSettings">true</longPathAware>\n    </windowsSett'
+ b'ings>\n  </application>\n  <dependency>\n    <dependentAssembly>\n      <ass'
+ b'emblyIdentity type="win32" name="Microsoft.Windows.Common-Controls" version='
+ b'"6.0.0.0" processorArchitecture="*" publicKeyToken="6595b64144ccf1df" langua'
+ b'ge="*"/>\n    </dependentAssembly>\n  </dependency>\n</assembly>',
+ True,
+ False,
+ None,
+ None,
+ None,
+ 'C:\\Users\\My '
+ 'PC\\Documents\\Isam-AULauncher\\build\\IsamAULauncher_Lite\\IsamAULauncher_Lite.pkg',
+ [('pyi-contents-directory _internal', '', 'OPTION'),
+  ('PYZ-00.pyz',
+   'C:\\Users\\My '
+   'PC\\Documents\\Isam-AULauncher\\build\\IsamAULauncher_Lite\\PYZ-00.pyz',
+   'PYZ'),
+  ('struct',
+   'C:\\Users\\My '
+   'PC\\Documents\\Isam-AULauncher\\build\\IsamAULauncher_Lite\\localpycs\\struct.pyc',
+   'PYMODULE'),
+  ('pyimod01_archive',
+   'C:\\Users\\My '
+   'PC\\Documents\\Isam-AULauncher\\build\\IsamAULauncher_Lite\\localpycs\\pyimod01_archive.pyc',
+   'PYMODULE'),
+  ('pyimod02_importers',
+   'C:\\Users\\My '
+   'PC\\Documents\\Isam-AULauncher\\build\\IsamAULauncher_Lite\\localpycs\\pyimod02_importers.pyc',
+   'PYMODULE'),
+  ('pyimod03_ctypes',
+   'C:\\Users\\My '
+   'PC\\Documents\\Isam-AULauncher\\build\\IsamAULauncher_Lite\\localpycs\\pyimod03_ctypes.pyc',
+   'PYMODULE'),
+  ('pyimod04_pywin32',
+   'C:\\Users\\My '
+   'PC\\Documents\\Isam-AULauncher\\build\\IsamAULauncher_Lite\\localpycs\\pyimod04_pywin32.pyc',
+   'PYMODULE'),
+  ('pyiboot01_bootstrap',
+   'C:\\Users\\My '
+   'PC\\AppData\\Roaming\\Python\\Python314\\site-packages\\PyInstaller\\loader\\pyiboot01_bootstrap.py',
+   'PYSOURCE'),
+  ('pyi_rth_inspect',
+   'C:\\Users\\My '
+   'PC\\AppData\\Roaming\\Python\\Python314\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_inspect.py',
+   'PYSOURCE'),
+  ('pyi_rth_pywintypes',
+   'C:\\Users\\My '
+   'PC\\AppData\\Roaming\\Python\\Python314\\site-packages\\_pyinstaller_hooks_contrib\\rthooks\\pyi_rth_pywintypes.py',
+   'PYSOURCE'),
+  ('pyi_rth_pythoncom',
+   'C:\\Users\\My '
+   'PC\\AppData\\Roaming\\Python\\Python314\\site-packages\\_pyinstaller_hooks_contrib\\rthooks\\pyi_rth_pythoncom.py',
+   'PYSOURCE'),
+  ('pyi_rth_pkgutil',
+   'C:\\Users\\My '
+   'PC\\AppData\\Roaming\\Python\\Python314\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_pkgutil.py',
+   'PYSOURCE'),
+  ('pyi_rth_multiprocessing',
+   'C:\\Users\\My '
+   'PC\\AppData\\Roaming\\Python\\Python314\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_multiprocessing.py',
+   'PYSOURCE'),
+  ('pyi_rth_setuptools',
+   'C:\\Users\\My '
+   'PC\\AppData\\Roaming\\Python\\Python314\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_setuptools.py',
+   'PYSOURCE'),
+  ('pyi_rth_cryptography_openssl',
+   'C:\\Users\\My '
+   'PC\\AppData\\Roaming\\Python\\Python314\\site-packages\\_pyinstaller_hooks_contrib\\rthooks\\pyi_rth_cryptography_openssl.py',
+   'PYSOURCE'),
+  ('main_lite',
+   'C:\\Users\\My PC\\Documents\\Isam-AULauncher\\src\\launcher\\main_lite.py',
+   'PYSOURCE'),
+  ('python314.dll', 'C:\\Python314\\python314.dll', 'BINARY'),
+  ('pywin32_system32\\pywintypes314.dll',
+   'C:\\Users\\My '
+   'PC\\AppData\\Roaming\\Python\\Python314\\site-packages\\pywin32_system32\\pywintypes314.dll',
+   'BINARY'),
+  ('pywin32_system32\\pythoncom314.dll',
+   'C:\\Users\\My '
+   'PC\\AppData\\Roaming\\Python\\Python314\\site-packages\\pywin32_system32\\pythoncom314.dll',
+   'BINARY'),
+  ('_decimal.pyd', 'C:\\Python314\\DLLs\\_decimal.pyd', 'EXTENSION'),
+  ('_hashlib.pyd', 'C:\\Python314\\DLLs\\_hashlib.pyd', 'EXTENSION'),
+  ('_ssl.pyd', 'C:\\Python314\\DLLs\\_ssl.pyd', 'EXTENSION'),
+  ('select.pyd', 'C:\\Python314\\DLLs\\select.pyd', 'EXTENSION'),
+  ('_socket.pyd', 'C:\\Python314\\DLLs\\_socket.pyd', 'EXTENSION'),
+  ('unicodedata.pyd', 'C:\\Python314\\DLLs\\unicodedata.pyd', 'EXTENSION'),
+  ('_zstd.pyd', 'C:\\Python314\\DLLs\\_zstd.pyd', 'EXTENSION'),
+  ('_lzma.pyd', 'C:\\Python314\\DLLs\\_lzma.pyd', 'EXTENSION'),
+  ('_bz2.pyd', 'C:\\Python314\\DLLs\\_bz2.pyd', 'EXTENSION'),
+  ('_overlapped.pyd', 'C:\\Python314\\DLLs\\_overlapped.pyd', 'EXTENSION'),
+  ('_asyncio.pyd', 'C:\\Python314\\DLLs\\_asyncio.pyd', 'EXTENSION'),
+  ('_queue.pyd', 'C:\\Python314\\DLLs\\_queue.pyd', 'EXTENSION'),
+  ('_ctypes.pyd', 'C:\\Python314\\DLLs\\_ctypes.pyd', 'EXTENSION'),
+  ('_multiprocessing.pyd',
+   'C:\\Python314\\DLLs\\_multiprocessing.pyd',
+   'EXTENSION'),
+  ('pyexpat.pyd', 'C:\\Python314\\DLLs\\pyexpat.pyd', 'EXTENSION'),
+  ('_wmi.pyd', 'C:\\Python314\\DLLs\\_wmi.pyd', 'EXTENSION'),
+  ('win32\\win32api.pyd',
+   'C:\\Users\\My '
+   'PC\\AppData\\Roaming\\Python\\Python314\\site-packages\\win32\\win32api.pyd',
+   'EXTENSION'),
+  ('pythonwin\\win32ui.pyd',
+   'C:\\Users\\My '
+   'PC\\AppData\\Roaming\\Python\\Python314\\site-packages\\pythonwin\\win32ui.pyd',
+   'EXTENSION'),
+  ('win32\\win32event.pyd',
+   'C:\\Users\\My '
+   'PC\\AppData\\Roaming\\Python\\Python314\\site-packages\\win32\\win32event.pyd',
+   'EXTENSION'),
+  ('win32\\win32trace.pyd',
+   'C:\\Users\\My '
+   'PC\\AppData\\Roaming\\Python\\Python314\\site-packages\\win32\\win32trace.pyd',
+   'EXTENSION'),
+  ('win32\\_win32sysloader.pyd',
+   'C:\\Users\\My '
+   'PC\\AppData\\Roaming\\Python\\Python314\\site-packages\\win32\\_win32sysloader.pyd',
+   'EXTENSION'),
+  ('_brotli.cp314-win_amd64.pyd',
+   'C:\\Users\\My '
+   'PC\\AppData\\Roaming\\Python\\Python314\\site-packages\\_brotli.cp314-win_amd64.pyd',
+   'EXTENSION'),
+  ('_cffi_backend.cp314-win_amd64.pyd',
+   'C:\\Users\\My '
+   'PC\\AppData\\Roaming\\Python\\Python314\\site-packages\\_cffi_backend.cp314-win_amd64.pyd',
+   'EXTENSION'),
+  ('cryptography\\hazmat\\bindings\\_rust.pyd',
+   'C:\\Users\\My '
+   'PC\\AppData\\Roaming\\Python\\Python314\\site-packages\\cryptography\\hazmat\\bindings\\_rust.pyd',
+   'EXTENSION'),
+  ('bcrypt\\_bcrypt.pyd',
+   'C:\\Users\\My '
+   'PC\\AppData\\Roaming\\Python\\Python314\\site-packages\\bcrypt\\_bcrypt.pyd',
+   'EXTENSION'),
+  ('81d243bd2c585b0f4821__mypyc.cp314-win_amd64.pyd',
+   'C:\\Users\\My '
+   'PC\\AppData\\Roaming\\Python\\Python314\\site-packages\\81d243bd2c585b0f4821__mypyc.cp314-win_amd64.pyd',
+   'EXTENSION'),
+  ('charset_normalizer\\cd.cp314-win_amd64.pyd',
+   'C:\\Users\\My '
+   'PC\\AppData\\Roaming\\Python\\Python314\\site-packages\\charset_normalizer\\cd.cp314-win_amd64.pyd',
+   'EXTENSION'),
+  ('charset_normalizer\\md.cp314-win_amd64.pyd',
+   'C:\\Users\\My '
+   'PC\\AppData\\Roaming\\Python\\Python314\\site-packages\\charset_normalizer\\md.cp314-win_amd64.pyd',
+   'EXTENSION'),
+  ('dearpygui\\_dearpygui.pyd',
+   'C:\\Users\\My '
+   'PC\\AppData\\Roaming\\Python\\Python314\\site-packages\\dearpygui\\_dearpygui.pyd',
+   'EXTENSION'),
+  ('VCRUNTIME140.dll', 'C:\\Python314\\VCRUNTIME140.dll', 'BINARY'),
+  ('VCRUNTIME140_1.dll', 'C:\\Python314\\VCRUNTIME140_1.dll', 'BINARY'),
+  ('libcrypto-3.dll', 'C:\\Python314\\DLLs\\libcrypto-3.dll', 'BINARY'),
+  ('libssl-3.dll', 'C:\\Python314\\DLLs\\libssl-3.dll', 'BINARY'),
+  ('libffi-8.dll', 'C:\\Python314\\DLLs\\libffi-8.dll', 'BINARY'),
+  ('python3.dll', 'C:\\Python314\\python3.dll', 'BINARY'),
+  ('dearpygui\\VCRUNTIME140_1.dll',
+   'C:\\Users\\My '
+   'PC\\AppData\\Roaming\\Python\\Python314\\site-packages\\dearpygui\\VCRUNTIME140_1.dll',
+   'BINARY'),
+  ('MSVCP140.dll', 'C:\\WINDOWS\\system32\\MSVCP140.dll', 'BINARY'),
+  ('resources\\icon.ico',
+   'C:\\Users\\My '
+   'PC\\Documents\\Isam-AULauncher\\src\\launcher\\resources\\icon.ico',
+   'DATA'),
+  ('setuptools\\_vendor\\jaraco\\text\\Lorem ipsum.txt',
+   'C:\\Users\\My '
+   'PC\\AppData\\Roaming\\Python\\Python314\\site-packages\\setuptools\\_vendor\\jaraco\\text\\Lorem '
+   'ipsum.txt',
+   'DATA'),
+  ('cryptography-49.0.0.dist-info\\licenses\\LICENSE.APACHE',
+   'C:\\Users\\My '
+   'PC\\AppData\\Roaming\\Python\\Python314\\site-packages\\cryptography-49.0.0.dist-info\\licenses\\LICENSE.APACHE',
+   'DATA'),
+  ('cryptography-49.0.0.dist-info\\licenses\\LICENSE',
+   'C:\\Users\\My '
+   'PC\\AppData\\Roaming\\Python\\Python314\\site-packages\\cryptography-49.0.0.dist-info\\licenses\\LICENSE',
+   'DATA'),
+  ('cryptography-49.0.0.dist-info\\sboms\\cryptography-rust.cyclonedx.json',
+   'C:\\Users\\My '
+   'PC\\AppData\\Roaming\\Python\\Python314\\site-packages\\cryptography-49.0.0.dist-info\\sboms\\cryptography-rust.cyclonedx.json',
+   'DATA'),
+  ('cryptography-49.0.0.dist-info\\METADATA',
+   'C:\\Users\\My '
+   'PC\\AppData\\Roaming\\Python\\Python314\\site-packages\\cryptography-49.0.0.dist-info\\METADATA',
+   'DATA'),
+  ('cryptography-49.0.0.dist-info\\licenses\\LICENSE.BSD',
+   'C:\\Users\\My '
+   'PC\\AppData\\Roaming\\Python\\Python314\\site-packages\\cryptography-49.0.0.dist-info\\licenses\\LICENSE.BSD',
+   'DATA'),
+  ('cryptography-49.0.0.dist-info\\RECORD',
+   'C:\\Users\\My '
+   'PC\\AppData\\Roaming\\Python\\Python314\\site-packages\\cryptography-49.0.0.dist-info\\RECORD',
+   'DATA'),
+  ('cryptography-49.0.0.dist-info\\sboms\\sbom.json',
+   'C:\\Users\\My '
+   'PC\\AppData\\Roaming\\Python\\Python314\\site-packages\\cryptography-49.0.0.dist-info\\sboms\\sbom.json',
+   'DATA'),
+  ('cryptography-49.0.0.dist-info\\WHEEL',
+   'C:\\Users\\My '
+   'PC\\AppData\\Roaming\\Python\\Python314\\site-packages\\cryptography-49.0.0.dist-info\\WHEEL',
+   'DATA'),
+  ('cryptography-49.0.0.dist-info\\INSTALLER',
+   'C:\\Users\\My '
+   'PC\\AppData\\Roaming\\Python\\Python314\\site-packages\\cryptography-49.0.0.dist-info\\INSTALLER',
+   'DATA'),
+  ('certifi\\cacert.pem',
+   'C:\\Users\\My '
+   'PC\\AppData\\Roaming\\Python\\Python314\\site-packages\\certifi\\cacert.pem',
+   'DATA'),
+  ('certifi\\py.typed',
+   'C:\\Users\\My '
+   'PC\\AppData\\Roaming\\Python\\Python314\\site-packages\\certifi\\py.typed',
+   'DATA'),
+  ('h2-4.3.0.dist-info\\INSTALLER',
+   'C:\\Users\\My '
+   'PC\\AppData\\Roaming\\Python\\Python314\\site-packages\\h2-4.3.0.dist-info\\INSTALLER',
+   'DATA'),
+  ('h2-4.3.0.dist-info\\RECORD',
+   'C:\\Users\\My '
+   'PC\\AppData\\Roaming\\Python\\Python314\\site-packages\\h2-4.3.0.dist-info\\RECORD',
+   'DATA'),
+  ('h2-4.3.0.dist-info\\WHEEL',
+   'C:\\Users\\My '
+   'PC\\AppData\\Roaming\\Python\\Python314\\site-packages\\h2-4.3.0.dist-info\\WHEEL',
+   'DATA'),
+  ('h2-4.3.0.dist-info\\METADATA',
+   'C:\\Users\\My '
+   'PC\\AppData\\Roaming\\Python\\Python314\\site-packages\\h2-4.3.0.dist-info\\METADATA',
+   'DATA'),
+  ('h2-4.3.0.dist-info\\licenses\\LICENSE',
+   'C:\\Users\\My '
+   'PC\\AppData\\Roaming\\Python\\Python314\\site-packages\\h2-4.3.0.dist-info\\licenses\\LICENSE',
+   'DATA'),
+  ('h2-4.3.0.dist-info\\top_level.txt',
+   'C:\\Users\\My '
+   'PC\\AppData\\Roaming\\Python\\Python314\\site-packages\\h2-4.3.0.dist-info\\top_level.txt',
+   'DATA'),
+  ('base_library.zip',
+   'C:\\Users\\My '
+   'PC\\Documents\\Isam-AULauncher\\build\\IsamAULauncher_Lite\\base_library.zip',
+   'DATA')],
+ [],
+ False,
+ False,
+ 1788079606,
+ [('runw.exe',
+   'C:\\Users\\My '
+   'PC\\AppData\\Roaming\\Python\\Python314\\site-packages\\PyInstaller\\bootloader\\Windows-64bit-intel\\runw.exe',
+   'EXECUTABLE')],
+ 'C:\\Python314\\python314.dll')

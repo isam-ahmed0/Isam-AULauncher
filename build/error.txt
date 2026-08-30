@@ -1,0 +1,22 @@
+usage: pyinstaller [-h] [-v] [-D] [-F] [--specpath DIR] [-n NAME] [--contents-directory CONTENTS_DIRECTORY]
+                   [--add-data SOURCE:DEST] [--add-binary SOURCE:DEST] [-p DIR] [--hidden-import MODULENAME]
+                   [--collect-submodules MODULENAME] [--collect-data MODULENAME] [--collect-binaries MODULENAME]
+                   [--collect-all MODULENAME] [--copy-metadata PACKAGENAME] [--recursive-copy-metadata PACKAGENAME]
+                   [--additional-hooks-dir HOOKSPATH] [--runtime-hook RUNTIME_HOOKS] [--exclude-module EXCLUDES]
+                   [--splash IMAGE_FILE] [--splash-center {primary,active,virtual,default}]
+                   [-d {all,imports,bootloader,noarchive}] [--optimize LEVEL] [--python-option PYTHON_OPTION] [-s]
+                   [--noupx] [--upx-exclude FILE] [-c] [-w]
+                   [--hide-console {minimize-late,hide-late,minimize-early,hide-early}]
+                   [-i <FILE.ico or FILE.exe,ID or FILE.icns or Image or "NONE">] [--disable-windowed-traceback]
+                   [--version-file FILE] [--manifest <FILE or XML>] [-m <FILE or XML>] [-r RESOURCE] [--uac-admin]
+                   [--uac-uiaccess] [--argv-emulation] [--osx-bundle-identifier BUNDLE_IDENTIFIER]
+                   [--target-architecture ARCH] [--codesign-identity IDENTITY] [--osx-entitlements-file FILENAME]
+                   [--runtime-tmpdir PATH] [--bootloader-ignore-signals] [--distpath DIR] [--workpath WORKPATH] [-y]
+                   [--upx-dir UPX_DIR] [--clean] [--log-level LEVEL]
+                   scriptname [scriptname ...]
+pyinstaller: error: unrecognized arguments: --gui-2 --no-splash
+
+Built: dist\IsamAULauncher_lite.exe
+Press any key to continue . . .
+
+

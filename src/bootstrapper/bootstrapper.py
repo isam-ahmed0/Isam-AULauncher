@@ -2,6 +2,7 @@ import os
 import requests
 import zipfile
 import sys
+import webbrowser
 from colorama import init, Fore, Style
 import time
 import subprocess
@@ -139,11 +140,11 @@ def main():
 
     if choice == '1':
         executable_path = os.path.join(os.getcwd(), "APP", "Shadow X.exe")
-        subprocess.Popen([executable_path], shell=True)
+        subprocess.Popen([executable_path])
     elif choice == '3':
-        os.system("start https://discord.gg/AegHT8KGw4")  # Change to your Discord server link
+        webbrowser.open("https://discord.gg/AegHT8KGw4")
     elif choice == '4':
-        os.system("start https://jogamerforgames2021.github.io/")  # Change to your website
+        webbrowser.open("https://jogamerforgames2021.github.io/")
 
     print(f"\n{Fore.GREEN}Thanks for using Isam AULauncher!{Style.RESET_ALL}\n")
 

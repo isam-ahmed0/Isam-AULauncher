@@ -5,9 +5,11 @@ cd /d "%~dp0.."
 
 if not exist "dist" mkdir dist
 
-pyinstaller --noconfirm --onefile --windowed ^
+pyinstaller --noconfirm --onefile --windowed --noupx ^
   --name IsamAULauncher_Lite ^
   --icon src\launcher\resources\icon.ico ^
+  --version-file build\version_info_lite.txt ^
+  --manifest build\app.manifest ^
   --add-data "src\launcher\resources\icon.ico;resources" ^
   src\launcher\main_lite.py
 
