@@ -1,5 +1,6 @@
 import time
 import logging
+import threading
 from typing import Optional, List
 from dataclasses import dataclass
 
@@ -103,12 +104,13 @@ class DiscordRPC:
 
     def update_status(self, state: str, details: str, large_text: str = APP_NAME):
         if self.connected and self.rpc:
-            try:
-                self.rpc.update(state=state, details=details,
-                               large_image="amongus", large_text=large_text)
-            except Exception as e:
-                logging.error(f"RPC update failed: {e}")
-                self.connected = False
+            def _do():
+                try:
+                    self.rpc.update(state=state, details=details,
+                                   large_image="amongus", large_text=large_text)
+                except Exception as e:
+                    logging.error(f"RPC update failed: {e}")
+            threading.Thread(target=_do, daemon=True).start()
 
     def disconnect(self):
         if self.connected and self.rpc:

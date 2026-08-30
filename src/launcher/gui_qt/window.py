@@ -362,7 +362,7 @@ class LauncherApp:
         profile_icon.setObjectName("statusDot")
         profile_icon.setStyleSheet(f"color: {TEXT_MUTED};")
         profile_layout.addWidget(profile_icon)
-        self.profile_game_text = QLabel("Loading profile...")
+        self.profile_game_text = QLabel("Not logged in")
         self.profile_game_text.setObjectName("profileDetail")
         profile_layout.addWidget(self.profile_game_text)
         self.profile_game_detail = QLabel("")
@@ -576,10 +576,6 @@ class LauncherApp:
         self._active_page = label.lower()
         for name, btn in self.nav_buttons.items():
             btn.setChecked(name == label)
-        # Load itch profile on first visit to Profile page
-        if label == "Profile" and not hasattr(self, '_itch_profile_loaded'):
-            self._itch_profile_loaded = True
-            self._load_itch_profile()
 
     # ------------------------------------------------------------------ status
     def _set_status(self, text, color_name=None):
@@ -1197,7 +1193,7 @@ class LauncherApp:
 
         # 1. Fetch itch.io username
         try:
-            r = _req.get(ITCHIO_API, headers={"Authorization": token}, timeout=15)
+            r = _req.get(ITCHIO_API, headers={"Authorization": token}, timeout=8)
             if r.status_code == 200:
                 u = r.json().get("user", {})
                 profile["username"] = u.get("username")
@@ -1207,7 +1203,7 @@ class LauncherApp:
         # 2. Fetch Among Us account data via EOS
         try:
             r = _req.get(EOS_AUTH_URL, params={"store": "itchio", "token": token},
-                         headers={"Accept": "application/json"}, timeout=20)
+                         headers={"Accept": "application/json"}, timeout=8)
             if r.status_code == 200:
                 eos = r.json()
                 if eos.get("token") and eos.get("id_token"):
@@ -1215,7 +1211,7 @@ class LauncherApp:
                     r2 = _req.get(f"{BACKEND_API}/user/query-primary-before-merge",
                                   params={"access_token": eos["token"]},
                                   headers={"Authorization": "Bearer " + eos["id_token"],
-                                           **BACKEND_HEADERS}, timeout=20)
+                                           **BACKEND_HEADERS}, timeout=8)
                     if r2.status_code == 200:
                         data = r2.json().get("data", {})
                         platforms = data.get("platforms") or []
@@ -1225,7 +1221,7 @@ class LauncherApp:
                     # Query Among Us username
                     r3 = _req.get(f"{BACKEND_API}/user/username",
                                   headers={"Authorization": "Bearer " + eos["id_token"],
-                                           **BACKEND_HEADERS}, timeout=15)
+                                           **BACKEND_HEADERS}, timeout=8)
                     if r3.status_code == 200:
                         attrs = r3.json().get("data", {}).get("attributes", {})
                         name = attrs.get("username")
@@ -1300,6 +1296,7 @@ class LauncherApp:
     def run(self):
         self.window.show()
         self._load_initial_data()
+        self._load_itch_profile()
         exit_code = self.app.exec()
         self.discord.disconnect()
         sys.exit(exit_code)
