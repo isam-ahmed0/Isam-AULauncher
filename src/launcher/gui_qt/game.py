@@ -135,6 +135,17 @@ class GameManager(QObject):
             return False
 
         FileManager.safe_delete(zf)
+
+        exe = game_path / "Among Us.exe"
+        if not exe.exists():
+            found = list(game_path.rglob("Among Us.exe"))
+            if found:
+                game_path = found[0].parent
+                self.status_message.emit(f"Game found in subfolder: {game_path.name}", "info")
+            else:
+                self.status_message.emit("Among Us.exe not found after extraction!", "danger")
+                return False
+
         self.config.set_version(version)
         self.config.set_game_path(game_path)
         self.status_message.emit("Installation complete!", "success")

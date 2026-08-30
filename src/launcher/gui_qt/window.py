@@ -179,7 +179,7 @@ class LauncherApp:
         # Connect game manager signals
         self.game.game_started.connect(self._on_game_started)
         self.game.game_stopped.connect(self._on_game_stopped)
-        self.game.status_message.connect(lambda text, level: self._set_status(text, level))
+        self.game.status_message.connect(lambda text, level: self._invoke_main(lambda t=text, l=level: self._set_status(t, l)))
 
         self.current_version = "Not Installed"
         self.latest_version = "Checking..."
