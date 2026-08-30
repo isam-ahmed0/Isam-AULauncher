@@ -15,6 +15,8 @@ from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QStackedWidget, QLabel, QFrame, QProgressBar,
     QCheckBox, QDialog, QFileDialog, QStatusBar, QMessageBox,
+    QLineEdit, QRadioButton, QButtonGroup, QListWidget, QListWidgetItem,
+    QInputDialog, QScrollArea, QSizePolicy,
 )
 from PySide6.QtCore import Qt, QThread, Signal, QTimer, QObject
 from PySide6.QtGui import QIcon, QPixmap, QPainter, QColor, QLinearGradient, QFont
@@ -37,6 +39,8 @@ from gui_qt.theme import (
     TEXT_SECONDARY, TEXT_MUTED, BG_BASE, BG_SIDEBAR, BG_ELEVATED,
 )
 from gui_qt.game import GameManager
+from gui_qt.regions import RegionManager
+from gui_qt.zipextract import list_contents, extract_to
 
 _RESOURCES_DIR = Path(__file__).parent.parent / "resources"
 _HERO_IMAGE_PATH = _RESOURCES_DIR / "hero.png"
@@ -175,6 +179,7 @@ class LauncherApp:
         self.network = NetworkManager()
         self.discord = DiscordRPC()
         self.game = GameManager(self.config, self.network)
+        self.region_mgr = RegionManager()
 
         # Connect game manager signals
         self.game.game_started.connect(self._on_game_started)
@@ -462,14 +467,22 @@ class LauncherApp:
 
     def _build_tools_page(self):
         page = QWidget()
-        layout = QVBoxLayout(page)
-        layout.setContentsMargins(28, 20, 28, 0)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setObjectName("toolsScroll")
 
+        content = QWidget()
+        layout = QVBoxLayout(content)
+        layout.setContentsMargins(28, 20, 28, 20)
+        layout.setSpacing(16)
+
+        # --- Header ---
         title = QLabel("TOOLS")
         title.setObjectName("sectionTitle")
         layout.addWidget(title)
-        layout.addSpacing(12)
 
+        # --- Game Tools row 1 ---
         row1 = QHBoxLayout()
         row1.setSpacing(8)
         for label, cb in [
@@ -484,8 +497,7 @@ class LauncherApp:
             row1.addWidget(btn)
         layout.addLayout(row1)
 
-        layout.addSpacing(8)
-
+        # --- Game Tools row 2 ---
         row2 = QHBoxLayout()
         row2.setSpacing(8)
         for label, cb, obj_name in [
@@ -500,7 +512,115 @@ class LauncherApp:
             row2.addWidget(btn)
         layout.addLayout(row2)
 
+        # --- Separator ---
+        sep1 = QFrame()
+        sep1.setFrameShape(QFrame.Shape.HLine)
+        layout.addWidget(sep1)
+
+        # ============================================================
+        # REGION EDITOR
+        # ============================================================
+        region_title = QLabel("REGION EDITOR")
+        region_title.setObjectName("sectionTitle")
+        layout.addWidget(region_title)
+
+        self._region_list = QListWidget()
+        self._region_list.setObjectName("regionList")
+        self._region_list.setFixedHeight(160)
+        layout.addWidget(self._region_list)
+
+        region_btn_row = QHBoxLayout()
+        region_btn_row.setSpacing(8)
+
+        add_region_btn = QPushButton("Add Region")
+        add_region_btn.setObjectName("toolBtn")
+        add_region_btn.setFixedHeight(36)
+        add_region_btn.clicked.connect(self._cb_add_region)
+        region_btn_row.addWidget(add_region_btn)
+
+        remove_region_btn = QPushButton("Remove")
+        remove_region_btn.setObjectName("dangerBtn")
+        remove_region_btn.setFixedHeight(36)
+        remove_region_btn.clicked.connect(self._cb_remove_region)
+        region_btn_row.addWidget(remove_region_btn)
+
+        reset_region_btn = QPushButton("Reset to Official")
+        reset_region_btn.setObjectName("toolBtn")
+        reset_region_btn.setFixedHeight(36)
+        reset_region_btn.clicked.connect(self._cb_reset_regions)
+        region_btn_row.addWidget(reset_region_btn)
+
+        apply_region_btn = QPushButton("Apply")
+        apply_region_btn.setObjectName("successBtn")
+        apply_region_btn.setFixedHeight(36)
+        apply_region_btn.clicked.connect(self._cb_apply_region)
+        region_btn_row.addWidget(apply_region_btn)
+
+        layout.addLayout(region_btn_row)
+
+        self._region_status = QLabel("")
+        self._region_status.setObjectName("statusText")
+        layout.addWidget(self._region_status)
+
+        # --- Separator ---
+        sep2 = QFrame()
+        sep2.setFrameShape(QFrame.Shape.HLine)
+        layout.addWidget(sep2)
+
+        # ============================================================
+        # ZIP EXTRACTOR
+        # ============================================================
+        zip_title = QLabel("ZIP EXTRACTOR")
+        zip_title.setObjectName("sectionTitle")
+        layout.addWidget(zip_title)
+
+        zip_desc = QLabel("Extract mod files (BepInEx, etc.) into your game folder.")
+        zip_desc.setObjectName("statusText")
+        layout.addWidget(zip_desc)
+
+        self._zip_path_label = QLabel("No zip selected")
+        self._zip_path_label.setObjectName("mutedText")
+        layout.addWidget(self._zip_path_label)
+
+        zip_btn_row = QHBoxLayout()
+        zip_btn_row.setSpacing(8)
+
+        select_zip_btn = QPushButton("Select Zip")
+        select_zip_btn.setObjectName("toolBtn")
+        select_zip_btn.setFixedHeight(36)
+        select_zip_btn.clicked.connect(self._cb_select_zip)
+        zip_btn_row.addWidget(select_zip_btn)
+
+        extract_zip_btn = QPushButton("Extract to Game Folder")
+        extract_zip_btn.setObjectName("successBtn")
+        extract_zip_btn.setFixedHeight(36)
+        extract_zip_btn.clicked.connect(self._cb_extract_zip)
+        zip_btn_row.addWidget(extract_zip_btn)
+
+        layout.addLayout(zip_btn_row)
+
+        self._zip_contents_label = QLabel("")
+        self._zip_contents_label.setObjectName("mutedText")
+        self._zip_contents_label.setWordWrap(True)
+        layout.addWidget(self._zip_contents_label)
+
+        self._zip_progress = QProgressBar()
+        self._zip_progress.setRange(0, 100)
+        self._zip_progress.setValue(0)
+        self._zip_progress.setFixedHeight(16)
+        self._zip_progress.hide()
+        layout.addWidget(self._zip_progress)
+
         layout.addStretch()
+
+        scroll.setWidget(content)
+        outer = QVBoxLayout(page)
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.addWidget(scroll)
+
+        # Load regions on startup
+        self._load_region_list()
+
         return page
 
     def _build_aunlocker_page(self):
@@ -703,6 +823,130 @@ class LauncherApp:
 
     def _cb_uninstall(self):
         self._uninstall_game()
+
+    # ------------------------------------------------------------------ region editor
+    def _load_region_list(self):
+        self.region_mgr.load()
+        self._region_list.clear()
+        for i, r in enumerate(self.region_mgr.regions):
+            label = r["Name"]
+            if i == self.region_mgr.active_index:
+                label = f"  ●  {label}  (active)"
+            item = QListWidgetItem(label)
+            item.setData(Qt.ItemDataRole.UserRole, i)
+            self._region_list.addItem(item)
+        if self.region_mgr.active_index < self._region_list.count():
+            self._region_list.setCurrentRow(self.region_mgr.active_index)
+
+    def _cb_add_region(self):
+        name, ok = QInputDialog.getText(self.window, "Add Region", "Region name:")
+        if not ok or not name.strip():
+            return
+        ip, ok = QInputDialog.getText(self.window, "Add Region", "Server IP/URL:")
+        if not ok or not ip.strip():
+            return
+        port, ok = QInputDialog.getInt(self.window, "Add Region", "Port:", 443, 1, 65535)
+        if not ok:
+            return
+        if self.region_mgr.add(name.strip(), ip.strip(), port):
+            self.region_mgr.save()
+            self._load_region_list()
+            self._region_status.setText(f"Added region: {name.strip()}")
+            self._region_status.setStyleSheet(f"color: {SUCCESS};")
+        else:
+            self._region_status.setText(f"Region '{name.strip()}' already exists")
+            self._region_status.setStyleSheet(f"color: {WARNING};")
+
+    def _cb_remove_region(self):
+        item = self._region_list.currentItem()
+        if not item:
+            return
+        idx = item.data(Qt.ItemDataRole.UserRole)
+        name = self.region_mgr.regions[idx]["Name"]
+        reply = QMessageBox.question(
+            self.window, "Remove Region",
+            f"Remove '{name}'?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        )
+        if reply == QMessageBox.StandardButton.Yes:
+            self.region_mgr.remove(idx)
+            self.region_mgr.save()
+            self._load_region_list()
+            self._region_status.setText(f"Removed: {name}")
+            self._region_status.setStyleSheet(f"color: {INFO};")
+
+    def _cb_apply_region(self):
+        item = self._region_list.currentItem()
+        if not item:
+            return
+        idx = item.data(Qt.ItemDataRole.UserRole)
+        self.region_mgr.active_index = idx
+        if self.region_mgr.save():
+            name = self.region_mgr.regions[idx]["Name"]
+            self._region_status.setText(f"Active region set to: {name}")
+            self._region_status.setStyleSheet(f"color: {SUCCESS};")
+        else:
+            self._region_status.setText("Failed to save region settings")
+            self._region_status.setStyleSheet(f"color: {DANGER};")
+
+    def _cb_reset_regions(self):
+        reply = QMessageBox.question(
+            self.window, "Reset Regions",
+            "Reset to official Innersloth servers? Custom regions will be removed.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        )
+        if reply == QMessageBox.StandardButton.Yes:
+            self.region_mgr.reset_official()
+            self.region_mgr.save()
+            self._load_region_list()
+            self._region_status.setText("Reset to official regions")
+            self._region_status.setStyleSheet(f"color: {INFO};")
+
+    # ------------------------------------------------------------------ zip extractor
+    def _cb_select_zip(self):
+        path, _ = QFileDialog.getOpenFileName(
+            self.window, "Select Zip File", "", "Zip Files (*.zip);;All Files (*)"
+        )
+        if not path:
+            return
+        self._selected_zip = Path(path)
+        self._zip_path_label.setText(str(self._selected_zip))
+        self._zip_path_label.setStyleSheet(f"color: {TEXT_PRIMARY};")
+        contents = list_contents(self._selected_zip)
+        if contents:
+            preview = contents[:15]
+            more = f"\n... and {len(contents) - 15} more" if len(contents) > 15 else ""
+            self._zip_contents_label.setText("Contents:\n" + "\n".join(preview) + more)
+        else:
+            self._zip_contents_label.setText("Could not read zip contents")
+
+    def _cb_extract_zip(self):
+        if not hasattr(self, "_selected_zip") or not self._selected_zip:
+            QMessageBox.warning(self.window, "Error", "Select a zip file first!")
+            return
+        gp = self.config.get_game_path()
+        if not gp:
+            QMessageBox.warning(self.window, "Error", "Game not installed! Set a game location first.")
+            return
+        self._zip_progress.show()
+        self._zip_progress.setValue(0)
+        self._set_status("Extracting zip...", "info")
+
+        def go():
+            def prog(done, total):
+                pct = int(done / total * 100) if total else 0
+                self._invoke_main(lambda p=pct: self._zip_progress.setValue(p))
+            ok = extract_to(self._selected_zip, gp, prog)
+            self._invoke_main(lambda: self._zip_progress.hide())
+            if ok:
+                self._invoke_main(lambda: self._set_status("Zip extracted!", "success"))
+                self._invoke_main(lambda: QMessageBox.information(
+                    self.window, "Success", "Files extracted to game folder!"))
+            else:
+                self._invoke_main(lambda: self._set_status("Extraction failed", "danger"))
+                self._invoke_main(lambda: QMessageBox.warning(
+                    self.window, "Error", "Failed to extract zip file."))
+        self._run(go)
 
     # ------------------------------------------------------------------ folder selected
     def _folder_selected(self, folder):
