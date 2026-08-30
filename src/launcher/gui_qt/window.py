@@ -165,7 +165,7 @@ class Worker(QThread):
 # Main Window
 # ---------------------------------------------------------------------------
 class LauncherApp:
-    def __init__(self):
+    def __init__(self, existing_app=None):
         self.config = Config()
         self.network = NetworkManager()
         self.discord = DiscordRPC()
@@ -191,6 +191,7 @@ class LauncherApp:
 
         self._itch_auth_shown = False
 
+        self._existing_app = existing_app
         self._setup_app()
         self._build_ui()
         self._setup_game_timer()
@@ -198,8 +199,11 @@ class LauncherApp:
 
     # ------------------------------------------------------------------ setup
     def _setup_app(self):
-        self.app = QApplication(sys.argv)
-        apply_theme(self.app)
+        if hasattr(self, '_existing_app') and self._existing_app:
+            self.app = self._existing_app
+        else:
+            self.app = QApplication(sys.argv)
+            apply_theme(self.app)
         if _ICON_PATH.exists():
             self.app.setWindowIcon(QIcon(str(_ICON_PATH)))
 
@@ -1295,7 +1299,6 @@ class LauncherApp:
     # ------------------------------------------------------------------ run
     def run(self):
         self.window.show()
-        self._load_initial_data()
         self._load_itch_profile()
         exit_code = self.app.exec()
         self.discord.disconnect()

@@ -1,27 +1,65 @@
 """
 Isam AULauncher — main entry point.
-Default: PySide6 (Qt) GUI. Use --gui-2 for legacy Dear PyGui GUI.
+Default: PySide6 (Qt) GUI with splash screen. Use --gui-2 for legacy Dear PyGui GUI.
 """
 import sys
 import argparse
 import logging
+
+from PySide6.QtWidgets import QApplication
+from PySide6.QtCore import QTimer
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Isam AULauncher")
     parser.add_argument("--gui-2", action="store_true",
                         help="Use legacy Dear PyGui GUI")
+    parser.add_argument("--no-splash", action="store_true",
+                        help="Skip splash screen")
     args, _ = parser.parse_known_args()
 
     while True:
         try:
             if args.gui_2:
                 from gui_dpg.window import LauncherApp
-            else:
-                from gui_qt.window import LauncherApp
+                app = LauncherApp()
+                app.run()
+                break
 
-            app = LauncherApp()
-            app.run()
+            # Qt GUI with splash screen
+            from gui_qt.window import LauncherApp
+            from gui_qt.splash import SplashScreen
+            from gui_qt.theme import apply_theme
+
+            qapp = QApplication(sys.argv)
+            apply_theme(qapp)
+
+            launcher = LauncherApp(qapp)
+
+            if args.no_splash:
+                launcher.run()
+                break
+
+            splash = SplashScreen()
+
+            def on_splash_done():
+                launcher.run()
+
+            splash.finished.connect(on_splash_done)
+
+            # Start loading in background, then dismiss splash
+            def boot():
+                splash.update_status("Checking updates...")
+                launcher._load_initial_data()
+                # Give a brief moment for the splash to be visible
+                QTimer.singleShot(1800, splash.finish)
+
+            splash.show()
+
+            # Small delay so splash is visible before work starts
+            QTimer.singleShot(300, boot)
+
+            exit_code = qapp.exec()
             break
         except KeyboardInterrupt:
             break
