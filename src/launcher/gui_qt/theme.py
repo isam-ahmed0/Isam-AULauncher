@@ -427,18 +427,6 @@ QLabel#profileStatus {{
     font-size: 12px;
     font-weight: 600;
 }}
-
-/* ===== MOD CARD ===== */
-QFrame#modCard {{
-    background-color: {BG_SURFACE};
-    border: 1px solid {BORDER_SUBTLE};
-    border-radius: 8px;
-}}
-
-QFrame#modCard:hover {{
-    border: 1px solid {ACCENT};
-    background-color: {BG_ELEVATED};
-}}
 """
 
 

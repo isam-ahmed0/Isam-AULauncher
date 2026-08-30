@@ -32,7 +32,6 @@ from gui_qt.theme import (
     TEXT_SECONDARY, TEXT_MUTED, BG_BASE, BG_SIDEBAR, BG_ELEVATED,
 )
 from gui_qt.game import GameManager
-from gui_qt.mods import ModStore, ModStorePage
 
 _RESOURCES_DIR = Path(__file__).parent.parent / "resources"
 _HERO_IMAGE_PATH = _RESOURCES_DIR / "hero.png"
@@ -171,7 +170,6 @@ class LauncherApp:
         self.network = NetworkManager()
         self.discord = DiscordRPC()
         self.game = GameManager(self.config, self.network)
-        self.mods = ModStore()
 
         # Connect game manager signals
         self.game.game_started.connect(lambda: self._update_main_btn())
@@ -273,19 +271,17 @@ class LauncherApp:
         # Stacked pages
         self.pages = QStackedWidget()
         self.page_game = self._build_game_page()
-        self.page_mods = ModStorePage(self.mods, self.config)
         self.page_tools = self._build_tools_page()
         self.page_aunlocker = self._build_aunlocker_page()
         self.page_profile = self._build_profile_page()
         self.pages.addWidget(self.page_game)
-        self.pages.addWidget(self.page_mods)
         self.pages.addWidget(self.page_tools)
         self.pages.addWidget(self.page_aunlocker)
         self.pages.addWidget(self.page_profile)
 
         # Nav buttons
         self.nav_buttons = {}
-        for label, idx in [("Game", 0), ("Mods", 1), ("Tools", 2), ("AUnlocker", 3), ("Profile", 4)]:
+        for label, idx in [("Game", 0), ("Tools", 1), ("AUnlocker", 2), ("Profile", 3)]:
             btn = QPushButton(f"  {label}")
             btn.setCheckable(True)
             btn.setFixedHeight(40)
@@ -568,9 +564,6 @@ class LauncherApp:
         self._active_page = label.lower()
         for name, btn in self.nav_buttons.items():
             btn.setChecked(name == label)
-        # Auto-load mods when navigating to Mods page
-        if label == "Mods" and not self.page_mods._all_mods:
-            self.page_mods._load_mods()
 
     # ------------------------------------------------------------------ status
     def _set_status(self, text, color_name=None):
@@ -630,13 +623,11 @@ class LauncherApp:
         self._busy = True
         self.main_action_btn.setEnabled(False)
         self.aunlocker_btn.setEnabled(False)
-        self.page_mods.refresh_btn.setEnabled(False)
 
     def _busy_off(self):
         self._busy = False
         self.main_action_btn.setEnabled(True)
         self.aunlocker_btn.setEnabled(True)
-        self.page_mods.refresh_btn.setEnabled(True)
 
     # ------------------------------------------------------------------ callbacks
     def _cb_main_action(self):
