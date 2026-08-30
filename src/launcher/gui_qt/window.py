@@ -366,7 +366,7 @@ class LauncherApp:
         profile_icon.setObjectName("statusDot")
         profile_icon.setStyleSheet(f"color: {TEXT_MUTED};")
         profile_layout.addWidget(profile_icon)
-        self.profile_game_text = QLabel("Not logged in")
+        self.profile_game_text = QLabel("Loading...")
         self.profile_game_text.setObjectName("profileDetail")
         profile_layout.addWidget(self.profile_game_text)
         self.profile_game_detail = QLabel("")
