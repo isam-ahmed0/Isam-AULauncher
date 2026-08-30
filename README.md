@@ -10,31 +10,15 @@ carries the **Isam AULauncher** identity with a fresh, sleek interface.
 
 ## Install
 
-The easiest way to use is download the IsamAULauncher-Setup-0.1.exe from [Release](https://github.com/isam-ahmed0/Isam-AULauncher/releases/download/latest)
+The easiest way to use is download the IsamAULauncher-Setup-0.1.exe from
+### [Release](https://github.com/isam-ahmed0/Isam-AULauncher/releases/latest)
+
 You can also download portable zip.
-Theres also a lite version which is Isam-AU-LITE.zip
+
+Theres also a lite version which is **Isam-AU-LITE.zip** which is 8x lite and low feautures.
 
 
-## Build (Windows)
+I recommend to use the setup exe or prtable zip. the lite one can crash.
 
-```bat
-pip install -r build\requirements.txt
-build\build_launcher.bat        :: IsamAULauncher.exe
-build\build_bootstrapper.bat    :: IsamAULauncherBootstrapper.exe
-build\build_fixer.bat           :: Itch_Login_Fixer.exe
-```
-
-Outputs land in `dist/`.
-
-## Build the installer (NSIS)
-
-Install the NSIS Unicode compiler from https://nsis.sourceforge.io/Download,
-then:
-
-```bat
-makensis /DVERSION=0.1 installer\IsamAULauncher.nsi
-```
-
-Forked from `jogamerforgames2021/AmongUsLauncherNew` &
-`jogamerforgames2021/BootstrapperTEST`. All upstream download endpoints,
-Discord invite and YouTube links remain in place.
+The test and old repo was https://github.com/isam-ahmed0/AmongUs_Launcher
+I like contributions. If you want to contribute, just fork then edit what you like and create a Pull Request.
