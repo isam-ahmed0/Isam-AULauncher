@@ -23,11 +23,14 @@ PATCHES_URL = "https://raw.githubusercontent.com/jogamerforgames2021/AmongUsLaun
 SOURCE_CODE_URL = "https://github.com/isam-ahmed0/Isam-AULauncher"
 GITHUB_REPO = "jogamerforgames2021/AmongUsLauncherNew"
 AUNLOCKER_JSON_URL = "https://raw.githubusercontent.com/jogamerforgames2021/AmongUsLauncherNew/refs/heads/main/AUnlockerStuff/Versions.json"
-DISCORD_CLIENT_ID = "1378503147768647821"
+DISCORD_CLIENT_ID = "1543527340963930193"
 DISCORD_INVITE = ""
 YOUTUBE_CHANNEL = "https://www.youtube.com/@isam0ahmed"
 REQUEST_TIMEOUT = 10
 CHUNK_SIZE = 8192
+FIXER_URL = "https://github.com/jogamerforgames2021/AmongUsLauncherNew/raw/refs/heads/main/Fixer/Itch_Login_Fixer.exe"
+LAUNCHER_UPDATE_URL = "https://raw.githubusercontent.com/isam-ahmed0/Isam-AULauncher/main/LAUNCHER_VERSION"
+LAUNCHER_SETUP_URL = "https://github.com/isam-ahmed0/Isam-AULauncher/releases/download/latest/IsamAU-Setup.exe"
 
 GAME_CRITICAL_FILES = ["Among Us.exe"]
 GAME_CRITICAL_DIRS = ["BepInEx", "dotnet"]

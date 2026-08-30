@@ -5,12 +5,19 @@ REM Requirements:
 REM   1. Python on PATH (or activate your venv) with build\requirements.txt installed
 REM   2. NSIS (Unicode) installed from https://nsis.sourceforge.io/Download
 REM
-REM Produces: dist\IsamAULauncher-Setup-0.1.exe
+REM Produces: dist\IsamAU-Setup.exe
 setlocal
 cd /d "%~dp0.."
 set "ROOT=%CD%"
 
 if not exist "dist" mkdir dist
+
+REM Read version from config.py
+set "VERSION="
+for /f "tokens=2 delims== " %%v in ('findstr "LAUNCHER_VERSION" src\launcher\config.py') do set "VERSION=%%~v"
+set "VERSION=%VERSION:"=%"
+if not defined VERSION set "VERSION=0.1"
+echo Using version: %VERSION%
 
 echo ============================================================
 echo  [1/3] Building IsamAULauncher.exe
@@ -45,7 +52,7 @@ if not defined MAKENSIS (
 )
 
 echo Using: %MAKENSIS%
-"%MAKENSIS%" "/DROOT=%ROOT%" "installer\IsamAULauncher.nsi"
+"%MAKENSIS%" "/DROOT=%ROOT%" "/DVERSION=%VERSION%" "installer\IsamAULauncher.nsi"
 if errorlevel 1 (
   echo.
   echo Installer build FAILED.
@@ -54,6 +61,6 @@ if errorlevel 1 (
 
 echo.
 echo ============================================================
-echo  Done! Installer: dist\IsamAULauncher-Setup-0.1.exe
+echo  Done! Installer: dist\IsamAU-Setup.exe (v%VERSION%)
 echo ============================================================
 pause

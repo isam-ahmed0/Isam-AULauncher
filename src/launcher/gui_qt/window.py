@@ -30,6 +30,7 @@ from config import (
     Config, APP_NAME, BRAND_SHORT, MAKER, LAUNCHER_VERSION,
     VERSION_URL, GITHUB_REPO, AUNLOCKER_JSON_URL, PATCHES_URL,
     DISCORD_INVITE, YOUTUBE_CHANNEL, SOURCE_CODE_URL,
+    LAUNCHER_UPDATE_URL, LAUNCHER_SETUP_URL,
 )
 from network import NetworkManager, DiscordRPC
 from file_manager import FileManager
@@ -1353,7 +1354,50 @@ class LauncherApp:
             self._invoke_main(self._update_main_btn)
             if self.config.settings.get("discord_rpc"):
                 self.discord.connect()
+            self._check_launcher_update()
         self._run(go)
+
+    def _check_launcher_update(self):
+        try:
+            remote = self.network.fetch_text(LAUNCHER_UPDATE_URL)
+            if not remote:
+                return
+            remote = remote.strip()
+            if remote == LAUNCHER_VERSION:
+                return
+            self._invoke_main(lambda: self._prompt_launcher_update(remote))
+        except Exception as e:
+            logging.debug(f"Launcher update check failed: {e}")
+
+    def _prompt_launcher_update(self, new_version):
+        reply = QMessageBox.information(
+            self.window, "Update Available",
+            f"A new version (v{new_version}) is available.\n\n"
+            f"Current: v{LAUNCHER_VERSION}\n"
+            f"New: v{new_version}\n\n"
+            f"Download and install now?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        )
+        if reply == QMessageBox.StandardButton.Yes:
+            self._set_status("Downloading launcher update...", "info")
+            self._invoke_main(self._busy_on)
+            def go():
+                import tempfile
+                try:
+                    setup_path = Path(tempfile.gettempdir()) / "IsamAU-Setup.exe"
+                    ok = self.network.download_file(LAUNCHER_SETUP_URL, setup_path)
+                    if not ok:
+                        self._invoke_main(lambda: self._set_status("Download failed", "danger"))
+                        self._invoke_main(self._busy_off)
+                        return
+                    self._invoke_main(lambda: self._set_status("Installing update...", "info"))
+                    subprocess.Popen([str(setup_path), "/S"])
+                    os._exit(0)
+                except Exception as e:
+                    logging.error(f"Launcher update failed: {e}")
+                    self._invoke_main(lambda: self._set_status(f"Update failed: {e}", "danger"))
+                    self._invoke_main(self._busy_off)
+            self._run(go)
 
     # ------------------------------------------------------------------ itchfixer
     def _find_itch_fixer(self):
