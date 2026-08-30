@@ -14,7 +14,7 @@ if not exist "dist" mkdir dist
 echo ============================================================
 echo  Building with Cx_Freeze...
 echo ============================================================
-python build\cx_setup.py build --build-exe=dist\IsamAULauncher_cx
+python build\cx_setup.py build_exe --build-exe=dist\IsamAULauncher_cx
 if errorlevel 1 (
   echo.
   echo Cx_Freeze build FAILED.
