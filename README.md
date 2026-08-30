@@ -21,4 +21,5 @@ Theres also a lite version called **Isam-AU-LITE.zip** which is 8x lite and low 
 I recommend to use the setup exe or prtable zip. the lite one can crash.
 
 The test and old repo was https://github.com/isam-ahmed0/AmongUs_Launcher
+
 I like contributions. If you want to contribute, just fork then edit what you like and create a Pull Request.
