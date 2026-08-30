@@ -15,7 +15,7 @@ The easiest way to use is download the IsamAULauncher-Setup-0.1.exe from
 
 You can also download portable zip.
 
-Theres also a lite version which is **Isam-AU-LITE.zip** which is 8x lite and low feautures.
+Theres also a lite version called **Isam-AU-LITE.zip** which is 8x lite and low feautures.
 
 
 I recommend to use the setup exe or prtable zip. the lite one can crash.
