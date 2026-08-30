@@ -1,5 +1,7 @@
 # Isam AULauncher
 
+## After downloading game please use locate game into the folder you installed.
+If it still shows install game.
 A clean, modern launcher for Among Us — maintained by **Isam**.
 
 ![image](https://github.com/isam-ahmed0/Isam-AULauncher/blob/main/Screenshot%202026-08-30%20150105.png?raw=true)
