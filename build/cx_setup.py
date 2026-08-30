@@ -16,9 +16,7 @@ build_exe_options = {
         "PySide6",
         "requests",
         "pypresence",
-        "PIL",
         "customtkinter",
-        "http.server",
     ],
     "excludes": [
         "tkinter",
