@@ -5,9 +5,18 @@ __pycache__/
 
 # Build outputs
 build/dist/
+build/IsamAULauncher/
+build/IsamAULauncher_Lite/
+build/IsamAULauncherBootstrapper/
+build/error.txt
 dist/
 *.spec
 *.log
+
+# Temp files
+game.zip
+bug.txt
+launcher.txt
 
 # Local scratch / staging
 scratch/
