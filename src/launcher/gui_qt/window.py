@@ -1403,7 +1403,11 @@ class LauncherApp:
     def _find_itch_fixer(self):
         """Find Itch_Login_Fixer.exe relative to the launcher."""
         if getattr(sys, 'frozen', False):
-            return Path(sys.executable).parent / ITCH_FIXER_NAME
+            base = Path(sys.executable).parent
+            fixer = base / "Fixer" / ITCH_FIXER_NAME
+            if fixer.exists():
+                return fixer
+            return base / ITCH_FIXER_NAME
         return Path(__file__).parent.parent.parent / "release" / "Fixer" / ITCH_FIXER_NAME
 
     def _launch_itch_fixer(self):

@@ -2,18 +2,20 @@
 __pycache__/
 *.py[cod]
 *.egg-info/
+src/Isam_AULauncher.egg-info/
 
 # Build outputs
-build/dist/
+dist/
+build/exe.*/
+*.spec
+*.log
+
+# Build intermediates
 build/IsamAULauncher/
 build/IsamAULauncher_Lite/
 build/IsamAULauncherBootstrapper/
 build/Itch_Login_Fixer/
 build/error.txt
-build/exe.*/
-dist/
-*.spec
-*.log
 
 # Temp files
 game.zip

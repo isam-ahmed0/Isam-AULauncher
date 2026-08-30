@@ -3,9 +3,7 @@
 ; Compile with: makensis.exe installer\IsamAULauncher.nsi
 ; Paths are resolved relative to this script, so it builds from anywhere.
 ;
-; Supports two build modes:
-;   PyInstaller (default): packages single .exe files
-;   Cx_Freeze (/DBUILD_CX=1): packages folder with shared lib/
+; Packages PyInstaller --onedir output (folders with exe + _internal/).
 ;-------------------------------------------------------------------------------
 
 !include "MUI2.nsh"
@@ -24,15 +22,8 @@
   !define ROOT "${__FILEDIR__}\.."
 !endif
 !define SRC_ICON      "${ROOT}\src\launcher\resources\icon.ico"
-
-; --- Build mode: Cx_Freeze or PyInstaller ---
-!ifdef BUILD_CX
-  !define CX_DIR     "${ROOT}\dist\IsamAULauncher_cx"
-!else
-  !define LAUNCHER_EXE  "${ROOT}\dist\IsamAULauncher.exe"
-  !define FIXER_EXE     "${ROOT}\dist\Itch_Login_Fixer.exe"
-!endif
-
+!define LAUNCHER_DIR  "${ROOT}\dist\IsamAULauncher"
+!define FIXER_DIR     "${ROOT}\dist\Itch_Login_Fixer"
 !define SEVENZ_EXE    "${ROOT}\release\7z.exe"
 !define BEPMODS_ZIP   "${ROOT}\release\bepmods.zip"
 
@@ -80,16 +71,9 @@ VIAddVersionKey "LegalCopyright"  "Copyright (c) 2026 ${COMPANY}"
 Section "Isam AULauncher (required)" SecMain
   SectionIn RO
 
+  ; Install entire --onedir folder to $INSTDIR
   SetOutPath "$INSTDIR"
-
-!ifdef BUILD_CX
-  ; Cx_Freeze: install entire build folder (exes + lib/ + other files)
-  File /r "${CX_DIR}\*.*"
-!else
-  ; PyInstaller: install single exe files
-  File /oname=IsamAULauncher.exe "${LAUNCHER_EXE}"
-  File /oname=icon.ico "${SRC_ICON}"
-!endif
+  File /r "${LAUNCHER_DIR}\*.*"
 
   WriteUninstaller "$INSTDIR\Uninstall.exe"
 
@@ -112,14 +96,10 @@ Section "Isam AULauncher (required)" SecMain
 SectionEnd
 
 Section "Itch Login Fixer" SecFixer
-!ifdef BUILD_CX
-  ; Cx_Freeze: Itch_Login_Fixer.exe already installed with folder copy above
-!else
-  ; PyInstaller: install fixer as separate exe
-  SetOutPath "$INSTDIR"
-  File /oname=Itch_Login_Fixer.exe "${FIXER_EXE}"
-!endif
-  CreateShortcut "$SMPROGRAMS\${APP_SHORT}\Itch Login Fixer.lnk" "$INSTDIR\Itch_Login_Fixer.exe"
+  ; Install fixer into subfolder (avoids _internal/ conflict with launcher)
+  SetOutPath "$INSTDIR\Fixer"
+  File /r "${FIXER_DIR}\*.*"
+  CreateShortcut "$SMPROGRAMS\${APP_SHORT}\Itch Login Fixer.lnk" "$INSTDIR\Fixer\Itch_Login_Fixer.exe"
 SectionEnd
 
 Section "Support tools (7-zip + mods)" SecTools
@@ -143,14 +123,7 @@ Section "Uninstall"
   ; Desktop
   Delete "$DESKTOP\${APP_SHORT}.lnk"
 
-  ; Files + folder (RMDir /r handles all files including Cx_Freeze lib/ folder)
-  Delete "$INSTDIR\IsamAULauncher.exe"
-  Delete "$INSTDIR\Itch_Login_Fixer.exe"
-  Delete "$INSTDIR\icon.ico"
-  Delete "$INSTDIR\7z.exe"
-  Delete "$INSTDIR\bepmods.zip"
-  Delete "$INSTDIR\Uninstall.exe"
-  Delete "$INSTDIR\launcher.log"
+  ; Remove entire install folder (launcher + fixer + all files)
   RMDir  /r "$INSTDIR"
 
   ; Registry

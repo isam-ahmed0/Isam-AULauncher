@@ -20,9 +20,9 @@ if not defined VERSION set "VERSION=0.1"
 echo Using version: %VERSION%
 
 echo ============================================================
-echo  [1/3] Building IsamAULauncher.exe
+echo  [1/3] Building IsamAULauncher
 echo ============================================================
-pyinstaller --noconfirm --onefile --windowed --noupx ^
+pyinstaller --noconfirm --onedir --windowed --noupx ^
   --name IsamAULauncher ^
   --icon src\launcher\resources\icon.ico ^
   --add-data "src\launcher\resources\icon.ico;resources" ^
@@ -30,9 +30,9 @@ pyinstaller --noconfirm --onefile --windowed --noupx ^
 
 echo.
 echo ============================================================
-echo  [2/3] Building Itch_Login_Fixer.exe
+echo  [2/3] Building Itch_Login_Fixer
 echo ============================================================
-pyinstaller --noconfirm --onefile --windowed --noupx ^
+pyinstaller --noconfirm --onedir --windowed --noupx ^
   --name Itch_Login_Fixer ^
   --icon src\fixer\assets\icon.ico ^
   --hidden-import customtkinter ^
