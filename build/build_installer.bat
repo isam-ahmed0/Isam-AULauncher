@@ -14,7 +14,7 @@ if not exist "dist" mkdir dist
 
 REM Read version from config.py
 set "VERSION="
-for /f "tokens=2 delims== " %%v in ('findstr "LAUNCHER_VERSION" src\launcher\config.py') do set "VERSION=%%~v"
+for /f "tokens=2 delims== " %%v in ('findstr "LAUNCHER_VERSION =" src\launcher\config.py') do set "VERSION=%%~v"
 set "VERSION=%VERSION:"=%"
 if not defined VERSION set "VERSION=0.1"
 echo Using version: %VERSION%
