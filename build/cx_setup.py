@@ -3,7 +3,7 @@ Cx_Freeze build script for Isam AULauncher.
 Builds both IsamAULauncher and Itch_Login_Fixer into a shared lib/ folder.
 
 Usage (from repo root):
-    python build/cx_setup.py build --build-exe=dist\IsamAULauncher_cx
+    python build/cx_setup.py build --build-exe=dist/IsamAULauncher_cx
 
 Requirements:
     pip install cx_Freeze>=8.7
@@ -41,13 +41,13 @@ build_exe_options = {
 executables = [
     Executable(
         "src/launcher/main.py",
-        base="Win32GUI",
+        base="gui",
         target_name="IsamAULauncher.exe",
         icon="src/launcher/resources/icon.ico",
     ),
     Executable(
         "src/fixer/Itch_Login_Fixer.py",
-        base="Win32GUI",
+        base="gui",
         target_name="Itch_Login_Fixer.exe",
         icon="src/fixer/assets/icon.ico",
     ),
