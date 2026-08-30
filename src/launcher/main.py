@@ -37,29 +37,30 @@ if __name__ == "__main__":
             launcher = LauncherApp(qapp)
 
             if args.no_splash:
-                launcher.run()
-                break
+                launcher.window.show()
+                launcher._load_itch_profile()
+                exit_code = qapp.exec()
+                launcher.discord.disconnect()
+                sys.exit(exit_code)
 
             splash = SplashScreen()
 
             def on_splash_done():
-                launcher.run()
+                launcher.window.show()
+                launcher._load_itch_profile()
 
             splash.finished.connect(on_splash_done)
 
-            # Start loading in background, then dismiss splash
             def boot():
                 splash.update_status("Checking updates...")
-                launcher._load_initial_data()
-                # Give a brief moment for the splash to be visible
                 QTimer.singleShot(1800, splash.finish)
 
             splash.show()
-
-            # Small delay so splash is visible before work starts
             QTimer.singleShot(300, boot)
 
             exit_code = qapp.exec()
+            launcher.discord.disconnect()
+            sys.exit(exit_code)
             break
         except KeyboardInterrupt:
             break

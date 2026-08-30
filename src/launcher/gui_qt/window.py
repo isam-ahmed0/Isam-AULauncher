@@ -1300,6 +1300,3 @@ class LauncherApp:
     def run(self):
         self.window.show()
         self._load_itch_profile()
-        exit_code = self.app.exec()
-        self.discord.disconnect()
-        sys.exit(exit_code)
