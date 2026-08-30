@@ -185,7 +185,6 @@ class LauncherApp:
         # Connect game manager signals
         self.game.game_started.connect(self._on_game_started)
         self.game.game_stopped.connect(self._on_game_stopped)
-        self.game.status_message.connect(lambda text, level: self._invoke_main(lambda t=text, l=level: self._set_status(t, l)))
 
         self.current_version = "Not Installed"
         self.latest_version = "Checking..."
@@ -206,10 +205,12 @@ class LauncherApp:
         self._existing_app = existing_app
         self._ui_signaler = _UISignaler()
         self._ui_signaler.invoke.connect(lambda fn: fn())
+        self._shutting_down = False
         self._setup_app()
         self._build_ui()
         self._setup_game_timer()
         self._load_initial_data()
+        self.window.closeEvent = self._close_event
 
     # ------------------------------------------------------------------ setup
     def _setup_app(self):
@@ -234,6 +235,8 @@ class LauncherApp:
 
     def _invoke_main(self, fn):
         """Schedule fn to run on the main thread."""
+        if self._shutting_down:
+            return
         self._ui_signaler.invoke.emit(fn)
 
     def _setup_game_timer(self):
@@ -1003,7 +1006,6 @@ class LauncherApp:
                 if not gp:
                     gp = self._pending_install_path
                     if not gp:
-                        self._invoke_main(self._busy_off)
                         self._install_folder_pending = True
                         self._invoke_main(lambda: self._set_status("Select a folder to install into", "info"))
                         def _pick_folder():
@@ -1012,6 +1014,8 @@ class LauncherApp:
                             )
                             if folder:
                                 self._folder_selected(folder)
+                            else:
+                                self._invoke_main(self._busy_off)
                         self._invoke_main(_pick_folder)
                         return
 
@@ -1064,11 +1068,16 @@ class LauncherApp:
                         zp = Path("AUnlocker.zip")
                         self._invoke_main(lambda: self._set_status("Downloading AUnlocker...", "info"))
                         if self.network.download_file(entry.get("link", ""), zp):
-                            FileManager.extract_zip(zp, gp)
-                            FileManager.safe_delete(zp)
-                            self._invoke_main(lambda: QMessageBox.information(self.window, "Info",
-                                                                            "AUnlocker installed!"))
-                            self._invoke_main(lambda: self._set_status("Ready"))
+                            if FileManager.extract_zip(zp, gp):
+                                FileManager.safe_delete(zp)
+                                self._invoke_main(lambda: QMessageBox.information(self.window, "Info",
+                                                                                "AUnlocker installed!"))
+                                self._invoke_main(lambda: self._set_status("Ready"))
+                            else:
+                                FileManager.safe_delete(zp)
+                                self._invoke_main(lambda: QMessageBox.warning(self.window, "Error",
+                                                                            "Failed to extract AUnlocker"))
+                                self._invoke_main(lambda: self._set_status("Extraction failed", "danger"))
                             return
                 self._invoke_main(lambda: QMessageBox.warning(self.window, "Warning",
                                         "No compatible AUnlocker version found"))
@@ -1095,7 +1104,7 @@ class LauncherApp:
             QMessageBox.warning(self.window, "Error", "pywin32 not installed")
             return
         exe = gp / "Among Us.exe"
-        ver = self.config.get_version()
+        ver = self.config.get_version() or "Unknown"
         try:
             sc = Path.home() / "Desktop" / f"Among Us {ver}.lnk"
             sh = win32com.client.Dispatch("WScript.Shell")
@@ -1207,9 +1216,18 @@ class LauncherApp:
                 else:
                     QMessageBox.warning(self.window, "Error",
                                         "Failed to remove game files")
-            if FileManager.safe_delete(self.config.appdata_dir):
-                QMessageBox.information(self.window, "Info",
-                                        "Launcher data removed")
+            reply2 = QMessageBox.question(
+                self.window, "Confirm",
+                "Also remove launcher settings and data?\nThe launcher will restart.",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            )
+            if reply2 == QMessageBox.StandardButton.Yes:
+                import shutil as _shutil
+                try:
+                    _shutil.rmtree(str(self.config.appdata_dir), ignore_errors=True)
+                except Exception:
+                    pass
+                os._exit(0)
             self.current_version = "Not Installed"
             self._update_version_display()
             self._update_main_btn()
@@ -1314,7 +1332,7 @@ class LauncherApp:
         if DISCORD_INVITE:
             discord_btn = QPushButton("Discord")
             discord_btn.setObjectName("toolBtn")
-            discord_btn.clicked.connect(lambda: os.system(f"start {DISCORD_INVITE}"))
+            discord_btn.clicked.connect(lambda: webbrowser.open(DISCORD_INVITE))
             links_row.addWidget(discord_btn)
         else:
             discord_btn = QPushButton("Discord (Coming soon)")
@@ -1324,12 +1342,12 @@ class LauncherApp:
 
         yt_btn = QPushButton("YouTube")
         yt_btn.setObjectName("toolBtn")
-        yt_btn.clicked.connect(lambda: os.system(f"start {YOUTUBE_CHANNEL}"))
+        yt_btn.clicked.connect(lambda: webbrowser.open(YOUTUBE_CHANNEL))
         links_row.addWidget(yt_btn)
 
         src_btn = QPushButton("Source Code")
         src_btn.setObjectName("toolBtn")
-        src_btn.clicked.connect(lambda: os.system(f"start {SOURCE_CODE_URL}"))
+        src_btn.clicked.connect(lambda: webbrowser.open(SOURCE_CODE_URL))
         links_row.addWidget(src_btn)
         layout.addLayout(links_row)
 
@@ -1399,7 +1417,7 @@ class LauncherApp:
                         return
                     self._invoke_main(lambda: self._set_status("Installing update...", "info"))
                     subprocess.Popen([str(setup_path), "/S"])
-                    sys.exit(0)
+                    os._exit(0)
                 except Exception as e:
                     logging.error(f"Launcher update failed: {e}")
                     self._invoke_main(lambda: self._set_status(f"Update failed: {e}", "danger"))
@@ -1614,3 +1632,38 @@ class LauncherApp:
     def run(self):
         self.window.show()
         self._load_itch_profile()
+
+    # ------------------------------------------------------------------ shutdown
+    def _close_event(self, event):
+        """Handle window close — stop all tasks, then allow close."""
+        self.shutdown()
+        event.accept()
+
+    def shutdown(self):
+        """Stop all background tasks, disconnect services."""
+        if self._shutting_down:
+            return
+        self._shutting_down = True
+        try:
+            if hasattr(self, '_game_timer') and self._game_timer:
+                self._game_timer.stop()
+        except Exception:
+            pass
+        try:
+            if self.game and self.game.is_running:
+                self.game.stop()
+        except Exception:
+            pass
+        try:
+            self.discord.disconnect()
+        except Exception:
+            pass
+        try:
+            self.network.session.close()
+        except Exception:
+            pass
+        for w in list(self._workers):
+            try:
+                w.terminate()
+            except Exception:
+                pass

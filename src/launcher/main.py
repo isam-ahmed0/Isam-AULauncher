@@ -39,7 +39,7 @@ if __name__ == "__main__":
                 launcher._load_itch_profile()
                 launcher.window.show()
                 qapp.exec()
-                launcher.discord.disconnect()
+                launcher.shutdown()
                 break
 
             splash = SplashScreen()
@@ -59,7 +59,7 @@ if __name__ == "__main__":
             QTimer.singleShot(300, boot)
 
             qapp.exec()
-            launcher.discord.disconnect()
+            launcher.shutdown()
             break
         except KeyboardInterrupt:
             break

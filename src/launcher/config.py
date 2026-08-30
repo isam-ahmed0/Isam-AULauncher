@@ -38,7 +38,8 @@ GAME_CRITICAL_DIRS = ["BepInEx", "dotnet"]
 
 class Config:
     def __init__(self):
-        self.appdata_dir = Path(os.environ["APPDATA"]) / "IsamAULauncher"
+        appdata = os.environ.get("APPDATA") or str(Path.home() / ".isamau")
+        self.appdata_dir = Path(appdata) / "IsamAULauncher"
         self.appdata_dir.mkdir(parents=True, exist_ok=True)
         self.version_file = self.appdata_dir / "current_version.txt"
         self.game_path_file = self.appdata_dir / "game_path.txt"
@@ -59,9 +60,13 @@ class Config:
         return defaults
 
     def save_settings(self):
+        import tempfile
         try:
-            with open(self.config_file, 'w') as f:
+            fd, tmp = tempfile.mkstemp(dir=self.appdata_dir, suffix=".json")
+            with os.fdopen(fd, 'w') as f:
                 json.dump(self.settings, f, indent=4)
+            import shutil
+            shutil.move(tmp, self.config_file)
         except Exception as e:
             logging.error(f"Failed to save settings: {e}")
 

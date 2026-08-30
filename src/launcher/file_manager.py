@@ -15,6 +15,10 @@ class FileManager:
                 members = zf.infolist()
                 total = len(members)
                 for i, m in enumerate(members):
+                    target = (extract_to / m.filename).resolve()
+                    if not str(target).startswith(str(extract_to.resolve())):
+                        logging.error(f"Zip slip attempt blocked: {m.filename}")
+                        return False
                     zf.extract(m, extract_to)
                     if progress_callback:
                         progress_callback(i + 1, total)

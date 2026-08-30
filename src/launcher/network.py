@@ -8,7 +8,7 @@ import requests
 
 from config import (
     GITHUB_REPO, REQUEST_TIMEOUT, CHUNK_SIZE,
-    DISCORD_CLIENT_ID, APP_NAME
+    DISCORD_CLIENT_ID, APP_NAME, LAUNCHER_VERSION
 )
 
 try:
@@ -28,7 +28,7 @@ class GameVersion:
 class NetworkManager:
     def __init__(self):
         self.session = requests.Session()
-        self.session.headers.update({'User-Agent': f'IsamAULauncher/0.1'})
+        self.session.headers.update({'User-Agent': f'IsamAULauncher/{LAUNCHER_VERSION}'})
 
     def fetch_text(self, url: str) -> Optional[str]:
         try:
@@ -38,6 +38,12 @@ class NetworkManager:
         except requests.RequestException as e:
             logging.error(f"Failed to fetch {url}: {e}")
             return None
+
+    def close(self):
+        try:
+            self.session.close()
+        except Exception:
+            pass
 
     def download_file(self, url: str, output_path, progress_callback=None) -> bool:
         try:
@@ -55,7 +61,7 @@ class NetworkManager:
                                 if progress_callback and total:
                                     speed = dl / max(time.time() - start, 0.001)
                                     progress_callback(dl, total, speed)
-                except IOError as e:
+                except (IOError, OSError) as e:
                     logging.error(f"File write failed: {e}")
                     try:
                         import os
@@ -96,6 +102,7 @@ class DiscordRPC:
     def __init__(self):
         self.rpc = None
         self.connected = False
+        self._lock = threading.Lock()
 
     def connect(self) -> bool:
         if not DISCORD_RPC_AVAILABLE:
@@ -119,15 +126,17 @@ class DiscordRPC:
             return False
 
     def update_status(self, state: str, details: str, large_text: str = "Isam AU"):
-        if self.connected and self.rpc:
+        with self._lock:
+            if not self.connected or not self.rpc:
+                return
             rpc = self.rpc
-            def _do():
-                try:
-                    rpc.update(state=state, details=details,
-                                   large_image="isam_au", large_text=large_text)
-                except Exception as e:
-                    logging.error(f"RPC update failed: {e}")
-            threading.Thread(target=_do, daemon=True).start()
+        def _do():
+            try:
+                rpc.update(state=state, details=details,
+                               large_image="isam_au", large_text=large_text)
+            except Exception as e:
+                logging.error(f"RPC update failed: {e}")
+        threading.Thread(target=_do, daemon=True).start()
 
     def disconnect(self):
         if self.connected and self.rpc:

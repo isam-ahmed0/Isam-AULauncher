@@ -27,6 +27,10 @@ def extract_to(
             members = zf.infolist()
             total = len(members)
             for i, m in enumerate(members):
+                target = (target_dir / m.filename).resolve()
+                if not str(target).startswith(str(target_dir.resolve())):
+                    log.error(f"Zip slip attempt blocked: {m.filename}")
+                    return False
                 zf.extract(m, target_dir)
                 if progress_callback:
                     progress_callback(i + 1, total)
