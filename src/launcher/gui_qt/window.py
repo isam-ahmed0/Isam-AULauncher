@@ -8,6 +8,7 @@ import json
 import logging
 import shutil
 import subprocess
+import webbrowser
 from pathlib import Path
 
 from PySide6.QtWidgets import (
@@ -180,6 +181,8 @@ class LauncherApp:
         self._change_location_pending = False
         self._install_folder_pending = False
         self._pending_install_path = None
+
+        self._itch_auth_shown = False
 
         self._setup_app()
         self._build_ui()
@@ -1075,12 +1078,72 @@ class LauncherApp:
         return Path(__file__).parent.parent.parent / "release" / "Fixer" / ITCH_FIXER_NAME
 
     def _launch_itch_fixer(self):
-        """Auto-launch ItchFixer as a separate process."""
+        """Launch ItchFixer as a separate process."""
         exe = self._find_itch_fixer()
         if exe.exists():
             subprocess.Popen([str(exe)], cwd=str(exe.parent))
         else:
             logging.warning(f"ItchFixer not found: {exe}")
+
+    def _show_itch_auth_dialog(self):
+        """Show 2-step itch.io authentication popup."""
+        dialog = QDialog(self.window)
+        dialog.setWindowTitle("itch.io Authentication")
+        dialog.setFixedSize(480, 320)
+        dialog.setModal(True)
+
+        layout = QVBoxLayout(dialog)
+        layout.setContentsMargins(24, 20, 24, 20)
+        layout.setSpacing(12)
+
+        title = QLabel("itch.io Login Required")
+        title.setObjectName("sectionTitle")
+        layout.addWidget(title)
+        layout.addSpacing(4)
+        layout.addWidget(QFrame(frameShape=QFrame.Shape.HLine))
+        layout.addSpacing(8)
+
+        # Step 1
+        step1_label = QLabel("Step 1")
+        step1_label.setObjectName("profileName")
+        layout.addWidget(step1_label)
+
+        step1_desc = QLabel("Open itch.io and sign in or create an account.")
+        step1_desc.setObjectName("profileDetail")
+        step1_desc.setWordWrap(True)
+        layout.addWidget(step1_desc)
+
+        open_btn = QPushButton("Open itch.io")
+        open_btn.setObjectName("primaryBtn")
+        open_btn.setFixedHeight(36)
+        open_btn.clicked.connect(lambda: webbrowser.open("https://itch.io/login"))
+        layout.addWidget(open_btn)
+
+        layout.addSpacing(12)
+
+        # Step 2
+        step2_label = QLabel("Step 2")
+        step2_label.setObjectName("profileName")
+        layout.addWidget(step2_label)
+
+        step2_desc = QLabel("After logging in, click Authenticate to open ItchFixer and complete the login.")
+        step2_desc.setObjectName("profileDetail")
+        step2_desc.setWordWrap(True)
+        layout.addWidget(step2_desc)
+
+        auth_btn = QPushButton("Authenticate")
+        auth_btn.setObjectName("successBtn")
+        auth_btn.setFixedHeight(40)
+        layout.addWidget(auth_btn)
+
+        def do_authenticate():
+            dialog.accept()
+            self._launch_itch_fixer()
+            self.app.quit()
+
+        auth_btn.clicked.connect(do_authenticate)
+
+        dialog.exec()
 
     # ------------------------------------------------------------------ itch profile (read-only)
     def _read_itch_token(self):
@@ -1160,13 +1223,16 @@ class LauncherApp:
             # Not logged in
             self.profile_game_text.setText("Not logged in")
             self.profile_game_text.setStyleSheet(f"color: {TEXT_MUTED};")
-            self.profile_game_detail.setText("ItchFixer will open on startup to log in")
+            self.profile_game_detail.setText("Click Profile to authenticate")
             self.profile_game_detail.setStyleSheet(f"color: {TEXT_MUTED};")
             self.profile_page_status.setText("Not logged in")
             self.profile_page_status.setStyleSheet(f"color: {TEXT_MUTED};")
             self.profile_page_name.setText("")
             self.profile_page_au.setText("")
             self.profile_page_platforms.setText("")
+            if not self._itch_auth_shown:
+                self._itch_auth_shown = True
+                self._show_itch_auth_dialog()
             return
 
         username = profile.get("username") or "Unknown"
@@ -1204,7 +1270,6 @@ class LauncherApp:
     # ------------------------------------------------------------------ run
     def run(self):
         self.window.show()
-        self._launch_itch_fixer()
         self._load_itch_profile()
         exit_code = self.app.exec()
         self.discord.disconnect()
