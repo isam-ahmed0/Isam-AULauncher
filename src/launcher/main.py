@@ -18,30 +18,29 @@ if __name__ == "__main__":
                         help="Skip splash screen")
     args, _ = parser.parse_known_args()
 
+    if args.gui_2:
+        from gui_dpg.window import LauncherApp
+        app = LauncherApp()
+        app.run()
+        sys.exit(0)
+
+    qapp = QApplication(sys.argv)
+
     while True:
         try:
-            if args.gui_2:
-                from gui_dpg.window import LauncherApp
-                app = LauncherApp()
-                app.run()
-                break
-
-            # Qt GUI with splash screen
             from gui_qt.window import LauncherApp
             from gui_qt.splash import SplashScreen
             from gui_qt.theme import apply_theme
 
-            qapp = QApplication(sys.argv)
             apply_theme(qapp)
-
             launcher = LauncherApp(qapp)
 
             if args.no_splash:
                 launcher._load_itch_profile()
                 launcher.window.show()
-                exit_code = qapp.exec()
+                qapp.exec()
                 launcher.discord.disconnect()
-                sys.exit(exit_code)
+                break
 
             splash = SplashScreen()
 
@@ -59,15 +58,17 @@ if __name__ == "__main__":
             splash.show()
             QTimer.singleShot(300, boot)
 
-            exit_code = qapp.exec()
+            qapp.exec()
             launcher.discord.disconnect()
-            sys.exit(exit_code)
             break
         except KeyboardInterrupt:
             break
         except Exception as e:
             logging.critical(e, exc_info=True)
             print(f"Error: {e}")
-            r = input("Enter to restart, 'exit' to quit: ").strip().lower()
+            try:
+                r = input("Enter to restart, 'exit' to quit: ").strip().lower()
+            except (EOFError, OSError):
+                break
             if r == "exit":
                 break

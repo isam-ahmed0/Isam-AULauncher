@@ -3,6 +3,7 @@ SplashScreen — Riot-style transparent splash screen for Isam AULauncher.
 Frameless, semi-transparent window with brand logo and loading status.
 """
 import sys
+import math
 from PySide6.QtCore import Qt, QTimer, QPropertyAnimation, QEasingCurve, Signal
 from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout
 from PySide6.QtGui import QPainter, QColor, QFont, QPen, QBrush, QLinearGradient, QFontMetrics
@@ -81,6 +82,12 @@ class SplashScreen(QWidget):
 
     # ------------------------------------------------------------------ paint
     def paintEvent(self, event):
+        try:
+            self._paint(event)
+        except Exception:
+            pass
+
+    def _paint(self, event):
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
 
@@ -93,7 +100,6 @@ class SplashScreen(QWidget):
         p.drawRoundedRect(0, 0, w, h, 16, 16)
 
         # --- Subtle border glow (pulsing) ---
-        import math
         glow_intensity = int(40 + 30 * math.sin(self._glow_phase))
         border_color = QColor(99, 102, 241, glow_intensity)  # accent blue
         p.setPen(QPen(border_color, 1.5))

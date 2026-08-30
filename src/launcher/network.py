@@ -46,17 +46,31 @@ class NetworkManager:
                 r.raise_for_status()
                 total = int(r.headers.get('content-length', 0))
                 dl = 0
-                with open(output_path, 'wb') as f:
-                    for chunk in r.iter_content(CHUNK_SIZE):
-                        if chunk:
-                            f.write(chunk)
-                            dl += len(chunk)
-                            if progress_callback and total:
-                                speed = dl / max(time.time() - start, 0.001)
-                                progress_callback(dl, total, speed)
+                try:
+                    with open(output_path, 'wb') as f:
+                        for chunk in r.iter_content(CHUNK_SIZE):
+                            if chunk:
+                                f.write(chunk)
+                                dl += len(chunk)
+                                if progress_callback and total:
+                                    speed = dl / max(time.time() - start, 0.001)
+                                    progress_callback(dl, total, speed)
+                except IOError as e:
+                    logging.error(f"File write failed: {e}")
+                    try:
+                        import os
+                        os.remove(output_path)
+                    except OSError:
+                        pass
+                    return False
             return True
         except requests.RequestException as e:
             logging.error(f"Download failed: {e}")
+            try:
+                import os
+                os.remove(output_path)
+            except (OSError, TypeError):
+                pass
             return False
 
     def get_releases(self) -> List[GameVersion]:
@@ -90,8 +104,9 @@ class DiscordRPC:
             if self.connected and self.rpc:
                 try:
                     self.rpc.close()
-                except:
+                except Exception:
                     pass
+                self.rpc = None
             self.rpc = Presence(DISCORD_CLIENT_ID)
             self.rpc.connect()
             self.connected = True
@@ -100,14 +115,16 @@ class DiscordRPC:
         except Exception as e:
             logging.error(f"Discord RPC failed: {e}")
             self.connected = False
+            self.rpc = None
             return False
 
-    def update_status(self, state: str, details: str, large_text: str = APP_NAME):
+    def update_status(self, state: str, details: str, large_text: str = "Isam AU"):
         if self.connected and self.rpc:
+            rpc = self.rpc
             def _do():
                 try:
-                    self.rpc.update(state=state, details=details,
-                                   large_image="amongus", large_text=large_text)
+                    rpc.update(state=state, details=details,
+                                   large_image="isam_au", large_text=large_text)
                 except Exception as e:
                     logging.error(f"RPC update failed: {e}")
             threading.Thread(target=_do, daemon=True).start()
@@ -116,6 +133,7 @@ class DiscordRPC:
         if self.connected and self.rpc:
             try:
                 self.rpc.close()
-                self.connected = False
-            except:
+            except Exception:
                 pass
+            self.connected = False
+            self.rpc = None

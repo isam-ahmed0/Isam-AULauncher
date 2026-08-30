@@ -19,6 +19,11 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QThread, Signal, QTimer
 from PySide6.QtGui import QIcon, QPixmap, QPainter, QColor, QLinearGradient, QFont
 
+
+class _UISignaler(Qt.QObject):
+    """Bridge to dispatch callables from background threads to the main thread."""
+    invoke = Signal(object)
+
 from config import (
     Config, APP_NAME, BRAND_SHORT, MAKER, LAUNCHER_VERSION,
     VERSION_URL, GITHUB_REPO, AUNLOCKER_JSON_URL, PATCHES_URL,
@@ -190,8 +195,11 @@ class LauncherApp:
         self._pending_install_path = None
 
         self._itch_auth_shown = False
+        self._itch_profile = None
 
         self._existing_app = existing_app
+        self._ui_signaler = _UISignaler()
+        self._ui_signaler.invoke.connect(lambda fn: fn())
         self._setup_app()
         self._build_ui()
         self._setup_game_timer()
@@ -218,6 +226,10 @@ class LauncherApp:
         if w in self._workers:
             self._workers.remove(w)
 
+    def _invoke_main(self, fn):
+        """Schedule fn to run on the main thread."""
+        self._ui_signaler.invoke.emit(fn)
+
     def _setup_game_timer(self):
         """Poll game process state every 2 seconds."""
         self._game_timer = QTimer()
@@ -228,9 +240,7 @@ class LauncherApp:
         """Check if game is still running, update button accordingly."""
         was_running = self.game.is_running
         self.game.poll()
-        if was_running and not self.game.is_running:
-            self._on_game_stopped()
-        elif self.game.is_running:
+        if self.game.is_running:
             if self.main_action_btn.text() != "PLAYING":
                 self._on_game_started()
 
@@ -727,36 +737,38 @@ class LauncherApp:
     def _download_latest(self):
         def go():
             try:
-                self._busy_on()
-                self._set_status("Preparing download...", "info")
+                self._invoke_main(self._busy_on)
+                self._invoke_main(lambda: self._set_status("Preparing download...", "info"))
                 if self.discord.connected:
                     self.discord.update_status("Updating Game", "Downloading...")
                 latest = self.latest_version
                 if latest == "Checking...":
                     latest = self.network.fetch_text(VERSION_URL)
                     if not latest:
-                        self._set_status("Failed to fetch version info", "danger")
+                        self._invoke_main(lambda: self._set_status("Failed to fetch version info", "danger"))
                         return
                 gp = self.config.get_game_path()
                 if not gp:
                     gp = self._pending_install_path
                     if not gp:
-                        self._busy_off()
+                        self._invoke_main(self._busy_off)
                         self._install_folder_pending = True
-                        self._set_status("Select a folder to install into", "info")
-                        folder = QFileDialog.getExistingDirectory(
-                            self.window, "Select Install Folder"
-                        )
-                        if folder:
-                            self._folder_selected(folder)
+                        self._invoke_main(lambda: self._set_status("Select a folder to install into", "info"))
+                        def _pick_folder():
+                            folder = QFileDialog.getExistingDirectory(
+                                self.window, "Select Install Folder"
+                            )
+                            if folder:
+                                self._folder_selected(folder)
+                        self._invoke_main(_pick_folder)
                         return
 
                 # Wire up progress signals from GameManager
                 def on_progress(pct):
-                    self._update_progress(pct)
+                    self._invoke_main(lambda p=pct: self._update_progress(p))
 
                 def on_status(text, level):
-                    self._set_status(text, level)
+                    self._invoke_main(lambda t=text, l=level: self._set_status(t, l))
 
                 self.game.update_progress.connect(on_progress)
                 self.game.status_message.connect(on_status)
@@ -765,16 +777,16 @@ class LauncherApp:
                     if ok:
                         self._pending_install_path = None
                         self.current_version = latest
-                        self._update_version_display()
-                        self._update_progress(100)
+                        self._invoke_main(self._update_version_display)
+                        self._invoke_main(lambda: self._update_progress(100))
                 finally:
                     self.game.update_progress.disconnect(on_progress)
                     self.game.status_message.disconnect(on_status)
             except Exception as e:
-                self._set_status(f"Error: {e}", "danger")
+                self._invoke_main(lambda: self._set_status(f"Error: {e}", "danger"))
             finally:
-                self._busy_off()
-                self._update_main_btn()
+                self._invoke_main(self._busy_off)
+                self._invoke_main(self._update_main_btn)
                 if self.discord.connected:
                     self.discord.update_status("In Launcher", "Browsing Menu")
         self._run(go)
@@ -788,30 +800,31 @@ class LauncherApp:
 
         def go():
             try:
-                self._busy_on()
-                self._set_status("Checking AUnlocker...", "info")
+                self._invoke_main(self._busy_on)
+                self._invoke_main(lambda: self._set_status("Checking AUnlocker...", "info"))
                 data = self.network.fetch_text(AUNLOCKER_JSON_URL)
                 if not data:
-                    QMessageBox.warning(self.window, "Error", "Failed to fetch data")
+                    self._invoke_main(lambda: QMessageBox.warning(self.window, "Error", "Failed to fetch data"))
                     return
                 versions = json.loads(data).get("versions", [])
                 for entry in versions:
-                    if entry["version"] == ver:
+                    if entry.get("version") == ver:
                         zp = Path("AUnlocker.zip")
-                        self._set_status("Downloading AUnlocker...", "info")
-                        if self.network.download_file(entry["link"], zp):
+                        self._invoke_main(lambda: self._set_status("Downloading AUnlocker...", "info"))
+                        if self.network.download_file(entry.get("link", ""), zp):
                             FileManager.extract_zip(zp, gp)
                             FileManager.safe_delete(zp)
-                            QMessageBox.information(self.window, "Info",
-                                                    "AUnlocker installed!")
-                            self._set_status("Ready")
+                            self._invoke_main(lambda: QMessageBox.information(self.window, "Info",
+                                                                            "AUnlocker installed!"))
+                            self._invoke_main(lambda: self._set_status("Ready"))
                             return
-                QMessageBox.warning(self.window, "Warning",
-                                    "No compatible AUnlocker version found")
-            except Exception:
-                self._set_status("Ready")
+                self._invoke_main(lambda: QMessageBox.warning(self.window, "Warning",
+                                        "No compatible AUnlocker version found"))
+            except Exception as e:
+                logging.error(f"AUnlocker install failed: {e}")
+                self._invoke_main(lambda: self._set_status("Ready"))
             finally:
-                self._busy_off()
+                self._invoke_main(self._busy_off)
         self._run(go)
 
     def _launch_game(self):
@@ -1092,8 +1105,8 @@ class LauncherApp:
             latest = self.network.fetch_text(VERSION_URL)
             if latest:
                 self.latest_version = latest
-            self._update_version_display()
-            self._update_main_btn()
+            self._invoke_main(self._update_version_display)
+            self._invoke_main(self._update_main_btn)
             if self.config.settings.get("discord_rpc"):
                 self.discord.connect()
         self._run(go)
@@ -1109,7 +1122,10 @@ class LauncherApp:
         """Launch ItchFixer as a separate process."""
         exe = self._find_itch_fixer()
         if exe.exists():
-            subprocess.Popen([str(exe)], cwd=str(exe.parent))
+            try:
+                subprocess.Popen([str(exe)], cwd=str(exe.parent))
+            except OSError as e:
+                logging.error(f"Failed to launch ItchFixer: {e}")
         else:
             logging.warning(f"ItchFixer not found: {exe}")
 
@@ -1181,8 +1197,8 @@ class LauncherApp:
                 token = _ITCH_TOKEN_FILE.read_text().strip()
                 if token:
                     return token
-        except Exception:
-            pass
+        except (OSError, IOError) as e:
+            logging.debug(f"Failed to read itch token: {e}")
         return None
 
     def _fetch_itch_profile(self):
@@ -1201,8 +1217,8 @@ class LauncherApp:
             if r.status_code == 200:
                 u = r.json().get("user", {})
                 profile["username"] = u.get("username")
-        except Exception:
-            pass
+        except (requests.RequestException, ValueError) as e:
+            logging.debug(f"Failed to fetch itch.io username: {e}")
 
         # 2. Fetch Among Us account data via EOS
         try:
@@ -1232,19 +1248,18 @@ class LauncherApp:
                         disc = attrs.get("discriminator")
                         if name:
                             profile["among_us_name"] = f"{name}#{disc}" if disc else name
-        except Exception:
-            pass
+        except (requests.RequestException, ValueError, KeyError) as e:
+            logging.debug(f"Failed to fetch Among Us profile data: {e}")
 
         return profile
 
     def _load_itch_profile(self):
         """Fetch itch profile in background, update UI on main thread via signal."""
         def go():
-            self._itch_profile = self._fetch_itch_profile()
-        w = Worker(go)
-        w.finished.connect(lambda: self._update_profile_ui(self._itch_profile))
-        self._workers.append(w)
-        w.start()
+            profile = self._fetch_itch_profile()
+            self._itch_profile = profile
+            self._invoke_main(lambda p=profile: self._update_profile_ui(p))
+        self._run(go)
 
     def _update_profile_ui(self, profile):
         """Update all profile-related UI elements."""
