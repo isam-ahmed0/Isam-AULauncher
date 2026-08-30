@@ -1210,12 +1210,13 @@ class LauncherApp:
         return profile
 
     def _load_itch_profile(self):
-        """Fetch itch profile in background and update UI."""
+        """Fetch itch profile in background, update UI on main thread via signal."""
         def go():
-            profile = self._fetch_itch_profile()
-            self._itch_profile = profile
-            self._update_profile_ui(profile)
-        self._run(go)
+            self._itch_profile = self._fetch_itch_profile()
+        w = Worker(go)
+        w.finished.connect(lambda: self._update_profile_ui(self._itch_profile))
+        self._workers.append(w)
+        w.start()
 
     def _update_profile_ui(self, profile):
         """Update all profile-related UI elements."""
