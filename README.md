@@ -9,19 +9,14 @@ This is the continuation of my Among Us launcher project.
 I changed everything, logic, language
 carries the **Isam AULauncher** identity with a fresh, sleek interface.
 
-### The itch login and game files are from Shadow Slime.
+### Cedits
+The itch login and game files are from Shadow Slime.
 
 ## Install
 
-The easiest way to use is download the IsamAULauncher-Setup-0.1.exe from
-### [Release](https://github.com/isam-ahmed0/Isam-AULauncher/releases/latest)
+The easiest way to use is download the IsamAULauncher-Setup.exe from [Releases](https://github.com/isam-ahmed0/Isam-AULauncher/releases/latest).
 
-You can also download portable zip.
-
-Theres also a lite version called **Isam-AU-LITE.zip** which is 8x lite and low feautures.
-
-
-I recommend to use the setup exe or prtable zip. The lite one can sometimes crashes.
+Theres also a lite version called **Isam-AU-LITE.zip** which is 8x lite and low feautures **but discontinued**
 
 The test and old repo was https://github.com/isam-ahmed0/AmongUs_Launcher
 
