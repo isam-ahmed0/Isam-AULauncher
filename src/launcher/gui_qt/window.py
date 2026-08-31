@@ -22,6 +22,9 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QThread, Signal, QTimer, QObject
 from PySide6.QtGui import QIcon, QPixmap, QPainter, QColor, QLinearGradient, QFont, QFontMetrics, QAction
 
+from ..mod_inspector import inspect_profile_dlls
+from .mod_warnings import ModWarningDialog
+
 
 class _UISignaler(QObject):
     """Bridge to dispatch callables from background threads to the main thread."""
@@ -1509,6 +1512,13 @@ class LauncherApp:
         self._run(go)
 
     def _launch_game(self):
+        profile_name = self.config.get_active_profile()
+        profile_path = self.profile_mgr.profile_path(profile_name)
+        _, issues = inspect_profile_dlls(profile_path)
+        if issues:
+            dlg = ModWarningDialog(issues, parent=self.window)
+            if dlg.exec() != QDialog.DialogCode.Accepted:
+                return
         ok = self.game.launch()
         if ok:
             self._update_main_btn()
