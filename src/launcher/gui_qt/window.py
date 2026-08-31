@@ -758,6 +758,8 @@ class LauncherApp:
         self._update_bep_status()
 
         return page
+
+    def _build_profile_page(self):
         page = QWidget()
         layout = QVBoxLayout(page)
         layout.setContentsMargins(0, 0, 0, 0)
