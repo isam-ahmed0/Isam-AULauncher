@@ -1,4 +1,4 @@
-import asyncio
+import warnings
 import time
 import logging
 import threading
@@ -105,30 +105,18 @@ class DiscordRPC:
         self.connected = False
         self._lock = threading.Lock()
 
-    def _run_async(self, coro):
-        """Run a coroutine in a new event loop (for async pypresence)."""
-        if asyncio.iscoroutine(coro):
-            try:
-                loop = asyncio.new_event_loop()
-                loop.run_until_complete(coro)
-                loop.close()
-            except Exception:
-                pass
-        # If not a coroutine, pypresence is sync — nothing to do
-
     def connect(self) -> bool:
         if not DISCORD_RPC_AVAILABLE:
             return False
         try:
             if self.connected and self.rpc:
                 try:
-                    self._run_async(self.rpc.close())
+                    self.rpc.close()
                 except Exception:
                     pass
                 self.rpc = None
             self.rpc = Presence(DISCORD_CLIENT_ID)
-            result = self.rpc.connect()
-            self._run_async(result)
+            self.rpc.connect()
             self.connected = True
             self.update_status("In Launcher", "Browsing Menu")
             return True
@@ -145,12 +133,10 @@ class DiscordRPC:
             rpc = self.rpc
         def _do():
             try:
-                result = rpc.update(state=state, details=details,
-                                    large_image="isam_au", large_text=large_text)
-                if asyncio.iscoroutine(result):
-                    loop = asyncio.new_event_loop()
-                    loop.run_until_complete(result)
-                    loop.close()
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", RuntimeWarning)
+                    rpc.update(state=state, details=details,
+                               large_image="isam_au", large_text=large_text)
             except Exception as e:
                 logging.error(f"RPC update failed: {e}")
         threading.Thread(target=_do, daemon=True).start()
@@ -158,11 +144,7 @@ class DiscordRPC:
     def disconnect(self):
         if self.connected and self.rpc:
             try:
-                result = self.rpc.close()
-                if asyncio.iscoroutine(result):
-                    loop = asyncio.new_event_loop()
-                    loop.run_until_complete(result)
-                    loop.close()
+                self.rpc.close()
             except Exception:
                 pass
             self.connected = False
