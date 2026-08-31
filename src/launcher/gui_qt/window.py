@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
     QCheckBox, QDialog, QFileDialog, QStatusBar, QMessageBox,
     QLineEdit, QRadioButton, QButtonGroup, QListWidget, QListWidgetItem,
     QInputDialog, QScrollArea, QSizePolicy, QSystemTrayIcon, QMenu,
-    QComboBox, QGridLayout,
+    QComboBox,
 )
 from PySide6.QtCore import Qt, QThread, Signal, QTimer, QObject
 from PySide6.QtGui import QIcon, QPixmap, QPainter, QColor, QLinearGradient, QFont, QAction
@@ -1765,10 +1765,6 @@ class LauncherApp:
         layout.addWidget(info_title)
         layout.addSpacing(6)
 
-        grid = QGridLayout()
-        grid.setContentsMargins(8, 0, 8, 0)
-        grid.setColumnMinimumWidth(0, 130)
-
         gp = self.config.get_game_path()
         version = self.config.get_version() or "Not installed"
         install_path = str(gp) if gp else "Not set"
@@ -1806,17 +1802,19 @@ class LauncherApp:
         ]
 
         for row, (label, value, color) in enumerate(fields):
+            row_layout = QHBoxLayout()
+            row_layout.setContentsMargins(8, 0, 8, 0)
             lbl = QLabel(label)
             lbl.setObjectName("mutedText")
-            lbl.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-            grid.addWidget(lbl, row, 0)
-
+            lbl.setFixedWidth(120)
+            row_layout.addWidget(lbl)
             val = QLabel(value)
             val.setStyleSheet(f"color: {color};")
             val.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-            grid.addWidget(val, row, 1)
-
-        layout.addLayout(grid)
+            val.setWordWrap(False)
+            row_layout.addWidget(val)
+            row_layout.addStretch()
+            layout.addLayout(row_layout)
 
         layout.addSpacing(16)
         layout.addWidget(QFrame(frameShape=QFrame.Shape.HLine))
