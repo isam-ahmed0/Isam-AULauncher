@@ -111,8 +111,13 @@ class ProfileManager:
             if self.is_junction(plugins):
                 plugins.rmdir()  # removes junction only
             elif plugins.exists():
-                # plugins is a real folder — migrate its contents first
-                return False
+                # plugins is a real folder — move its contents into the target profile
+                for dll in plugins.glob("*.dll"):
+                    try:
+                        shutil.move(str(dll), str(target / dll.name))
+                    except OSError as e:
+                        log.error(f"Failed to migrate mod {dll}: {e}")
+                plugins.rmdir()
             else:
                 # Folder doesn't exist, ensure parent exists
                 plugins.parent.mkdir(parents=True, exist_ok=True)

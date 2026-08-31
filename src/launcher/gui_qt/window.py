@@ -839,6 +839,7 @@ class LauncherApp:
 
         # Initialize
         self._update_bep_status()
+        self._run_first_time_migration()
         self._refresh_profile_list()
 
         return page
