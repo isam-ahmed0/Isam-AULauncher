@@ -822,6 +822,12 @@ class LauncherApp:
         add_mods_btn.clicked.connect(self._cb_add_mods)
         mods_btn_row.addWidget(add_mods_btn)
 
+        move_mods_btn = QPushButton("Move to...")
+        move_mods_btn.setObjectName("toolBtn")
+        move_mods_btn.setFixedHeight(36)
+        move_mods_btn.clicked.connect(self._cb_move_mods)
+        mods_btn_row.addWidget(move_mods_btn)
+
         remove_mods_btn = QPushButton("Remove Selected")
         remove_mods_btn.setObjectName("dangerBtn")
         remove_mods_btn.setFixedHeight(36)
@@ -1358,6 +1364,35 @@ class LauncherApp:
             self._mods_list.addItem(item)
         self._mods_status.setText(f"{len(dlls)} mod(s) in '{name}'")
         self._mods_status.setStyleSheet(f"color: {INFO};")
+
+    def _cb_move_mods(self):
+        selected = self._mods_list.selectedItems()
+        if not selected:
+            QMessageBox.information(self.window, "Info", "Select mod(s) to move first.")
+            return
+        current_profile = self._profile_combo.currentText()
+        profiles = self.profile_mgr.list_profiles()
+        others = [p for p in profiles if p != current_profile]
+        if not others:
+            QMessageBox.information(self.window, "Info", "No other profiles to move to.")
+            return
+        item, ok = QInputDialog.getItem(
+            self.window, "Move Mods", "Move to profile:", others, 0, False,
+        )
+        if not ok:
+            return
+        names = [item.text().split("  ")[0] for item in selected]
+        reply = QMessageBox.question(
+            self.window, "Confirm",
+            f"Move {len(names)} mod(s) to '{item}'?\n" + "\n".join(names),
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        )
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+        moved = self.profile_mgr.move_mods(current_profile, item, names)
+        self._mods_status.setText(f"Moved {moved} mod(s) to '{item}'")
+        self._mods_status.setStyleSheet(f"color: {SUCCESS};")
+        self._cb_refresh_mods()
 
     def _cb_remove_mods(self):
         selected = self._mods_list.selectedItems()

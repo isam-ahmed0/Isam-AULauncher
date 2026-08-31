@@ -165,6 +165,25 @@ class ProfileManager:
                 log.error(f"Failed to copy mod {src}: {e}")
         return copied
 
+    def move_mods(self, from_profile: str, to_profile: str, dll_names: list) -> int:
+        """Move .dll files from one profile to another. Returns count moved."""
+        src_dir = self.profile_path(from_profile)
+        dst_dir = self.profile_path(to_profile)
+        if not src_dir.exists() or not dst_dir.exists():
+            return 0
+        moved = 0
+        for name in dll_names:
+            src = src_dir / name
+            dst = dst_dir / name
+            if not src.exists():
+                continue
+            try:
+                shutil.move(str(src), str(dst))
+                moved += 1
+            except OSError as e:
+                log.error(f"Failed to move mod {src} -> {dst}: {e}")
+        return moved
+
     def ensure_first_profiles(self, game_path: Path) -> str:
         """On first run: if BepInEx/plugins has real files (not junction),
         move them into 'Default' profile, create junction, and create 'Vanilla'.
