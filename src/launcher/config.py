@@ -22,7 +22,6 @@ MESSAGE_URL = "https://raw.githubusercontent.com/jogamerforgames2021/AmongUsLaun
 PATCHES_URL = "https://raw.githubusercontent.com/jogamerforgames2021/AmongUsLauncherNew/refs/heads/main/Patches.xml"
 SOURCE_CODE_URL = "https://github.com/isam-ahmed0/Isam-AULauncher"
 GITHUB_REPO = "jogamerforgames2021/AmongUsLauncherNew"
-AUNLOCKER_JSON_URL = "https://raw.githubusercontent.com/jogamerforgames2021/AmongUsLauncherNew/refs/heads/main/AUnlockerStuff/Versions.json"
 DISCORD_CLIENT_ID = "1543527340963930193"
 DISCORD_INVITE = ""
 YOUTUBE_CHANNEL = "https://www.youtube.com/@isam0ahmed"

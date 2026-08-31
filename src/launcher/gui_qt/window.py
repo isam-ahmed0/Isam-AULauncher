@@ -29,14 +29,14 @@ class _UISignaler(QObject):
 
 from config import (
     Config, APP_NAME, BRAND_SHORT, MAKER, LAUNCHER_VERSION,
-    VERSION_URL, GITHUB_REPO, AUNLOCKER_JSON_URL, PATCHES_URL,
+    VERSION_URL,
     DISCORD_INVITE, YOUTUBE_CHANNEL, SOURCE_CODE_URL,
     LAUNCHER_UPDATE_URL,
 )
 from network import NetworkManager, DiscordRPC
 from file_manager import FileManager
 from gui_qt.theme import (
-    apply_theme, ACCENT, ACCENT_2, SUCCESS, SUCCESS_HOVER,
+    apply_theme, ACCENT, SUCCESS, SUCCESS_HOVER,
     INFO, DANGER, WARNING, TEXT_BRIGHT, TEXT_PRIMARY,
     TEXT_SECONDARY, TEXT_MUTED, BG_BASE, BG_SIDEBAR, BG_ELEVATED,
 )
@@ -203,7 +203,6 @@ class LauncherApp:
         self._pending_install_path = None
 
         self._itch_auth_shown = False
-        self._itch_profile = None
 
         self._existing_app = existing_app
         self._ui_signaler = _UISignaler()
@@ -291,7 +290,6 @@ class LauncherApp:
 
     def _poll_game_state(self):
         """Check if game is still running, update button accordingly."""
-        was_running = self.game.is_running
         self.game.poll()
         if self.game.is_running:
             if self.main_action_btn.text() != "PLAYING":
@@ -351,18 +349,16 @@ class LauncherApp:
         self.pages = QStackedWidget()
         self.page_game = self._build_game_page()
         self.page_tools = self._build_tools_page()
-        self.page_aunlocker = self._build_aunlocker_page()
         self.page_profile = self._build_profile_page()
         self.pages.addWidget(self.page_game)
         self.pages.addWidget(self.page_tools)
-        self.pages.addWidget(self.page_aunlocker)
         self.pages.addWidget(self.page_profile)
         self.page_mods = self._build_mods_page()
         self.pages.addWidget(self.page_mods)
 
         # Nav buttons
         self.nav_buttons = {}
-        for label, idx in [("Game", 0), ("Tools", 1), ("AUnlocker", 2), ("Profile", 3), ("Mods", 4)]:
+        for label, idx in [("Game", 0), ("Tools", 1), ("Profile", 2), ("Mods", 3)]:
             btn = QPushButton(f"  {label}")
             btn.setCheckable(True)
             btn.setFixedHeight(40)
@@ -675,31 +671,6 @@ class LauncherApp:
 
         return page
 
-    def _build_aunlocker_page(self):
-        page = QWidget()
-        layout = QVBoxLayout(page)
-        layout.setContentsMargins(28, 20, 28, 0)
-
-        title = QLabel("AUNLOCKER")
-        title.setObjectName("sectionTitle")
-        layout.addWidget(title)
-        layout.addSpacing(12)
-
-        desc = QLabel("Install the Among Us unlocker for your game version.")
-        desc.setObjectName("statusText")
-        layout.addWidget(desc)
-        layout.addSpacing(16)
-
-        self.aunlocker_btn = QPushButton("Install AUnlocker")
-        self.aunlocker_btn.setObjectName("primaryBtn")
-        self.aunlocker_btn.setFixedHeight(52)
-        self.aunlocker_btn.setFixedWidth(240)
-        self.aunlocker_btn.clicked.connect(self._cb_install_aunlocker)
-        layout.addWidget(self.aunlocker_btn)
-
-        layout.addStretch()
-        return page
-
     def _build_mods_page(self):
         page = QWidget()
         layout = QVBoxLayout(page)
@@ -977,12 +948,10 @@ class LauncherApp:
     def _busy_on(self):
         self._busy = True
         self.main_action_btn.setEnabled(False)
-        self.aunlocker_btn.setEnabled(False)
 
     def _busy_off(self):
         self._busy = False
         self.main_action_btn.setEnabled(True)
-        self.aunlocker_btn.setEnabled(True)
 
     # ------------------------------------------------------------------ callbacks
     def _cb_main_action(self):
@@ -994,9 +963,6 @@ class LauncherApp:
         elif "PLAYING" in txt:
             self.game.stop()
             self._update_main_btn()
-
-    def _cb_install_aunlocker(self):
-        self._install_aunlocker()
 
     def _cb_create_shortcut(self):
         self._create_shortcut()
@@ -1535,47 +1501,6 @@ class LauncherApp:
                 self._invoke_main(self._update_main_btn)
                 if self.discord.connected:
                     self.discord.update_status("In Launcher", "Browsing Menu")
-        self._run(go)
-
-    def _install_aunlocker(self):
-        ver = self.config.get_version()
-        gp = self.config.get_game_path()
-        if not ver or not gp:
-            QMessageBox.warning(self.window, "Error", "Game not installed!")
-            return
-
-        def go():
-            try:
-                self._invoke_main(self._busy_on)
-                self._invoke_main(lambda: self._set_status("Checking AUnlocker...", "info"))
-                data = self.network.fetch_text(AUNLOCKER_JSON_URL)
-                if not data:
-                    self._invoke_main(lambda: QMessageBox.warning(self.window, "Error", "Failed to fetch data"))
-                    return
-                versions = json.loads(data).get("versions", [])
-                for entry in versions:
-                    if entry.get("version") == ver:
-                        zp = Path("AUnlocker.zip")
-                        self._invoke_main(lambda: self._set_status("Downloading AUnlocker...", "info"))
-                        if self.network.download_file(entry.get("link", ""), zp):
-                            if FileManager.extract_zip(zp, gp):
-                                FileManager.safe_delete(zp)
-                                self._invoke_main(lambda: QMessageBox.information(self.window, "Info",
-                                                                                "AUnlocker installed!"))
-                                self._invoke_main(lambda: self._set_status("Ready"))
-                            else:
-                                FileManager.safe_delete(zp)
-                                self._invoke_main(lambda: QMessageBox.warning(self.window, "Error",
-                                                                            "Failed to extract AUnlocker"))
-                                self._invoke_main(lambda: self._set_status("Extraction failed", "danger"))
-                            return
-                self._invoke_main(lambda: QMessageBox.warning(self.window, "Warning",
-                                        "No compatible AUnlocker version found"))
-            except Exception as e:
-                logging.error(f"AUnlocker install failed: {e}")
-                self._invoke_main(lambda: self._set_status("Ready"))
-            finally:
-                self._invoke_main(self._busy_off)
         self._run(go)
 
     def _launch_game(self):
@@ -2131,7 +2056,6 @@ class LauncherApp:
         """Fetch itch profile in background, update UI on main thread via signal."""
         def go():
             profile = self._fetch_itch_profile()
-            self._itch_profile = profile
             self._invoke_main(lambda p=profile: self._update_profile_ui(p))
         self._run(go)
 

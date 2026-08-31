@@ -15,7 +15,7 @@ import dearpygui.dearpygui as dpg
 
 from config import (
     Config, APP_NAME, BRAND_SHORT, MAKER, LAUNCHER_VERSION,
-    VERSION_URL, GITHUB_REPO, AUNLOCKER_JSON_URL, PATCHES_URL,
+    VERSION_URL, GITHUB_REPO, PATCHES_URL,
     DISCORD_INVITE, YOUTUBE_CHANNEL, SOURCE_CODE_URL,
 )
 from network import NetworkManager, DiscordRPC, GameVersion
@@ -134,7 +134,6 @@ class LauncherApp:
             # Nav items
             self._sidebar_btn("Game", "game", True)
             self._sidebar_btn("Tools", "tools", False)
-            self._sidebar_btn("AUnlocker", "aunlocker", False)
 
             dpg.add_spacer(height=8)
             dpg.add_separator()
@@ -169,7 +168,7 @@ class LauncherApp:
         page_id = sender.replace("nav_", "")
         self._active_page = page_id
 
-        for p in ("game", "tools", "aunlocker"):
+        for p in ("game", "tools"):
             tag = f"nav_{p}"
             if p == page_id:
                 bind_accent(tag, "accent")
@@ -180,7 +179,6 @@ class LauncherApp:
 
         dpg.show_item("page_game") if page_id == "game" else dpg.hide_item("page_game")
         dpg.show_item("page_tools") if page_id == "tools" else dpg.hide_item("page_tools")
-        dpg.show_item("page_aunlocker") if page_id == "aunlocker" else dpg.hide_item("page_aunlocker")
 
         if page_id == "game":
             self._start_hero_animation()
@@ -192,7 +190,6 @@ class LauncherApp:
         with dpg.group(tag="content_area"):
             self._build_game_page()
             self._build_tools_page()
-            self._build_aunlocker_page()
 
     # ------------------------------------------------------------------ game page
     def _build_game_page(self):
@@ -272,22 +269,6 @@ class LauncherApp:
                 dpg.add_button(label="Uninstall", callback=self._cb_uninstall,
                                width=180, height=44)
                 bind_accent(dpg.last_item(), "btn_danger")
-                dpg.add_spacer(width=8)
-
-    # ------------------------------------------------------------------ aunlocker page
-    def _build_aunlocker_page(self):
-        with dpg.group(tag="page_aunlocker", show=False):
-            dpg.add_spacer(height=20)
-            dpg.add_text("AUNLOCKER", color=TEXT_MUTED)
-            dpg.add_spacer(height=12)
-            dpg.add_text("Install the Among Us unlocker for your game version.",
-                         color=TEXT_SECONDARY)
-            dpg.add_spacer(height=16)
-            with dpg.group(horizontal=True):
-                dpg.add_spacer(width=8)
-                dpg.add_button(label="Install AUnlocker", tag="aunlocker_btn",
-                               callback=self._cb_install_aunlocker, width=240, height=52)
-                bind_accent("aunlocker_btn", "btn_primary")
                 dpg.add_spacer(width=8)
 
     # ------------------------------------------------------------------ hero banner
@@ -425,9 +406,6 @@ class LauncherApp:
             self._download_latest()
         elif "LAUNCH" in btn_text:
             self._launch_game()
-
-    def _cb_install_aunlocker(self, sender, app_data):
-        self._install_aunlocker()
 
     def _cb_create_shortcut(self, sender, app_data):
         self._create_shortcut()
@@ -610,38 +588,6 @@ class LauncherApp:
             finally:
                 self._busy_off()
                 self._update_main_btn()
-        threading.Thread(target=go, daemon=True).start()
-
-    def _install_aunlocker(self):
-        ver = self.config.get_version()
-        gp = self.config.get_game_path()
-        if not ver or not gp:
-            self._show_error("Game not installed!")
-            return
-        def go():
-            try:
-                self._busy_on()
-                self._set_status("Checking AUnlocker...", INFO)
-                data = self.network.fetch_text(AUNLOCKER_JSON_URL)
-                if not data:
-                    self._show_error("Failed to fetch data")
-                    return
-                versions = json.loads(data).get("versions", [])
-                for entry in versions:
-                    if entry["version"] == ver:
-                        zp = Path("AUnlocker.zip")
-                        self._set_status("Downloading AUnlocker...", INFO)
-                        if self.network.download_file(entry["link"], zp):
-                            FileManager.extract_zip(zp, gp)
-                            FileManager.safe_delete(zp)
-                            self._show_info("AUnlocker installed!")
-                            self._set_status("Ready")
-                            return
-                self._show_warning("No compatible AUnlocker version found")
-            except Exception as e:
-                self._set_status("Ready")
-            finally:
-                self._busy_off()
         threading.Thread(target=go, daemon=True).start()
 
     def _launch_game(self):
@@ -848,14 +794,10 @@ class LauncherApp:
     def _busy_on(self):
         self._busy = True
         dpg.configure_item("main_action_btn", enabled=False)
-        if dpg.does_item_exist("aunlocker_btn"):
-            dpg.configure_item("aunlocker_btn", enabled=False)
 
     def _busy_off(self):
         self._busy = False
         dpg.configure_item("main_action_btn", enabled=True)
-        if dpg.does_item_exist("aunlocker_btn"):
-            dpg.configure_item("aunlocker_btn", enabled=True)
 
     # ------------------------------------------------------------------ modals
     def _show_modal_header(self, title, accent_color=None):
