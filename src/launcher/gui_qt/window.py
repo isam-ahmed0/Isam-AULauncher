@@ -253,8 +253,8 @@ class LauncherApp:
         self.window.raise_()
 
     def _quit_from_tray(self):
-        self.shutdown()
-        os._exit(0)
+        self._force_quit = True
+        self.window.close()
 
     def _on_tray_activated(self, reason):
         if reason == QSystemTrayIcon.ActivationReason.Trigger:
@@ -1925,7 +1925,13 @@ class LauncherApp:
 
     # ------------------------------------------------------------------ shutdown
     def _close_event(self, event):
-        """Minimize to tray instead of closing."""
+        """Minimize to tray instead of closing. Force-quit from tray menu."""
+        if getattr(self, '_force_quit', False):
+            self.shutdown()
+            if self._tray:
+                self._tray.hide()
+            event.accept()
+            return
         if self._tray and self._tray.isVisible():
             event.ignore()
             self.window.hide()
