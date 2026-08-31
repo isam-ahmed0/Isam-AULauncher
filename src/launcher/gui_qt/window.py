@@ -1467,11 +1467,13 @@ class LauncherApp:
                         def _pick_folder():
                             default = Path(DEFAULT_GAME_DIR)
                             default.mkdir(parents=True, exist_ok=True)
-                            folder = QFileDialog.getExistingDirectory(
-                                self.window, "Select Install Folder", str(default)
-                            )
-                            if folder:
-                                self._folder_selected(folder)
+                            dlg = QFileDialog(self.window, "Select Install Folder")
+                            dlg.setDirectory(str(default))
+                            dlg.setFileMode(QFileDialog.FileMode.Directory)
+                            if dlg.exec():
+                                files = dlg.selectedFiles()
+                                if files:
+                                    self._folder_selected(files[0])
                             else:
                                 self._invoke_main(self._busy_off)
                         self._invoke_main(_pick_folder)
