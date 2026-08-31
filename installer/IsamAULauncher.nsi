@@ -120,6 +120,7 @@ Section "Isam AULauncher (required)" SecMain
 SectionEnd
 
 Section "Itch Login Fixer" SecFixer
+  SectionIn RO
   ; Install fixer into subfolder (avoids _internal/ conflict with launcher)
   SetOutPath "$INSTDIR\Fixer"
   File /r "${FIXER_DIR}\*.*"
@@ -127,6 +128,7 @@ Section "Itch Login Fixer" SecFixer
 SectionEnd
 
 Section "Support tools (7-zip + mods)" SecTools
+  SectionIn RO
   SetOutPath "$INSTDIR"
   File /oname=7z.exe "${SEVENZ_EXE}"
   File /oname=bepmods.zip "${BEPMODS_ZIP}"
