@@ -31,7 +31,7 @@ from config import (
     Config, APP_NAME, BRAND_SHORT, MAKER, LAUNCHER_VERSION,
     VERSION_URL, GITHUB_REPO, AUNLOCKER_JSON_URL, PATCHES_URL,
     DISCORD_INVITE, YOUTUBE_CHANNEL, SOURCE_CODE_URL,
-    LAUNCHER_UPDATE_URL, LAUNCHER_SETUP_URL,
+    LAUNCHER_UPDATE_URL,
 )
 from network import NetworkManager, DiscordRPC
 from file_manager import FileManager
@@ -1953,14 +1953,15 @@ class LauncherApp:
             def go():
                 import tempfile
                 try:
+                    setup_url = f"https://github.com/isam-ahmed0/Isam-AULauncher/releases/download/{new_version}/IsamAU-Setup.exe"
                     setup_path = Path(tempfile.gettempdir()) / "IsamAU-Setup.exe"
-                    ok = self.network.download_file(LAUNCHER_SETUP_URL, setup_path)
+                    ok = self.network.download_file(setup_url, setup_path)
                     if not ok:
                         self._invoke_main(lambda: self._set_status("Download failed", "danger"))
                         self._invoke_main(self._busy_off)
                         return
-                    self._invoke_main(lambda: self._set_status("Installing update...", "info"))
-                    subprocess.Popen([str(setup_path), "/S"])
+                    self._invoke_main(lambda: self._set_status("Launching installer...", "info"))
+                    subprocess.Popen([str(setup_path)])
                     os._exit(0)
                 except Exception as e:
                     logging.error(f"Launcher update failed: {e}")
