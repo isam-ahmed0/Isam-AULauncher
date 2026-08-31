@@ -1,10 +1,10 @@
 """
 Theme — Steam-like dark theme for Isam AULauncher (PySide6).
-QSS-based styling with the same color palette as the DPG version.
+3-color scheme: Primary (Indigo), Secondary (Lighter Indigo), Opposite (Green).
 """
 
 # ---------------------------------------------------------------------------
-# Palette — Steam-like minimal dark
+# Palette
 # ---------------------------------------------------------------------------
 BG_BASE = "#12141a"
 BG_SURFACE = "#181b22"
@@ -17,14 +17,12 @@ BORDER_FOCUS = "#6366f1"
 
 ACCENT = "#6366f1"
 ACCENT_HOVER = "#818cf8"
-ACCENT_2 = "#06b6d4"
+ACCENT_2 = "#34d399"
 
 SUCCESS = "#34d399"
 SUCCESS_HOVER = "#10b981"
-INFO = "#60a5fa"
-INFO_HOVER = "#3b82f6"
-WARNING = "#fbbf24"
-WARNING_HOVER = "#f59e0b"
+INFO = "#818cf8"
+WARNING = "#6366f1"
 DANGER = "#f87171"
 DANGER_HOVER = "#ef4444"
 
@@ -134,7 +132,7 @@ QPushButton#dangerBtn {{
 }}
 
 QPushButton#dangerBtn:hover {{
-    background-color: #dc2626;
+    background-color: {DANGER_HOVER};
 }}
 
 QPushButton#dangerBtn:disabled {{
@@ -155,20 +153,6 @@ QPushButton#toolBtn {{
 QPushButton#toolBtn:hover {{
     background-color: {BG_HOVER};
     border-color: {ACCENT};
-}}
-
-/* ===== DANGER BUTTON ===== */
-QPushButton#dangerBtn {{
-    background-color: #dc2626;
-    color: {TEXT_BRIGHT};
-    border: none;
-    border-radius: 8px;
-    padding: 10px 16px;
-    font-size: 13px;
-}}
-
-QPushButton#dangerBtn:hover {{
-    background-color: {DANGER_HOVER};
 }}
 
 /* ===== MODAL BUTTONS ===== */
@@ -200,7 +184,7 @@ QPushButton#modalSecondary:hover {{
 }}
 
 QPushButton#modalDanger {{
-    background-color: #dc2626;
+    background-color: {DANGER};
     color: {TEXT_BRIGHT};
     border: none;
     border-radius: 8px;
@@ -217,8 +201,6 @@ QProgressBar {{
     background-color: {BG_ELEVATED};
     border: none;
     border-radius: 6px;
-    min-height: 12px;
-    max-height: 12px;
     text-align: center;
     color: transparent;
 }}
@@ -227,7 +209,7 @@ QProgressBar::chunk {{
     background: qlineargradient(
         x1:0, y1:0, x2:1, y2:0,
         stop:0 {ACCENT},
-        stop:1 {ACCENT_2}
+        stop:1 {SUCCESS}
     );
     border-radius: 6px;
 }}
@@ -254,7 +236,6 @@ QLabel#sectionTitle {{
     font-size: 11px;
     font-weight: 600;
     color: {TEXT_MUTED};
-    letter-spacing: 1px;
 }}
 
 QLabel#heroTitle {{
@@ -274,7 +255,7 @@ QLabel#versionBadge {{
     border-radius: 10px;
     padding: 3px 10px;
     font-size: 11px;
-    color: {ACCENT_2};
+    color: {SUCCESS};
 }}
 
 QLabel#successText {{
@@ -283,7 +264,7 @@ QLabel#successText {{
 }}
 
 QLabel#infoText {{
-    color: {INFO};
+    color: {ACCENT_HOVER};
     font-weight: 600;
 }}
 
@@ -305,14 +286,6 @@ QLabel#statusText {{
 QLabel#footerText {{
     color: {TEXT_MUTED};
     font-size: 11px;
-}}
-
-/* ===== FRAME / CARDS ===== */
-QFrame#card {{
-    background-color: {BG_SURFACE};
-    border: 1px solid {BORDER_SUBTLE};
-    border-radius: 10px;
-    padding: 20px;
 }}
 
 /* ===== SCROLLBAR ===== */
@@ -341,6 +314,41 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{
     background: none;
 }}
 
+/* ===== SCROLL AREA ===== */
+QScrollArea {{
+    background-color: transparent;
+    border: none;
+}}
+
+QScrollArea > QWidget > QWidget {{
+    background-color: transparent;
+}}
+
+/* ===== LIST WIDGETS ===== */
+QListWidget {{
+    background-color: {BG_ELEVATED};
+    color: {TEXT_PRIMARY};
+    border: 1px solid {BORDER_SUBTLE};
+    border-radius: 8px;
+    padding: 4px;
+    outline: none;
+    font-size: 13px;
+}}
+
+QListWidget::item {{
+    padding: 6px 8px;
+    border-radius: 4px;
+}}
+
+QListWidget::item:selected {{
+    background-color: {ACCENT};
+    color: {TEXT_BRIGHT};
+}}
+
+QListWidget::item:hover {{
+    background-color: {BG_HOVER};
+}}
+
 /* ===== CHECKBOX ===== */
 QCheckBox {{
     spacing: 8px;
@@ -358,6 +366,7 @@ QCheckBox::indicator {{
 QCheckBox::indicator:checked {{
     background-color: {ACCENT};
     border-color: {ACCENT};
+    image: none;
 }}
 
 QCheckBox::indicator:hover {{

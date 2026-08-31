@@ -111,7 +111,7 @@ class SplashScreen(QWidget):
         grad = QLinearGradient(0, 0, w, 0)
         grad.setColorAt(0.0, QColor(99, 102, 241, 0))
         grad.setColorAt(0.3, QColor(99, 102, 241, 180))
-        grad.setColorAt(0.5, QColor(6, 182, 212, 220))
+        grad.setColorAt(0.5, QColor(52, 211, 153, 220))
         grad.setColorAt(0.7, QColor(99, 102, 241, 180))
         grad.setColorAt(1.0, QColor(99, 102, 241, 0))
         p.setPen(QPen(QBrush(grad), 2))
@@ -136,7 +136,7 @@ class SplashScreen(QWidget):
         p.setPen(QColor(99, 102, 241, 100))
         p.setBrush(QColor(32, 36, 46, 200))
         p.drawRoundedRect(bx, by, tw, 24, 12, 12)
-        p.setPen(QColor(6, 182, 212))
+        p.setPen(QColor(52, 211, 153))
         p.drawText(bx, by, tw, 24, Qt.AlignmentFlag.AlignCenter, ver_text)
 
         # --- Loading status at bottom ---

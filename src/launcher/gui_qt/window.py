@@ -15,12 +15,12 @@ from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QStackedWidget, QLabel, QFrame, QProgressBar,
     QCheckBox, QDialog, QFileDialog, QStatusBar, QMessageBox,
-    QLineEdit, QRadioButton, QButtonGroup, QListWidget, QListWidgetItem,
-    QInputDialog, QScrollArea, QSizePolicy, QSystemTrayIcon, QMenu,
+    QListWidget, QListWidgetItem,
+    QInputDialog, QScrollArea, QSystemTrayIcon, QMenu,
     QComboBox,
 )
 from PySide6.QtCore import Qt, QThread, Signal, QTimer, QObject
-from PySide6.QtGui import QIcon, QPixmap, QPainter, QColor, QLinearGradient, QFont, QAction
+from PySide6.QtGui import QIcon, QPixmap, QPainter, QColor, QLinearGradient, QFont, QFontMetrics, QAction
 
 
 class _UISignaler(QObject):
@@ -116,13 +116,13 @@ class HeroBanner(QLabel):
         painter.setPen(Qt.PenStyle.NoPen)
         painter.setBrush(QColor(99, 102, 241, 25))
         painter.drawEllipse(int(w * 0.75) - 80, int(h * 0.35) - 80, 160, 160)
-        painter.setBrush(QColor(6, 182, 212, 20))
+        painter.setBrush(QColor(52, 211, 153, 20))
         painter.drawEllipse(int(w * 0.15) - 65, int(h * 0.7) - 65, 130, 130)
 
         # Bottom accent gradient line
         gradient = QLinearGradient(0, 0, w, 0)
         gradient.setColorAt(0, QColor(99, 102, 241, 200))
-        gradient.setColorAt(1, QColor(6, 182, 212, 200))
+        gradient.setColorAt(1, QColor(52, 211, 153, 200))
         painter.setBrush(gradient)
         painter.drawRect(0, h - 3, w, 3)
 
@@ -149,7 +149,7 @@ class HeroBanner(QLabel):
         painter.setBrush(QColor(32, 36, 46, 220))
         painter.setPen(QColor(99, 102, 241, 100))
         painter.drawRoundedRect(bx, by, tw, 24, 12, 12)
-        painter.setPen(QColor(6, 182, 212))
+        painter.setPen(QColor(52, 211, 153))
         painter.drawText(bx, by, tw, 24, Qt.AlignmentFlag.AlignCenter, badge_text)
 
         painter.end()
@@ -472,7 +472,7 @@ class LauncherApp:
         left = QVBoxLayout()
         left.addWidget(self._muted_label("INSTALLED"))
         self.ver_installed = QLabel("Not Installed")
-        self.ver_installed.setObjectName("successText")
+        self.ver_installed.setObjectName("mutedText")
         left.addWidget(self.ver_installed)
         left.addSpacing(12)
         left.addWidget(self._muted_label("LATEST"))
@@ -605,6 +605,7 @@ class LauncherApp:
         apply_region_btn.setFixedHeight(36)
         apply_region_btn.clicked.connect(self._cb_apply_region)
         region_btn_row.addWidget(apply_region_btn)
+        region_btn_row.addStretch()
 
         layout.addLayout(region_btn_row)
 
@@ -646,6 +647,7 @@ class LauncherApp:
         extract_zip_btn.setFixedHeight(36)
         extract_zip_btn.clicked.connect(self._cb_extract_zip)
         zip_btn_row.addWidget(extract_zip_btn)
+        zip_btn_row.addStretch()
 
         layout.addLayout(zip_btn_row)
 
@@ -803,7 +805,7 @@ class LauncherApp:
         layout.addWidget(mods_title)
 
         self._mods_list = QListWidget()
-        self._mods_list.setObjectName("regionList")
+        self._mods_list.setObjectName("modsList")
         self._mods_list.setMinimumHeight(120)
         layout.addWidget(self._mods_list)
 
@@ -938,6 +940,11 @@ class LauncherApp:
 
     def _update_version_display(self):
         self.ver_installed.setText(self.current_version)
+        if self.current_version and self.current_version not in ("Not Installed", "Unknown"):
+            self.ver_installed.setObjectName("successText")
+        else:
+            self.ver_installed.setObjectName("mutedText")
+        self.ver_installed.style().polish(self.ver_installed)
         self.ver_latest.setText(self.latest_version)
 
     def _update_main_btn(self):
@@ -1790,7 +1797,7 @@ class LauncherApp:
             disk_usage = "N/A"
 
         bep_text = "Installed" if bepinstalled else "Not installed"
-        bep_color = SUCCESS if bepinstalled else WARNING
+        bep_color = SUCCESS if bepinstalled else TEXT_MUTED
 
         fields = [
             ("Version:", version, TEXT_BRIGHT),
@@ -1812,6 +1819,11 @@ class LauncherApp:
             val.setStyleSheet(f"color: {color};")
             val.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
             val.setWordWrap(False)
+            val.setMaximumWidth(300)
+            fm = QFontMetrics(val.font())
+            elided = fm.elidedText(value, Qt.TextElideMode.ElideRight, 300)
+            val.setText(elided)
+            val.setToolTip(value)
             row_layout.addWidget(val)
             row_layout.addStretch()
             layout.addLayout(row_layout)
@@ -2079,7 +2091,7 @@ class LauncherApp:
             if r.status_code == 200:
                 u = r.json().get("user", {})
                 profile["username"] = u.get("username")
-        except (requests.RequestException, ValueError) as e:
+        except (_req.RequestException, ValueError) as e:
             logging.debug(f"Failed to fetch itch.io username: {e}")
 
         # 2. Fetch Among Us account data via EOS
@@ -2110,7 +2122,7 @@ class LauncherApp:
                         disc = attrs.get("discriminator")
                         if name:
                             profile["among_us_name"] = f"{name}#{disc}" if disc else name
-        except (requests.RequestException, ValueError, KeyError) as e:
+        except (_req.RequestException, ValueError, KeyError) as e:
             logging.debug(f"Failed to fetch Among Us profile data: {e}")
 
         return profile
