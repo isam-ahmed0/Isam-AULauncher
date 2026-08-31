@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 
-from ..mod_inspector import _read_dll_metadata
+from mod_inspector import _read_dll_metadata
 from .theme import (
     BG_SURFACE, BG_ELEVATED, BORDER_SUBTLE,
     ACCENT, ACCENT_2, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED,

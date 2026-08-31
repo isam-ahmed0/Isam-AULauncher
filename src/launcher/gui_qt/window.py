@@ -22,7 +22,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QThread, Signal, QTimer, QObject
 from PySide6.QtGui import QIcon, QPixmap, QPainter, QColor, QLinearGradient, QFont, QFontMetrics, QAction
 
-from ..mod_inspector import inspect_profile_dlls
+from mod_inspector import inspect_profile_dlls
 from .mod_warnings import ModWarningDialog
 from .mod_details import ModInfoDialog
 
