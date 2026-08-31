@@ -24,6 +24,7 @@ from PySide6.QtGui import QIcon, QPixmap, QPainter, QColor, QLinearGradient, QFo
 
 from ..mod_inspector import inspect_profile_dlls
 from .mod_warnings import ModWarningDialog
+from .mod_details import ModInfoDialog
 
 
 class _UISignaler(QObject):
@@ -810,6 +811,12 @@ class LauncherApp:
         remove_mods_btn.clicked.connect(self._cb_remove_mods)
         mods_btn_row.addWidget(remove_mods_btn)
 
+        info_mods_btn = QPushButton("Info")
+        info_mods_btn.setObjectName("toolBtn")
+        info_mods_btn.setFixedHeight(36)
+        info_mods_btn.clicked.connect(self._cb_mod_info)
+        mods_btn_row.addWidget(info_mods_btn)
+
         mods_btn_row.addStretch()
         layout.addLayout(mods_btn_row)
 
@@ -1395,6 +1402,18 @@ class LauncherApp:
         self._mods_status.setText(f"Removed {removed} mod(s)")
         self._mods_status.setStyleSheet(f"color: {SUCCESS};")
         self._cb_refresh_mods()
+
+    def _cb_mod_info(self):
+        selected = self._mods_list.selectedItems()
+        if not selected:
+            QMessageBox.information(self.window, "Info", "Select a mod from the list first.")
+            return
+        item = selected[0]
+        dll_path = Path(item.data(Qt.ItemDataRole.UserRole))
+        name = self._profile_combo.currentText()
+        profile_dir = self.profile_mgr.profile_path(name) if name else Path()
+        dlg = ModInfoDialog(dll_path, profile_dir, parent=self.window)
+        dlg.exec()
 
     def _cb_add_mods(self):
         name = self._profile_combo.currentText()
