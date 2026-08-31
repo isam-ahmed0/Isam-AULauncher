@@ -70,6 +70,7 @@ class SplashScreen(QWidget):
         self._fade_out_anim = fade_out  # prevent GC
 
     def _on_fade_out_done(self):
+        self._glow_timer.stop()
         self.close()
         self.finished.emit()
 

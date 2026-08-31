@@ -62,6 +62,10 @@ if __name__ == "__main__":
             launcher.shutdown()
             break
         except KeyboardInterrupt:
+            try:
+                launcher.shutdown()
+            except Exception:
+                pass
             break
         except Exception as e:
             logging.critical(e, exc_info=True)
