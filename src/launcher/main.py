@@ -6,8 +6,9 @@ import sys
 import argparse
 import logging
 
-from PySide6.QtWidgets import QApplication
-from PySide6.QtCore import QTimer
+from PySide6.QtWidgets import QApplication, QMessageBox
+from PySide6.QtCore import QTimer, QSharedMemory
+from config import APP_NAME
 
 
 if __name__ == "__main__":
@@ -25,6 +26,15 @@ if __name__ == "__main__":
         sys.exit(0)
 
     qapp = QApplication(sys.argv)
+
+    # Single instance lock
+    _shared_mem = QSharedMemory("IsamAULauncher_SingleInstance")
+    if not _shared_mem.create(1):
+        QMessageBox.warning(
+            None, APP_NAME,
+            "Launcher is already running.\nPlease close the existing instance first.",
+        )
+        sys.exit(0)
 
     while True:
         try:

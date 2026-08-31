@@ -2121,6 +2121,7 @@ class LauncherApp:
             self.shutdown()
             if self._tray:
                 self._tray.hide()
+            QApplication.instance().quit()
             event.accept()
             return
         if self._tray and self._tray.isVisible():
@@ -2162,5 +2163,6 @@ class LauncherApp:
         for w in list(self._workers):
             try:
                 w.terminate()
+                w.wait(2000)
             except Exception:
                 pass
