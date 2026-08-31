@@ -2126,9 +2126,8 @@ class LauncherApp:
             self.shutdown()
             if self._tray:
                 self._tray.hide()
-            QApplication.instance().quit()
             event.accept()
-            return
+            os._exit(0)
         if self._tray and self._tray.isVisible():
             event.ignore()
             self.window.hide()
