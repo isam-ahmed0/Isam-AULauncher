@@ -22,6 +22,8 @@
   !define ROOT "${__FILEDIR__}\.."
 !endif
 !define SRC_ICON      "${ROOT}\src\launcher\resources\icon.ico"
+!define SIDEBAR_BMP   "${ROOT}\installer\sidebar.bmp"
+!define HEADER_BMP    "${ROOT}\installer\header.bmp"
 !define LAUNCHER_DIR  "${ROOT}\dist\IsamAULauncher"
 !define FIXER_DIR     "${ROOT}\dist\Itch_Login_Fixer"
 !define SEVENZ_EXE    "${ROOT}\release\7z.exe"
@@ -40,6 +42,9 @@ SetCompressor /SOLID lzma
 Icon    "${SRC_ICON}"
 UninstallIcon "${SRC_ICON}"
 
+; Replace "Nullsoft Install System" branding
+BrandingText "Isam Installer"
+
 ; Installer / uninstaller metadata
 VIProductVersion "${VERSION_DOT}"
 VIAddVersionKey "ProductName"    "${APP_NAME}"
@@ -53,8 +58,22 @@ VIAddVersionKey "LegalCopyright"  "Copyright (c) 2026 ${COMPANY}"
 !define MUI_ABORTWARNING
 !define MUI_ICON   "${SRC_ICON}"
 !define MUI_UNICON "${SRC_ICON}"
+
+; Custom images
+!define MUI_HEADERIMAGE
+!define MUI_HEADERIMAGE_BITMAP "${HEADER_BMP}"
+!define MUI_WELCOMEFINISHPAGE_BITMAP "${SIDEBAR_BMP}"
+!define MUI_UNWELCOMEFINISHPAGE_BITMAP "${SIDEBAR_BMP}"
+
+; Welcome page
+!define MUI_WELCOMEPAGE_TITLE "Welcome to Isam AULauncher"
+!define MUI_WELCOMEPAGE_TEXT "This wizard will guide you through the installation of Isam AULauncher v${VERSION}.$\r$\n$\r$\nFeatures:$\r$\n  - Auto-update to latest version$\r$\n  - One-click Among Us mod management$\r$\n  - Mod profile switching$\r$\n  - Itch.io integration$\r$\n$\r$\nClick Next to continue."
+
+; Finish page
+!define MUI_FINISHPAGE_TITLE "Installation Complete"
+!define MUI_FINISHPAGE_TEXT "Isam AULauncher v${VERSION} has been installed.$\r$\n$\r$\nClick Finish to close this wizard."
 !define MUI_FINISHPAGE_RUN "$INSTDIR\IsamAULauncher.exe"
-!define MUI_FINISHPAGE_RUN_TEXT "Run ${APP_NAME} now"
+!define MUI_FINISHPAGE_RUN_TEXT "Launch ${APP_NAME} now"
 
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_DIRECTORY
@@ -66,6 +85,14 @@ VIAddVersionKey "LegalCopyright"  "Copyright (c) 2026 ${COMPANY}"
 !insertmacro MUI_UNPAGE_INSTFILES
 
 !insertmacro MUI_LANGUAGE "English"
+
+;------------------------------- Pre-install: kill running launcher --------
+Function .onInit
+  ; Kill any running launcher so files are not locked during update
+  nsExec::ExecToStack 'taskkill /F /IM IsamAULauncher.exe'
+  Pop $0
+  Sleep 500
+FunctionEnd
 
 ;------------------------------- Components --------------------------------
 Section "Isam AULauncher (required)" SecMain
@@ -111,6 +138,14 @@ SectionEnd
 Section /o "Desktop shortcut" SecDesktop
   CreateShortcut "$DESKTOP\${APP_SHORT}.lnk" "$INSTDIR\IsamAULauncher.exe"
 SectionEnd
+
+;------------------------------- Component descriptions --------------------
+!insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
+  !insertmacro MUI_DESCRIPTION_TEXT ${SecMain}    "Core launcher files (required)."
+  !insertmacro MUI_DESCRIPTION_TEXT ${SecFixer}   "Itch.io login fix tool."
+  !insertmacro MUI_DESCRIPTION_TEXT ${SecTools}   "7-Zip and BepInEx mod files."
+  !insertmacro MUI_DESCRIPTION_TEXT ${SecDesktop} "Create a shortcut on your Desktop."
+!insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 ;------------------------------- Uninstall --------------------------------
 Section "Uninstall"
