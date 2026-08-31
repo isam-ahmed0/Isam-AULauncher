@@ -33,6 +33,7 @@ LAUNCHER_SETUP_URL = f"https://github.com/isam-ahmed0/Isam-AULauncher/releases/d
 
 GAME_CRITICAL_FILES = ["Among Us.exe"]
 GAME_CRITICAL_DIRS = ["BepInEx", "dotnet"]
+DEFAULT_GAME_DIR = "C:/Isam-AULauncher/Among-Us"
 
 
 class Config:

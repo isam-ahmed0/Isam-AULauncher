@@ -31,7 +31,7 @@ from config import (
     Config, APP_NAME, BRAND_SHORT, MAKER, LAUNCHER_VERSION,
     VERSION_URL,
     DISCORD_INVITE, YOUTUBE_CHANNEL, SOURCE_CODE_URL,
-    LAUNCHER_UPDATE_URL,
+    LAUNCHER_UPDATE_URL, DEFAULT_GAME_DIR,
 )
 from network import NetworkManager, DiscordRPC
 from file_manager import FileManager
@@ -1465,8 +1465,10 @@ class LauncherApp:
                         self._install_folder_pending = True
                         self._invoke_main(lambda: self._set_status("Select a folder to install into", "info"))
                         def _pick_folder():
+                            default = Path(DEFAULT_GAME_DIR)
+                            default.mkdir(parents=True, exist_ok=True)
                             folder = QFileDialog.getExistingDirectory(
-                                self.window, "Select Install Folder"
+                                self.window, "Select Install Folder", str(default)
                             )
                             if folder:
                                 self._folder_selected(folder)
