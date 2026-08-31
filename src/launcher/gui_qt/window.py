@@ -16,10 +16,10 @@ from PySide6.QtWidgets import (
     QPushButton, QStackedWidget, QLabel, QFrame, QProgressBar,
     QCheckBox, QDialog, QFileDialog, QStatusBar, QMessageBox,
     QLineEdit, QRadioButton, QButtonGroup, QListWidget, QListWidgetItem,
-    QInputDialog, QScrollArea, QSizePolicy,
+    QInputDialog, QScrollArea, QSizePolicy, QSystemTrayIcon, QMenu,
 )
 from PySide6.QtCore import Qt, QThread, Signal, QTimer, QObject
-from PySide6.QtGui import QIcon, QPixmap, QPainter, QColor, QLinearGradient, QFont
+from PySide6.QtGui import QIcon, QPixmap, QPainter, QColor, QLinearGradient, QFont, QAction
 
 
 class _UISignaler(QObject):
@@ -208,6 +208,7 @@ class LauncherApp:
         self._shutting_down = False
         self._setup_app()
         self._build_ui()
+        self._setup_tray()
         self._setup_game_timer()
         self._load_initial_data()
         self.window.closeEvent = self._close_event
@@ -221,6 +222,46 @@ class LauncherApp:
             apply_theme(self.app)
         if _ICON_PATH.exists():
             self.app.setWindowIcon(QIcon(str(_ICON_PATH)))
+
+    def _setup_tray(self):
+        if not QSystemTrayIcon.isSystemTrayAvailable():
+            self._tray = None
+            return
+        self._tray = QSystemTrayIcon(self.app)
+        if _ICON_PATH.exists():
+            self._tray.setIcon(QIcon(str(_ICON_PATH)))
+        self._tray.setToolTip(APP_NAME)
+
+        menu = QMenu()
+        show_action = QAction("Show Launcher", menu)
+        show_action.triggered.connect(self._show_from_tray)
+        menu.addAction(show_action)
+
+        menu.addSeparator()
+
+        quit_action = QAction("Quit", menu)
+        quit_action.triggered.connect(self._quit_from_tray)
+        menu.addAction(quit_action)
+
+        self._tray.setContextMenu(menu)
+        self._tray.activated.connect(self._on_tray_activated)
+        self._tray.show()
+
+    def _show_from_tray(self):
+        self.window.showNormal()
+        self.window.activateWindow()
+        self.window.raise_()
+
+    def _quit_from_tray(self):
+        self.shutdown()
+        os._exit(0)
+
+    def _on_tray_activated(self, reason):
+        if reason == QSystemTrayIcon.ActivationReason.Trigger:
+            if self.window.isVisible():
+                self.window.hide()
+            else:
+                self._show_from_tray()
 
     def _run(self, fn):
         """Run fn in a background thread."""
@@ -1884,9 +1925,19 @@ class LauncherApp:
 
     # ------------------------------------------------------------------ shutdown
     def _close_event(self, event):
-        """Handle window close — stop all tasks, then allow close."""
-        self.shutdown()
-        event.accept()
+        """Minimize to tray instead of closing."""
+        if self._tray and self._tray.isVisible():
+            event.ignore()
+            self.window.hide()
+            self._tray.showMessage(
+                APP_NAME,
+                "Launcher minimized to tray. Right-click to restore or quit.",
+                QSystemTrayIcon.MessageIcon.Information,
+                2000,
+            )
+        else:
+            self.shutdown()
+            event.accept()
 
     def shutdown(self):
         """Stop all background tasks, disconnect services."""
