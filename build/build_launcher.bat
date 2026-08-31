@@ -9,6 +9,7 @@ pyinstaller --noconfirm --onedir --windowed --noupx ^
   --name IsamAULauncher ^
   --icon src\launcher\resources\icon.ico ^
   --add-data "src\launcher\resources\icon.ico;resources" ^
+  --add-data "release\bepmods.zip;." ^
   src\launcher\main.py
 
 echo.

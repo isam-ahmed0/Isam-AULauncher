@@ -313,10 +313,12 @@ class LauncherApp:
         self.pages.addWidget(self.page_tools)
         self.pages.addWidget(self.page_aunlocker)
         self.pages.addWidget(self.page_profile)
+        self.page_mods = self._build_mods_page()
+        self.pages.addWidget(self.page_mods)
 
         # Nav buttons
         self.nav_buttons = {}
-        for label, idx in [("Game", 0), ("Tools", 1), ("AUnlocker", 2), ("Profile", 3)]:
+        for label, idx in [("Game", 0), ("Tools", 1), ("AUnlocker", 2), ("Profile", 3), ("Mods", 4)]:
             btn = QPushButton(f"  {label}")
             btn.setCheckable(True)
             btn.setFixedHeight(40)
@@ -652,7 +654,110 @@ class LauncherApp:
         layout.addStretch()
         return page
 
-    def _build_profile_page(self):
+    def _build_mods_page(self):
+        page = QWidget()
+        layout = QVBoxLayout(page)
+        layout.setContentsMargins(28, 20, 28, 20)
+        layout.setSpacing(16)
+
+        title = QLabel("MODS")
+        title.setObjectName("sectionTitle")
+        layout.addWidget(title)
+
+        desc = QLabel("Manage BepInEx mods for Among Us.")
+        desc.setObjectName("statusText")
+        layout.addWidget(desc)
+        layout.addSpacing(8)
+
+        # --- BepInEx Setup ---
+        bep_title = QLabel("BepInEx Setup")
+        bep_title.setObjectName("sectionTitle")
+        layout.addWidget(bep_title)
+
+        self._bep_status = QLabel("")
+        self._bep_status.setObjectName("statusText")
+        layout.addWidget(self._bep_status)
+
+        bep_btn_row = QHBoxLayout()
+        bep_btn_row.setSpacing(8)
+
+        self._bep_setup_btn = QPushButton("Setup BepInEx")
+        self._bep_setup_btn.setObjectName("successBtn")
+        self._bep_setup_btn.setFixedHeight(40)
+        self._bep_setup_btn.clicked.connect(self._cb_setup_bepinex)
+        bep_btn_row.addWidget(self._bep_setup_btn)
+
+        bep_btn_row.addStretch()
+        layout.addLayout(bep_btn_row)
+
+        layout.addSpacing(4)
+        layout.addWidget(QFrame(frameShape=QFrame.Shape.HLine))
+        layout.addSpacing(4)
+
+        # --- Installed Mods ---
+        mods_title = QLabel("Installed Mods")
+        mods_title.setObjectName("sectionTitle")
+        layout.addWidget(mods_title)
+
+        self._mods_list = QListWidget()
+        self._mods_list.setObjectName("regionList")
+        self._mods_list.setMinimumHeight(120)
+        layout.addWidget(self._mods_list)
+
+        mods_btn_row = QHBoxLayout()
+        mods_btn_row.setSpacing(8)
+
+        refresh_mods_btn = QPushButton("Refresh")
+        refresh_mods_btn.setObjectName("toolBtn")
+        refresh_mods_btn.setFixedHeight(36)
+        refresh_mods_btn.clicked.connect(self._cb_refresh_mods)
+        mods_btn_row.addWidget(refresh_mods_btn)
+
+        remove_mods_btn = QPushButton("Remove Selected")
+        remove_mods_btn.setObjectName("dangerBtn")
+        remove_mods_btn.setFixedHeight(36)
+        remove_mods_btn.clicked.connect(self._cb_remove_mods)
+        mods_btn_row.addWidget(remove_mods_btn)
+
+        mods_btn_row.addStretch()
+        layout.addLayout(mods_btn_row)
+
+        self._mods_status = QLabel("")
+        self._mods_status.setObjectName("statusText")
+        layout.addWidget(self._mods_status)
+
+        layout.addSpacing(4)
+        layout.addWidget(QFrame(frameShape=QFrame.Shape.HLine))
+        layout.addSpacing(4)
+
+        # --- Add Mods ---
+        add_title = QLabel("Add Mods")
+        add_title.setObjectName("sectionTitle")
+        layout.addWidget(add_title)
+
+        add_desc = QLabel("Select .dll mod files to install into BepInEx/plugins/.")
+        add_desc.setObjectName("statusText")
+        add_desc.setWordWrap(True)
+        layout.addWidget(add_desc)
+
+        add_btn_row = QHBoxLayout()
+        add_btn_row.setSpacing(8)
+
+        add_mods_btn = QPushButton("Add Mod Files")
+        add_mods_btn.setObjectName("primaryBtn")
+        add_mods_btn.setFixedHeight(40)
+        add_mods_btn.clicked.connect(self._cb_add_mods)
+        add_btn_row.addWidget(add_mods_btn)
+
+        add_btn_row.addStretch()
+        layout.addLayout(add_btn_row)
+
+        layout.addStretch()
+
+        # Check BepInEx status on load
+        self._update_bep_status()
+
+        return page
         page = QWidget()
         layout = QVBoxLayout(page)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -958,6 +1063,148 @@ class LauncherApp:
                 self._invoke_main(lambda: QMessageBox.warning(
                     self.window, "Error", "Failed to extract zip file."))
         self._run(go)
+
+    # ------------------------------------------------------------------ mods
+    def _find_bepmods_zip(self):
+        if getattr(sys, 'frozen', False):
+            base = Path(sys.executable).parent
+            zp = base / "_internal" / "bepmods.zip"
+            if zp.exists():
+                return zp
+        else:
+            zp = Path(__file__).parent.parent.parent / "release" / "bepmods.zip"
+            if zp.exists():
+                return zp
+        return None
+
+    def _get_plugins_dir(self):
+        gp = self.config.get_game_path()
+        if not gp:
+            return None
+        return gp / "BepInEx" / "plugins"
+
+    def _update_bep_status(self):
+        gp = self.config.get_game_path()
+        if not gp:
+            self._bep_status.setText("Game not installed — set a game location first")
+            self._bep_status.setStyleSheet(f"color: {TEXT_MUTED};")
+            return False
+        core_dll = gp / "BepInEx" / "core" / "BepInEx.dll"
+        if core_dll.exists():
+            self._bep_status.setText("BepInEx: Installed")
+            self._bep_status.setStyleSheet(f"color: {SUCCESS};")
+            return True
+        self._bep_status.setText("BepInEx: Not installed")
+        self._bep_status.setStyleSheet(f"color: {WARNING};")
+        return False
+
+    def _cb_setup_bepinex(self):
+        gp = self.config.get_game_path()
+        if not gp:
+            QMessageBox.warning(self.window, "Error", "Game not installed! Set a game location first.")
+            return
+        zp = self._find_bepmods_zip()
+        if not zp:
+            QMessageBox.warning(self.window, "Error", "bepmods.zip not found in launcher files.")
+            return
+        if (gp / "BepInEx" / "core" / "BepInEx.dll").exists():
+            reply = QMessageBox.question(
+                self.window, "Confirm",
+                "BepInEx is already installed. Reinstall?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            )
+            if reply != QMessageBox.StandardButton.Yes:
+                return
+
+        def go():
+            self._invoke_main(lambda: self._set_status("Installing BepInEx...", "info"))
+            self._invoke_main(self._busy_on)
+            ok = FileManager.extract_zip(zp, gp)
+            if ok:
+                self._invoke_main(lambda: self._set_status("BepInEx installed!", "success"))
+                self._invoke_main(lambda: QMessageBox.information(
+                    self.window, "Success", "BepInEx installed successfully!"))
+            else:
+                self._invoke_main(lambda: self._set_status("BepInEx installation failed", "danger"))
+                self._invoke_main(lambda: QMessageBox.warning(
+                    self.window, "Error", "Failed to extract BepInEx files."))
+            self._invoke_main(self._update_bep_status)
+            self._invoke_main(self._busy_off)
+        self._run(go)
+
+    def _cb_refresh_mods(self):
+        self._mods_list.clear()
+        plugins = self._get_plugins_dir()
+        if not plugins or not plugins.exists():
+            self._mods_status.setText("BepInEx not installed — no plugins folder")
+            self._mods_status.setStyleSheet(f"color: {TEXT_MUTED};")
+            return
+        dlls = sorted(plugins.glob("*.dll"), key=lambda f: f.name.lower())
+        if not dlls:
+            self._mods_status.setText("No mods installed")
+            self._mods_status.setStyleSheet(f"color: {TEXT_MUTED};")
+            return
+        for dll in dlls:
+            size = FileManager.format_size(dll.stat().st_size)
+            item = QListWidgetItem(f"{dll.name}  ({size})")
+            item.setData(Qt.ItemDataRole.UserRole, str(dll))
+            self._mods_list.addItem(item)
+        self._mods_status.setText(f"{len(dlls)} mod(s) installed")
+        self._mods_status.setStyleSheet(f"color: {INFO};")
+
+    def _cb_remove_mods(self):
+        selected = self._mods_list.selectedItems()
+        if not selected:
+            QMessageBox.information(self.window, "Info", "Select mod(s) to remove first.")
+            return
+        names = [item.text().split("  ")[0] for item in selected]
+        reply = QMessageBox.question(
+            self.window, "Confirm",
+            f"Remove {len(names)} mod(s)?\n" + "\n".join(names),
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        )
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+        removed = 0
+        for item in selected:
+            dll_path = Path(item.data(Qt.ItemDataRole.UserRole))
+            try:
+                dll_path.unlink()
+                removed += 1
+            except OSError as e:
+                logging.error(f"Failed to remove mod {dll_path}: {e}")
+        self._mods_status.setText(f"Removed {removed} mod(s)")
+        self._mods_status.setStyleSheet(f"color: {SUCCESS};")
+        self._cb_refresh_mods()
+
+    def _cb_add_mods(self):
+        plugins = self._get_plugins_dir()
+        if not plugins:
+            QMessageBox.warning(self.window, "Error", "Game not installed! Set a game location first.")
+            return
+        if not (plugins.parent / "core" / "BepInEx.dll").exists():
+            QMessageBox.warning(self.window, "Error",
+                                "BepInEx is not installed!\nSet it up on the Mods page first.")
+            return
+        files, _ = QFileDialog.getOpenFileNames(
+            self.window, "Select Mod Files", "", "DLL Files (*.dll);;All Files (*)"
+        )
+        if not files:
+            return
+        plugins.mkdir(parents=True, exist_ok=True)
+        copied = 0
+        for f in files:
+            src = Path(f)
+            dst = plugins / src.name
+            try:
+                import shutil as _shutil
+                _shutil.copy2(str(src), str(dst))
+                copied += 1
+            except OSError as e:
+                logging.error(f"Failed to copy mod {src}: {e}")
+        self._mods_status.setText(f"Added {copied} mod(s)")
+        self._mods_status.setStyleSheet(f"color: {SUCCESS};")
+        self._cb_refresh_mods()
 
     # ------------------------------------------------------------------ folder selected
     def _folder_selected(self, folder):
