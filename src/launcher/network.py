@@ -110,10 +110,6 @@ class DiscordRPC:
             return False
         try:
             if self.connected and self.rpc:
-                try:
-                    self.rpc.close()
-                except Exception:
-                    pass
                 self.rpc = None
             self.rpc = Presence(DISCORD_CLIENT_ID)
             self.rpc.connect()
@@ -142,10 +138,5 @@ class DiscordRPC:
         threading.Thread(target=_do, daemon=True).start()
 
     def disconnect(self):
-        if self.connected and self.rpc:
-            try:
-                self.rpc.close()
-            except Exception:
-                pass
-            self.connected = False
-            self.rpc = None
+        self.connected = False
+        self.rpc = None
