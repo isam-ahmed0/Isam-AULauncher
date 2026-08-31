@@ -41,6 +41,8 @@ class Config:
         appdata = os.environ.get("APPDATA") or str(Path.home() / ".isamau")
         self.appdata_dir = Path(appdata) / "IsamAULauncher"
         self.appdata_dir.mkdir(parents=True, exist_ok=True)
+        self.profiles_dir = self.appdata_dir / "Profiles"
+        self.profiles_dir.mkdir(parents=True, exist_ok=True)
         self.version_file = self.appdata_dir / "current_version.txt"
         self.game_path_file = self.appdata_dir / "game_path.txt"
         self.config_file = self.appdata_dir / "config.json"
@@ -49,7 +51,8 @@ class Config:
     def _load_settings(self) -> Dict:
         defaults = {
             "auto_update": True, "create_shortcuts": True,
-            "discord_rpc": True, "check_integrity": True, "ui_mode": "gui"
+            "discord_rpc": True, "check_integrity": True, "ui_mode": "gui",
+            "active_profile": "Default",
         }
         try:
             if self.config_file.exists():
@@ -99,3 +102,10 @@ class Config:
             self.game_path_file.write_text(str(path))
         except Exception as e:
             logging.error(f"Failed to write game path: {e}")
+
+    def get_active_profile(self) -> str:
+        return self.settings.get("active_profile", "Default")
+
+    def set_active_profile(self, name: str):
+        self.settings["active_profile"] = name
+        self.save_settings()

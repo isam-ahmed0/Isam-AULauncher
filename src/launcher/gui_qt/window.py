@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (
     QCheckBox, QDialog, QFileDialog, QStatusBar, QMessageBox,
     QLineEdit, QRadioButton, QButtonGroup, QListWidget, QListWidgetItem,
     QInputDialog, QScrollArea, QSizePolicy, QSystemTrayIcon, QMenu,
+    QComboBox,
 )
 from PySide6.QtCore import Qt, QThread, Signal, QTimer, QObject
 from PySide6.QtGui import QIcon, QPixmap, QPainter, QColor, QLinearGradient, QFont, QAction
@@ -41,6 +42,7 @@ from gui_qt.theme import (
 )
 from gui_qt.game import GameManager
 from gui_qt.regions import RegionManager
+from gui_qt.profiles import ProfileManager
 from gui_qt.zipextract import list_contents, extract_to
 
 _RESOURCES_DIR = Path(__file__).parent.parent / "resources"
@@ -181,6 +183,7 @@ class LauncherApp:
         self.discord = DiscordRPC()
         self.game = GameManager(self.config, self.network)
         self.region_mgr = RegionManager()
+        self.profile_mgr = ProfileManager(self.config.profiles_dir)
 
         # Connect game manager signals
         self.game.game_started.connect(self._on_game_started)
@@ -705,8 +708,9 @@ class LauncherApp:
         title.setObjectName("sectionTitle")
         layout.addWidget(title)
 
-        desc = QLabel("Manage BepInEx mods for Among Us.")
+        desc = QLabel("Manage BepInEx mod profiles for Among Us.\nEach profile is an isolated set of mods — zero file duplication.")
         desc.setObjectName("statusText")
+        desc.setWordWrap(True)
         layout.addWidget(desc)
         layout.addSpacing(8)
 
@@ -735,8 +739,66 @@ class LauncherApp:
         layout.addWidget(QFrame(frameShape=QFrame.Shape.HLine))
         layout.addSpacing(4)
 
-        # --- Installed Mods ---
-        mods_title = QLabel("Installed Mods")
+        # --- Mod Profiles ---
+        prof_title = QLabel("MOD PROFILES")
+        prof_title.setObjectName("sectionTitle")
+        layout.addWidget(prof_title)
+
+        # Profile selector row
+        prof_sel_row = QHBoxLayout()
+        prof_sel_row.setSpacing(8)
+
+        self._profile_combo = QComboBox()
+        self._profile_combo.setFixedHeight(36)
+        self._profile_combo.setMinimumWidth(200)
+        self._profile_combo.currentTextChanged.connect(self._on_profile_selected)
+        prof_sel_row.addWidget(self._profile_combo)
+
+        create_btn = QPushButton("Create")
+        create_btn.setObjectName("toolBtn")
+        create_btn.setFixedHeight(36)
+        create_btn.clicked.connect(self._cb_create_profile)
+        prof_sel_row.addWidget(create_btn)
+
+        rename_btn = QPushButton("Rename")
+        rename_btn.setObjectName("toolBtn")
+        rename_btn.setFixedHeight(36)
+        rename_btn.clicked.connect(self._cb_rename_profile)
+        prof_sel_row.addWidget(rename_btn)
+
+        delete_btn = QPushButton("Delete")
+        delete_btn.setObjectName("dangerBtn")
+        delete_btn.setFixedHeight(36)
+        delete_btn.clicked.connect(self._cb_delete_profile)
+        prof_sel_row.addWidget(delete_btn)
+
+        prof_sel_row.addStretch()
+        layout.addLayout(prof_sel_row)
+
+        # Active profile status
+        self._profile_active_label = QLabel("")
+        self._profile_active_label.setObjectName("statusText")
+        layout.addWidget(self._profile_active_label)
+
+        # Switch button
+        switch_row = QHBoxLayout()
+        switch_row.setSpacing(8)
+
+        self._profile_switch_btn = QPushButton("Switch to This Profile")
+        self._profile_switch_btn.setObjectName("primaryBtn")
+        self._profile_switch_btn.setFixedHeight(40)
+        self._profile_switch_btn.clicked.connect(self._cb_switch_profile)
+        switch_row.addWidget(self._profile_switch_btn)
+
+        switch_row.addStretch()
+        layout.addLayout(switch_row)
+
+        layout.addSpacing(4)
+        layout.addWidget(QFrame(frameShape=QFrame.Shape.HLine))
+        layout.addSpacing(4)
+
+        # --- Mods in Selected Profile ---
+        mods_title = QLabel("MODS IN PROFILE")
         mods_title.setObjectName("sectionTitle")
         layout.addWidget(mods_title)
 
@@ -754,6 +816,12 @@ class LauncherApp:
         refresh_mods_btn.clicked.connect(self._cb_refresh_mods)
         mods_btn_row.addWidget(refresh_mods_btn)
 
+        add_mods_btn = QPushButton("Add Mod Files")
+        add_mods_btn.setObjectName("successBtn")
+        add_mods_btn.setFixedHeight(36)
+        add_mods_btn.clicked.connect(self._cb_add_mods)
+        mods_btn_row.addWidget(add_mods_btn)
+
         remove_mods_btn = QPushButton("Remove Selected")
         remove_mods_btn.setObjectName("dangerBtn")
         remove_mods_btn.setFixedHeight(36)
@@ -767,36 +835,11 @@ class LauncherApp:
         self._mods_status.setObjectName("statusText")
         layout.addWidget(self._mods_status)
 
-        layout.addSpacing(4)
-        layout.addWidget(QFrame(frameShape=QFrame.Shape.HLine))
-        layout.addSpacing(4)
-
-        # --- Add Mods ---
-        add_title = QLabel("Add Mods")
-        add_title.setObjectName("sectionTitle")
-        layout.addWidget(add_title)
-
-        add_desc = QLabel("Select .dll mod files to install into BepInEx/plugins/.")
-        add_desc.setObjectName("statusText")
-        add_desc.setWordWrap(True)
-        layout.addWidget(add_desc)
-
-        add_btn_row = QHBoxLayout()
-        add_btn_row.setSpacing(8)
-
-        add_mods_btn = QPushButton("Add Mod Files")
-        add_mods_btn.setObjectName("primaryBtn")
-        add_mods_btn.setFixedHeight(40)
-        add_mods_btn.clicked.connect(self._cb_add_mods)
-        add_btn_row.addWidget(add_mods_btn)
-
-        add_btn_row.addStretch()
-        layout.addLayout(add_btn_row)
-
         layout.addStretch()
 
-        # Check BepInEx status on load
+        # Initialize
         self._update_bep_status()
+        self._refresh_profile_list()
 
         return page
 
@@ -1120,12 +1163,6 @@ class LauncherApp:
                 return zp
         return None
 
-    def _get_plugins_dir(self):
-        gp = self.config.get_game_path()
-        if not gp:
-            return None
-        return gp / "BepInEx" / "plugins"
-
     def _update_bep_status(self):
         gp = self.config.get_game_path()
         if not gp:
@@ -1167,6 +1204,7 @@ class LauncherApp:
                 self._invoke_main(lambda: self._set_status("BepInEx installed!", "success"))
                 self._invoke_main(lambda: QMessageBox.information(
                     self.window, "Success", "BepInEx installed successfully!"))
+                self._invoke_main(self._run_first_time_migration)
             else:
                 self._invoke_main(lambda: self._set_status("BepInEx installation failed", "danger"))
                 self._invoke_main(lambda: QMessageBox.warning(
@@ -1175,16 +1213,141 @@ class LauncherApp:
             self._invoke_main(self._busy_off)
         self._run(go)
 
+    # ------------------------------------------------------------------ profiles
+    def _refresh_profile_list(self):
+        """Reload profile combo box and update active profile label."""
+        self._profile_combo.blockSignals(True)
+        self._profile_combo.clear()
+        profiles = self.profile_mgr.list_profiles()
+        self._profile_combo.addItems(profiles)
+        active = self.config.get_active_profile()
+        idx = self._profile_combo.findText(active)
+        if idx >= 0:
+            self._profile_combo.setCurrentIndex(idx)
+        self._profile_combo.blockSignals(False)
+        self._update_profile_label()
+        self._cb_refresh_mods()
+
+    def _update_profile_label(self):
+        active = self.config.get_active_profile()
+        self._profile_active_label.setText(f"Active profile: {active}")
+        self._profile_active_label.setStyleSheet(f"color: {INFO}; font-weight: 600;")
+
+    def _on_profile_selected(self, name):
+        """When user selects a different profile in the combo (not the active one)."""
+        if not name:
+            return
+        active = self.config.get_active_profile()
+        if name != active:
+            self._profile_active_label.setText(f"Selected: {name}  (click Switch to activate)")
+            self._profile_active_label.setStyleSheet(f"color: {TEXT_SECONDARY};")
+        else:
+            self._update_profile_label()
+        self._cb_refresh_mods()
+
+    def _cb_create_profile(self):
+        name, ok = QInputDialog.getText(self.window, "Create Profile", "Profile name:")
+        if not ok or not name.strip():
+            return
+        name = name.strip()
+        if not self.profile_mgr.create_profile(name):
+            QMessageBox.warning(self.window, "Error", f"Could not create profile '{name}'.\nIt may already exist.")
+            return
+        self._refresh_profile_list()
+        # Switch to the new profile
+        self.config.set_active_profile(name)
+        gp = self.config.get_game_path()
+        if gp:
+            self.profile_mgr.switch_to(name, gp)
+        self._refresh_profile_list()
+
+    def _cb_rename_profile(self):
+        name = self._profile_combo.currentText()
+        if not name:
+            return
+        new_name, ok = QInputDialog.getText(self.window, "Rename Profile", "New name:", text=name)
+        if not ok or not new_name.strip() or new_name.strip() == name:
+            return
+        new_name = new_name.strip()
+        if not self.profile_mgr.rename_profile(name, new_name):
+            QMessageBox.warning(self.window, "Error", f"Could not rename to '{new_name}'.\nName may already exist.")
+            return
+        active = self.config.get_active_profile()
+        if active == name:
+            self.config.set_active_profile(new_name)
+            gp = self.config.get_game_path()
+            if gp:
+                self.profile_mgr.switch_to(new_name, gp)
+        self._refresh_profile_list()
+
+    def _cb_delete_profile(self):
+        name = self._profile_combo.currentText()
+        if not name:
+            return
+        active = self.config.get_active_profile()
+        if name == active:
+            QMessageBox.warning(self.window, "Error", "Cannot delete the active profile.\nSwitch to another profile first.")
+            return
+        reply = QMessageBox.question(
+            self.window, "Confirm",
+            f"Delete profile '{name}' and all its mods?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        )
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+        if self.profile_mgr.delete_profile(name, active):
+            self._refresh_profile_list()
+
+    def _cb_switch_profile(self):
+        name = self._profile_combo.currentText()
+        if not name:
+            return
+        gp = self.config.get_game_path()
+        if not gp:
+            QMessageBox.warning(self.window, "Error", "Game not installed!")
+            return
+        if not (gp / "BepInEx" / "core" / "BepInEx.dll").exists():
+            QMessageBox.warning(self.window, "Error", "BepInEx is not installed!\nSet it up first.")
+            return
+        if self.game.is_running:
+            QMessageBox.warning(self.window, "Error", "Close Among Us before switching profiles!")
+            return
+        if not self.profile_mgr.switch_to(name, gp):
+            QMessageBox.warning(self.window, "Error", f"Failed to switch to profile '{name}'.")
+            return
+        self.config.set_active_profile(name)
+        self._refresh_profile_list()
+        self._set_status(f"Switched to profile: {name}", "success")
+
+    def _run_first_time_migration(self):
+        """If no profiles exist yet, create defaults from existing plugins."""
+        gp = self.config.get_game_path()
+        if not gp:
+            return
+        profiles = self.profile_mgr.list_profiles()
+        if profiles:
+            return
+        active = self.profile_mgr.ensure_first_profiles(gp)
+        if active:
+            self.config.set_active_profile(active)
+            self._refresh_profile_list()
+
+    # ------------------------------------------------------------------ mods in profile
     def _cb_refresh_mods(self):
         self._mods_list.clear()
-        plugins = self._get_plugins_dir()
-        if not plugins or not plugins.exists():
-            self._mods_status.setText("BepInEx not installed — no plugins folder")
+        name = self._profile_combo.currentText()
+        if not name:
+            self._mods_status.setText("No profile selected")
             self._mods_status.setStyleSheet(f"color: {TEXT_MUTED};")
             return
-        dlls = sorted(plugins.glob("*.dll"), key=lambda f: f.name.lower())
+        profile_dir = self.profile_mgr.profile_path(name)
+        if not profile_dir.exists():
+            self._mods_status.setText("Profile folder not found")
+            self._mods_status.setStyleSheet(f"color: {TEXT_MUTED};")
+            return
+        dlls = sorted(profile_dir.glob("*.dll"), key=lambda f: f.name.lower())
         if not dlls:
-            self._mods_status.setText("No mods installed")
+            self._mods_status.setText("No mods in this profile")
             self._mods_status.setStyleSheet(f"color: {TEXT_MUTED};")
             return
         for dll in dlls:
@@ -1192,7 +1355,7 @@ class LauncherApp:
             item = QListWidgetItem(f"{dll.name}  ({size})")
             item.setData(Qt.ItemDataRole.UserRole, str(dll))
             self._mods_list.addItem(item)
-        self._mods_status.setText(f"{len(dlls)} mod(s) installed")
+        self._mods_status.setText(f"{len(dlls)} mod(s) in '{name}'")
         self._mods_status.setStyleSheet(f"color: {INFO};")
 
     def _cb_remove_mods(self):
@@ -1221,11 +1384,15 @@ class LauncherApp:
         self._cb_refresh_mods()
 
     def _cb_add_mods(self):
-        plugins = self._get_plugins_dir()
-        if not plugins:
+        name = self._profile_combo.currentText()
+        if not name:
+            QMessageBox.warning(self.window, "Error", "Select or create a profile first.")
+            return
+        gp = self.config.get_game_path()
+        if not gp:
             QMessageBox.warning(self.window, "Error", "Game not installed! Set a game location first.")
             return
-        if not (plugins.parent / "core" / "BepInEx.dll").exists():
+        if not (gp / "BepInEx" / "core" / "BepInEx.dll").exists():
             QMessageBox.warning(self.window, "Error",
                                 "BepInEx is not installed!\nSet it up on the Mods page first.")
             return
@@ -1234,18 +1401,8 @@ class LauncherApp:
         )
         if not files:
             return
-        plugins.mkdir(parents=True, exist_ok=True)
-        copied = 0
-        for f in files:
-            src = Path(f)
-            dst = plugins / src.name
-            try:
-                import shutil as _shutil
-                _shutil.copy2(str(src), str(dst))
-                copied += 1
-            except OSError as e:
-                logging.error(f"Failed to copy mod {src}: {e}")
-        self._mods_status.setText(f"Added {copied} mod(s)")
+        copied = self.profile_mgr.import_mods(name, [Path(f) for f in files])
+        self._mods_status.setText(f"Added {copied} mod(s) to '{name}'")
         self._mods_status.setStyleSheet(f"color: {SUCCESS};")
         self._cb_refresh_mods()
 
