@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
     QCheckBox, QDialog, QFileDialog, QStatusBar, QMessageBox,
     QLineEdit, QRadioButton, QButtonGroup, QListWidget, QListWidgetItem,
     QInputDialog, QScrollArea, QSizePolicy, QSystemTrayIcon, QMenu,
-    QComboBox,
+    QComboBox, QGridLayout,
 )
 from PySide6.QtCore import Qt, QThread, Signal, QTimer, QObject
 from PySide6.QtGui import QIcon, QPixmap, QPainter, QColor, QLinearGradient, QFont, QAction
@@ -1720,7 +1720,7 @@ class LauncherApp:
         settings = self.config.settings
         dialog = QDialog(self.window)
         dialog.setWindowTitle("Settings")
-        dialog.setFixedSize(480, 360)
+        dialog.setFixedSize(480, 480)
 
         layout = QVBoxLayout(dialog)
         layout.setContentsMargins(24, 20, 24, 20)
@@ -1755,7 +1755,70 @@ class LauncherApp:
         desc3.setObjectName("mutedText")
         layout.addWidget(desc3)
 
-        layout.addSpacing(20)
+        layout.addSpacing(16)
+        layout.addWidget(QFrame(frameShape=QFrame.Shape.HLine))
+        layout.addSpacing(8)
+
+        # --- Game Info section ---
+        info_title = QLabel("Game Info")
+        info_title.setObjectName("sectionTitle")
+        layout.addWidget(info_title)
+        layout.addSpacing(6)
+
+        grid = QGridLayout()
+        grid.setContentsMargins(8, 0, 8, 0)
+        grid.setColumnMinimumWidth(0, 130)
+
+        gp = self.config.get_game_path()
+        version = self.config.get_version() or "Not installed"
+        install_path = str(gp) if gp else "Not set"
+        bepinstalled = bool(gp and (gp / "BepInEx" / "core" / "BepInEx.dll").exists())
+        active_profile = self.config.get_active_profile()
+
+        # Count mods in active profile
+        mod_count = 0
+        if gp and bepinstalled:
+            profile_dir = self.profile_mgr.profile_path(active_profile)
+            if profile_dir.exists():
+                mod_count = len(list(profile_dir.glob("*.dll")))
+
+        # Disk usage
+        disk_usage = ""
+        if gp and gp.exists():
+            try:
+                total = sum(f.stat().st_size for f in gp.rglob("*") if f.is_file())
+                disk_usage = FileManager.format_size(total)
+            except Exception:
+                disk_usage = "Unknown"
+        else:
+            disk_usage = "N/A"
+
+        bep_text = "Installed" if bepinstalled else "Not installed"
+        bep_color = SUCCESS if bepinstalled else WARNING
+
+        fields = [
+            ("Version:", version, TEXT_BRIGHT),
+            ("Install Path:", install_path, TEXT_BRIGHT),
+            ("BepInEx:", bep_text, bep_color),
+            ("Active Profile:", active_profile, TEXT_BRIGHT),
+            ("Mods Installed:", str(mod_count), TEXT_BRIGHT),
+            ("Disk Usage:", disk_usage or "N/A", TEXT_BRIGHT),
+        ]
+
+        for row, (label, value, color) in enumerate(fields):
+            lbl = QLabel(label)
+            lbl.setObjectName("mutedText")
+            lbl.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            grid.addWidget(lbl, row, 0)
+
+            val = QLabel(value)
+            val.setStyleSheet(f"color: {color};")
+            val.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            grid.addWidget(val, row, 1)
+
+        layout.addLayout(grid)
+
+        layout.addSpacing(16)
         layout.addWidget(QFrame(frameShape=QFrame.Shape.HLine))
         layout.addSpacing(12)
 
