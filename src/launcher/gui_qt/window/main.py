@@ -16,8 +16,8 @@ from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QIcon, QAction
 
 from gui_qt.worker import _UISignaler, Worker
-from .widgets import HeroBanner, _ICON_PATH, SIDEBAR_W
-from .dialogs import SettingsDialog, AboutDialog
+from ..widgets import HeroBanner, _ICON_PATH, SIDEBAR_W
+from ..dialogs import SettingsDialog, AboutDialog
 
 from config import (
     Config, APP_NAME, BRAND_SHORT, MAKER, LAUNCHER_VERSION,

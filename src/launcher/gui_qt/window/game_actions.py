@@ -158,7 +158,7 @@ class GameActionsMixin:
 
     def _launch_game(self):
         from mod_inspector import inspect_profile_dlls
-        from .mod_warnings import ModWarningDialog
+        from ..mod_warnings import ModWarningDialog
         from PySide6.QtWidgets import QDialog
 
         profile_name = self.config.get_active_profile()
