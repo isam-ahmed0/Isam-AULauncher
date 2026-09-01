@@ -103,7 +103,8 @@ Section "Isam AULauncher (required)" SecMain
   FileOpen $9 "$PLUGINSDIR\download.bat" w
   FileWrite $9 '@echo off$\r$\n"$WINDIR\System32\curl.exe" -L -o "$PLUGINSDIR\IsamAU-All.zip" "${DOWNLOAD_URL}"$\r$\nexit /b %errorlevel%'
   FileClose $9
-  ExecWait '"$PLUGINSDIR\download.bat"' $0
+  nsExec::ExecToStack '"$PLUGINSDIR\download.bat"'
+  Pop $0
   ${If} $0 != "0"
     MessageBox MB_ICONSTOP "Download failed. Please check your internet connection and try again."
     Quit
@@ -115,7 +116,8 @@ Section "Isam AULauncher (required)" SecMain
   FileOpen $9 "$PLUGINSDIR\extract.bat" w
   FileWrite $9 '@echo off$\r$\n"$WINDIR\System32\tar.exe" xf "$PLUGINSDIR\IsamAU-All.zip" -C "$PLUGINSDIR\extracted"$\r$\nexit /b %errorlevel%'
   FileClose $9
-  ExecWait '"$PLUGINSDIR\extract.bat"' $0
+  nsExec::ExecToStack '"$PLUGINSDIR\extract.bat"'
+  Pop $0
   ${If} $0 != "0"
     MessageBox MB_ICONSTOP "Extraction failed. Please try again."
     Quit
@@ -127,7 +129,8 @@ Section "Isam AULauncher (required)" SecMain
   FileOpen $9 "$PLUGINSDIR\install.bat" w
   FileWrite $9 '@echo off$\r$\ncopy /Y "$PLUGINSDIR\extracted\IsamAULauncher\*" "$INSTDIR\"$\r$\nxcopy /E /Y "$PLUGINSDIR\extracted\IsamAULauncher\*" "$INSTDIR\"'
   FileClose $9
-  ExecWait '"$PLUGINSDIR\install.bat"' $0
+  nsExec::ExecToStack '"$PLUGINSDIR\install.bat"'
+  Pop $0
 
   WriteUninstaller "$INSTDIR\Uninstall.exe"
 
@@ -156,7 +159,8 @@ Section "Itch Login Fixer" SecFixer
   FileOpen $9 "$PLUGINSDIR\fixer.bat" w
   FileWrite $9 '@echo off$\r$\nxcopy /E /Y "$PLUGINSDIR\extracted\Itch_Login_Fixer\*" "$INSTDIR\Fixer\"'
   FileClose $9
-  ExecWait '"$PLUGINSDIR\fixer.bat"' $0
+  nsExec::ExecToStack '"$PLUGINSDIR\fixer.bat"'
+  Pop $0
   CreateShortcut "$SMPROGRAMS\${APP_SHORT}\Itch Login Fixer.lnk" "$INSTDIR\Fixer\Itch_Login_Fixer.exe"
 SectionEnd
 
@@ -167,7 +171,8 @@ Section "Support tools (7-zip + mods)" SecTools
   FileOpen $9 "$PLUGINSDIR\tools.bat" w
   FileWrite $9 '@echo off$\r$\ncopy /Y "$PLUGINSDIR\extracted\7z.exe" "$INSTDIR\7z.exe"$\r$\ncopy /Y "$PLUGINSDIR\extracted\bepmods.zip" "$INSTDIR\bepmods.zip"'
   FileClose $9
-  ExecWait '"$PLUGINSDIR\tools.bat"' $0
+  nsExec::ExecToStack '"$PLUGINSDIR\tools.bat"'
+  Pop $0
 SectionEnd
 
 Section /o "Desktop shortcut" SecDesktop
