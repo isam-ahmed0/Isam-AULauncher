@@ -61,7 +61,7 @@ class VideoSplash(QWidget):
             logging.warning(f"Video splash not found: {webm}")
             self.finished.emit()
             return
-        self._player.setSource(webm)
+        self._player.setSource(webm.as_uri())
         self._player.play()
 
     def _on_status(self, status):
