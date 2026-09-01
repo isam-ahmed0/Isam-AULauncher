@@ -478,12 +478,6 @@ def _apply_palette(p: dict):
     TEXT_BRIGHT = p["text_bright"]
 
 
-class ThemeChangeEvent:
-    """Event posted to QApplication when theme changes."""
-    def __init__(self, name):
-        self.theme_name = name
-
-
 def set_theme(app, theme_name: str):
     """Switch the active theme and re-apply stylesheet."""
     global CURRENT_THEME
@@ -496,11 +490,6 @@ def set_theme(app, theme_name: str):
     _apply_palette(palette)
     if app:
         app.setStyleSheet(build_qss(palette))
-        # Notify custom-painted widgets to repaint
-        from PySide6.QtCore import QEvent, QCoreApplication
-        event = ThemeChangeEvent(theme_name)
-        for w in app.topLevelWidgets():
-            QCoreApplication.sendEvent(w, event)
 
 
 def apply_theme(app):

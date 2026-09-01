@@ -13,7 +13,7 @@ from PySide6.QtWidgets import (
     QStatusBar, QComboBox, QScrollArea, QSystemTrayIcon, QMenu,
     QListWidget,
 )
-from PySide6.QtCore import Qt, QTimer, QEvent
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QIcon, QAction
 
 from gui_qt.worker import _UISignaler, Worker
@@ -73,16 +73,6 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         self._setup_tray()
         self._setup_game_timer()
         self.window.closeEvent = self._close_event
-        self.window.installEventFilter(self)
-
-    def eventFilter(self, obj, event):
-        if event.type() == QEvent.Type.User and hasattr(event, 'theme_name'):
-            # Theme changed — repaint custom-painted widgets
-            for w in [self._hero_game, self._hero_profile]:
-                if w:
-                    w.update()
-            return False
-        return super().eventFilter(obj, event)
 
     # ------------------------------------------------------------------ setup
     def _setup_app(self):

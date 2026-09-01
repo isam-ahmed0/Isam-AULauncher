@@ -248,6 +248,11 @@ class SettingsDialog(QDialog):
         app = QApplication.instance()
         if app:
             theme.set_theme(app, name)
+            # Repaint custom-painted widgets (HeroBanner)
+            from gui_qt.widgets import HeroBanner
+            for w in app.topLevelWidgets():
+                for banner in w.findChildren(HeroBanner):
+                    banner.update()
 
     def done(self, result):
         # Revert theme if cancelled
