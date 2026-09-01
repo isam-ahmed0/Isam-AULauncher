@@ -68,15 +68,22 @@ class VideoSplash(QWidget):
         self._player.play()
 
     def _on_frame(self, frame: QVideoFrame):
-        """Convert each video frame to QPixmap and repaint."""
+        """Convert each video frame to QPixmap with Alpha support and repaint."""
         if not frame.isValid():
             return
+
+        # Ensure frame is converted into standard ARGB32 format for transparency
         image = frame.toImage()
         if image.isNull():
             return
-        # Scale to fit splash size, keeping aspect ratio
+
+        if image.format() != QImage.Format.Format_ARGB32:
+            image = image.convertToFormat(QImage.Format.Format_ARGB32)
+
+        # Scale to fit splash size cleanly
         self._pixmap = QPixmap.fromImage(image).scaled(
-            self.WIDTH, self.HEIGHT,
+            self.WIDTH,
+            self.HEIGHT,
             Qt.AspectRatioMode.KeepAspectRatio,
             Qt.TransformationMode.SmoothTransformation,
         )
@@ -88,14 +95,15 @@ class VideoSplash(QWidget):
             return
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
-        # Center the scaled frame
+        p.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+        # Center the scaled frame in the splash area
         x = (self.WIDTH - self._pixmap.width()) // 2
         y = (self.HEIGHT - self._pixmap.height()) // 2
         p.drawPixmap(x, y, self._pixmap)
         p.end()
 
     def _on_status(self, status):
-        from PySide6.QtMultimedia import QMediaPlayer
         if status == QMediaPlayer.MediaStatus.EndOfMedia:
             self._player.stop()
             self.close()
