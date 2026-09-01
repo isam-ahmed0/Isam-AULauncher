@@ -14,7 +14,7 @@
 !define APP_SHORT     "Isam AULauncher"
 !define COMPANY       "Isam"
 !ifndef VERSION
-  !define VERSION     "0.1"
+  !searchparse/file "${ROOT}\src\launcher\config.py" `LAUNCHER_VERSION = "` VERSION `"`
 !endif
 !define VERSION_DOT   "${VERSION}.0.0"
 
