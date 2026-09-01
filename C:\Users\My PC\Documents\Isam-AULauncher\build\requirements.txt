@@ -1,0 +1,8 @@
+requests
+colorama
+pywin32
+pypresence
+dearpygui
+pyinstaller
+cx_Freeze>=8.7
+pefile

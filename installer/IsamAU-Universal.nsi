@@ -71,7 +71,6 @@ VIAddVersionKey "LegalCopyright"  "Copyright (c) 2026 ${COMPANY}"
 
 ;------------------------------- Runtime variables --------------------------
 Var INST_VERSION
-Var DOWNLOAD_URL
 
 Function .onInit
   InitPluginsDir
@@ -109,39 +108,23 @@ Function .onInit
   ${EndIf}
 
   DetailPrint "Latest version: $INST_VERSION"
-
-  ; Build download URL
-  StrCpy $DOWNLOAD_URL "${GITHUB_BASE}/$INST_VERSION/IsamAU-All.zip"
-
-  ; Update window title and metadata
-  DetailPrint "Download URL: $DOWNLOAD_URL"
 FunctionEnd
 
 ;------------------------------- Components --------------------------------
 Section "Isam AULauncher (required)" SecMain
   SectionIn RO
 
-  ; --- Download zip via hidden PowerShell (no visible window, no buffer) ---
+  ; --- Download zip (same approach as IsamAU-Online.nsi) ---
   DetailPrint "Downloading $INST_VERSION..."
   DetailPrint "This may take a few minutes..."
 
-  FileOpen $0 "$PLUGINSDIR\_download.ps1" w
-  FileWrite $0 '$$ErrorActionPreference = "Stop"$\r$\n'
-  FileWrite $0 '[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12$\r$\n'
-  FileWrite $0 'ProgressPreference = "SilentlyContinue"$\r$\n'
-  FileWrite $0 'Invoke-WebRequest -Uri "$DOWNLOAD_URL" -OutFile "$PLUGINSDIR\IsamAU-All.zip" -UseBasicParsing$\r$\n'
-  FileClose $0
+  ; Force TLS 1.2
+  System::Call 'wininet::InternetSetOption(0, 11, 0, 0) i'
 
-  ; VBScript wrapper runs PowerShell completely hidden
-  FileOpen $0 "$PLUGINSDIR\_run.vbs" w
-  FileWrite $0 'Set oShell = CreateObject("WScript.Shell")$\r$\n'
-  FileWrite $0 'oShell.Run "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ""$PLUGINSDIR\_download.ps1""", 0, True$\r$\n'
-  FileClose $0
-
-  ExecWait 'wscript.exe "$PLUGINSDIR\_run.vbs"' $0
+  System::Call 'urlmon::URLDownloadToFile(0, t"${GITHUB_BASE}/$INST_VERSION/IsamAU-All.zip", t"$PLUGINSDIR\IsamAU-All.zip", i0, i0) i .r0'
 
   ${If} $0 != "0"
-    MessageBox MB_ICONSTOP "Download failed. Please check your internet connection and try again."
+    MessageBox MB_ICONSTOP "Download failed (error $0). Please check your internet connection and try again."
     Quit
   ${EndIf}
 
@@ -154,7 +137,7 @@ Section "Isam AULauncher (required)" SecMain
   download_ok:
   DetailPrint "Download complete."
 
-  ; --- Extract ---
+  ; --- Extract via PowerShell (built-in, no .bat files) ---
   DetailPrint "Extracting files..."
   CreateDirectory "$PLUGINSDIR\extracted"
 
@@ -162,12 +145,8 @@ Section "Isam AULauncher (required)" SecMain
   FileWrite $0 'Expand-Archive -Path "$PLUGINSDIR\IsamAU-All.zip" -DestinationPath "$PLUGINSDIR\extracted" -Force$\r$\n'
   FileClose $0
 
-  FileOpen $0 "$PLUGINSDIR\_run2.vbs" w
-  FileWrite $0 'Set oShell = CreateObject("WScript.Shell")$\r$\n'
-  FileWrite $0 'oShell.Run "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ""$PLUGINSDIR\_extract.ps1""", 0, True$\r$\n'
-  FileClose $0
-
-  ExecWait 'wscript.exe "$PLUGINSDIR\_run2.vbs"' $0
+  nsExec::ExecToStack 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$PLUGINSDIR\_extract.ps1"'
+  Pop $0
   ${If} $0 != "0"
     MessageBox MB_ICONSTOP "Extraction failed. Please try again."
     Quit
