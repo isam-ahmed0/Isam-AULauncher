@@ -3,7 +3,7 @@
 ; Compile with: makensis.exe installer\IsamAU-Online.nsi
 ;
 ; Downloads all files from GitHub Releases during install.
-; Uses nsExec for direct command execution (no .bat file intermediaries).
+; Uses ExecWait with PowerShell scripts (no nsExec buffer issues).
 ;-------------------------------------------------------------------------------
 
 !include "MUI2.nsh"
@@ -17,14 +17,12 @@
 !endif
 !define VERSION_DOT   "${VERSION}.0.0"
 
-; Repo root = folder above this script (overridden by /DROOT= in build scripts)
 !ifndef ROOT
   !define ROOT "${__FILEDIR__}\.."
 !endif
 !define SRC_ICON      "${ROOT}\src\launcher\resources\icon.ico"
 !define SIDEBAR_BMP   "${ROOT}\installer\sidebar.bmp"
 
-; Download URL - GitHub Releases
 !define DOWNLOAD_URL  "https://github.com/isam-ahmed0/Isam-AULauncher/releases/download/${VERSION}/IsamAU-All.zip"
 
 Name    "${APP_NAME}"
@@ -86,21 +84,51 @@ FunctionEnd
 Section "Isam AULauncher (required)" SecMain
   SectionIn RO
 
-  ; --- Download via PowerShell (handles GitHub redirects natively) ---
+  ; --- Write download script to temp file ---
   DetailPrint "Downloading files from GitHub..."
   DetailPrint "URL: ${DOWNLOAD_URL}"
-  nsExec::ExecToStack 'powershell -NoProfile -Command "ProgressPreference = SilentlyContinue; [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri &quot;${DOWNLOAD_URL}&quot; -OutFile &quot;$PLUGINSDIR\IsamAU-All.zip&quot; -UseBasicParsing"'
-  Pop $0
+  FileOpen $0 "$PLUGINSDIR\_download.ps1" w
+  FileWrite $0 '$ErrorActionPreference = "Stop"$\r$\n'
+  FileWrite $0 '[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12$\r$\n'
+  FileWrite $0 'ProgressPreference = "SilentlyContinue"$\r$\n'
+  FileWrite $0 'try {$\r$\n'
+  FileWrite $0 '  Invoke-WebRequest -Uri "${DOWNLOAD_URL}" -OutFile "$PLUGINSDIR\IsamAU-All.zip" -UseBasicParsing$\r$\n'
+  FileWrite $0 '  exit 0$\r$\n'
+  FileWrite $0 '} catch {$\r$\n'
+  FileWrite $0 '  exit 1$\r$\n'
+  FileWrite $0 '}$\r$\n'
+  FileClose $0
+
+  ; --- Run download script (ExecWait — no output buffer, won't kill process) ---
+  DetailPrint "Downloading..."
+  ExecWait 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$PLUGINSDIR\_download.ps1"' $0
   ${If} $0 != "0"
     MessageBox MB_ICONSTOP "Download failed. Please check your internet connection and try again."
     Quit
   ${EndIf}
 
-  ; --- Extract ---
+  ; --- Verify download ---
+  IfFileExists "$PLUGINSDIR\IsamAU-All.zip" 0 download_failed
+    Goto download_ok
+  download_failed:
+    MessageBox MB_ICONSTOP "Download failed. The file was not created."
+    Quit
+  download_ok:
+
+  ; --- Write extract script to temp file ---
   DetailPrint "Extracting files..."
   CreateDirectory "$PLUGINSDIR\extracted"
-  nsExec::ExecToStack 'cmd /c "$WINDIR\System32\tar.exe" xf "$PLUGINSDIR\IsamAU-All.zip" -C "$PLUGINSDIR\extracted"'
-  Pop $0
+  FileOpen $0 "$PLUGINSDIR\_extract.ps1" w
+  FileWrite $0 '$ErrorActionPreference = "Stop"$\r$\n'
+  FileWrite $0 'try {$\r$\n'
+  FileWrite $0 '  Expand-Archive -Path "$PLUGINSDIR\IsamAU-All.zip" -DestinationPath "$PLUGINSDIR\extracted" -Force$\r$\n'
+  FileWrite $0 '  exit 0$\r$\n'
+  FileWrite $0 '} catch {$\r$\n'
+  FileWrite $0 '  exit 1$\r$\n'
+  FileWrite $0 '}$\r$\n'
+  FileClose $0
+
+  ExecWait 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$PLUGINSDIR\_extract.ps1"' $0
   ${If} $0 != "0"
     MessageBox MB_ICONSTOP "Extraction failed. Please try again."
     Quit
@@ -153,7 +181,6 @@ Section /o "Desktop shortcut" SecDesktop
   CreateShortcut "$DESKTOP\${APP_SHORT}.lnk" "$INSTDIR\IsamAULauncher.exe"
 SectionEnd
 
-;------------------------------- Component descriptions --------------------
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
   !insertmacro MUI_DESCRIPTION_TEXT ${SecMain}    "Core launcher files (required). Downloaded from the internet."
   !insertmacro MUI_DESCRIPTION_TEXT ${SecFixer}   "Itch.io login fix tool."
@@ -161,7 +188,6 @@ SectionEnd
   !insertmacro MUI_DESCRIPTION_TEXT ${SecDesktop} "Create a shortcut on your Desktop."
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
-;------------------------------- Uninstall --------------------------------
 Section "Uninstall"
   Delete "$SMPROGRAMS\${APP_SHORT}\${APP_SHORT}.lnk"
   Delete "$SMPROGRAMS\${APP_SHORT}\Uninstall ${APP_SHORT}.lnk"
