@@ -24,7 +24,7 @@
 !define SRC_ICON      "${ROOT}\src\launcher\resources\icon.ico"
 !define SIDEBAR_BMP   "${ROOT}\installer\sidebar.bmp"
 
-; Download URL - single zip with everything
+; Download URL - GitHub Releases
 !define DOWNLOAD_URL  "https://github.com/isam-ahmed0/Isam-AULauncher/releases/download/${VERSION}/IsamAU-All.zip"
 
 Name    "${APP_NAME}"
@@ -86,10 +86,10 @@ FunctionEnd
 Section "Isam AULauncher (required)" SecMain
   SectionIn RO
 
-  ; --- Download ---
+  ; --- Download via PowerShell (handles GitHub redirects natively) ---
   DetailPrint "Downloading files from GitHub..."
   DetailPrint "URL: ${DOWNLOAD_URL}"
-  nsExec::ExecToStack 'cmd /c "$WINDIR\System32\curl.exe" -L --progress-bar -o "$PLUGINSDIR\IsamAU-All.zip" "${DOWNLOAD_URL}"'
+  nsExec::ExecToStack 'powershell -NoProfile -Command "ProgressPreference = SilentlyContinue; [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri &quot;${DOWNLOAD_URL}&quot; -OutFile &quot;$PLUGINSDIR\IsamAU-All.zip&quot; -UseBasicParsing"'
   Pop $0
   ${If} $0 != "0"
     MessageBox MB_ICONSTOP "Download failed. Please check your internet connection and try again."
