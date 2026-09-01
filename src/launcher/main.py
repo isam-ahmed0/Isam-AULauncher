@@ -17,6 +17,8 @@ if __name__ == "__main__":
                         help="Use legacy Dear PyGui GUI")
     parser.add_argument("--no-splash", action="store_true",
                         help="Skip splash screen")
+    parser.add_argument("--splash-2", action="store_true",
+                        help="Use animated WebM video splash")
     args, _ = parser.parse_known_args()
 
     if args.gui_2:
@@ -49,6 +51,41 @@ if __name__ == "__main__":
                 launcher._load_initial_data()
                 launcher._load_itch_profile()
                 launcher.window.show()
+                qapp.exec()
+                launcher.shutdown()
+                break
+
+            if args.splash_2:
+                from gui_qt.video_splash import VideoSplash
+                from gui_qt.splash import SplashScreen
+
+                def on_video_done():
+                    splash = SplashScreen()
+
+                    def on_splash_done():
+                        launcher.window.show()
+
+                    splash.finished.connect(on_splash_done)
+
+                    def boot():
+                        splash.update_status("Loading profile...")
+                        qapp.processEvents()
+                        launcher._load_itch_profile_sync()
+                        splash.update_status("Checking updates...")
+                        qapp.processEvents()
+                        launcher._load_initial_data_sync()
+                        splash.update_status("Ready")
+                        qapp.processEvents()
+                        splash.finish()
+
+                    splash.show()
+                    QTimer.singleShot(50, boot)
+
+                vsplash = VideoSplash()
+                vsplash.finished.connect(on_video_done)
+                vsplash.show()
+                vsplash.play()
+
                 qapp.exec()
                 launcher.shutdown()
                 break
