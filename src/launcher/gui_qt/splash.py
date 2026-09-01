@@ -41,12 +41,12 @@ class SplashScreen(QWidget):
         self._opacity = 0.0
         self._glow_phase = 0.0
 
-        # Fade-in animation
+        # Fade-in animation (fast — splash is only visible 1-2s)
         self._fade_in = QPropertyAnimation(self, b"windowOpacity")
-        self._fade_in.setDuration(500)
+        self._fade_in.setDuration(150)
         self._fade_in.setStartValue(0.0)
         self._fade_in.setEndValue(1.0)
-        self._fade_in.setEasingCurve(QEasingCurve.Type.OutCubic)
+        self._fade_in.setEasingCurve(QEasingCurve.Type.OutQuad)
 
         # Glow animation (pulsing accent line)
         self._glow_timer = QTimer(self)
