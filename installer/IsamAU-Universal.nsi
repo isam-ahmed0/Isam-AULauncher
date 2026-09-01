@@ -121,18 +121,21 @@ FunctionEnd
 Section "Isam AULauncher (required)" SecMain
   SectionIn RO
 
-  ; --- Download zip ---
+  ; --- Download zip via PowerShell ExecWait (no buffer issues, handles large files) ---
   DetailPrint "Downloading $INST_VERSION..."
   DetailPrint "This may take a few minutes..."
 
-  ; Force TLS 1.2
-  System::Call 'wininet::InternetSetOption(0, 11, 0, 0) i'
+  FileOpen $0 "$PLUGINSDIR\_download.ps1" w
+  FileWrite $0 '$$ErrorActionPreference = "Stop"$\r$\n'
+  FileWrite $0 '[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12$\r$\n'
+  FileWrite $0 'ProgressPreference = "SilentlyContinue"$\r$\n'
+  FileWrite $0 'Invoke-WebRequest -Uri "$DOWNLOAD_URL" -OutFile "$PLUGINSDIR\IsamAU-All.zip" -UseBasicParsing$\r$\n'
+  FileClose $0
 
-  ; URLDownloadToFile - handles HTTPS + redirects natively
-  System::Call 'urlmon::URLDownloadToFile(0, t"$DOWNLOAD_URL", t"$PLUGINSDIR\IsamAU-All.zip", i0, i0) i .r0'
+  ExecWait 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$PLUGINSDIR\_download.ps1"' $0
 
   ${If} $0 != "0"
-    MessageBox MB_ICONSTOP "Download failed (error $0). Please check your internet connection and try again."
+    MessageBox MB_ICONSTOP "Download failed. Please check your internet connection and try again."
     Quit
   ${EndIf}
 
@@ -153,8 +156,7 @@ Section "Isam AULauncher (required)" SecMain
   FileWrite $0 'Expand-Archive -Path "$PLUGINSDIR\IsamAU-All.zip" -DestinationPath "$PLUGINSDIR\extracted" -Force$\r$\n'
   FileClose $0
 
-  nsExec::ExecToStack 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$PLUGINSDIR\_extract.ps1"'
-  Pop $0
+  ExecWait 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$PLUGINSDIR\_extract.ps1"' $0
   ${If} $0 != "0"
     MessageBox MB_ICONSTOP "Extraction failed. Please try again."
     Quit
