@@ -44,7 +44,7 @@ set /p "SIGN_PASS=Enter certificate password: "
 
 echo.
 echo Signing...
-"%SIGNTOOL%" sign /f "%CERT_FILE%" /p "%SIGN_PASS%" /fd SHA256 /d "Isam AULauncher" "%TARGET%"
+"%SIGNTOOL%" sign /f "%CERT_FILE%" /p "%SIGN_PASS%" /fd SHA256 /d "Isam Ahmed" "%TARGET%"
 
 if %ERRORLEVEL% neq 0 (
     echo.

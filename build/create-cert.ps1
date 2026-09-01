@@ -3,7 +3,7 @@
 
 $ErrorActionPreference = "Stop"
 
-$subject = "CN=Isam AULauncher"
+$subject = "CN=Isam Ahmed"
 $validYears = 5
 $outDir = Join-Path $PSScriptRoot "..\release"
 $outFile = Join-Path $outDir "signing-cert.pfx"
