@@ -13,7 +13,7 @@
 !define APP_SHORT     "Isam AULauncher"
 !define COMPANY       "Isam"
 !ifndef VERSION
-  !system 'cmd /c "for /f "delims=" %v in ('"${ROOT}\LAUNCHER_VERSION"') do @echo !define VERSION "%v"" > "${__FILEDIR__}\_ver.nsh"'
+  !system '"${__FILEDIR__}\_read_ver.bat" "${ROOT}\LAUNCHER_VERSION" > "${__FILEDIR__}\_ver.nsh"'
   !include "${__FILEDIR__}\_ver.nsh"
   !delfile "${__FILEDIR__}\_ver.nsh"
 !endif
