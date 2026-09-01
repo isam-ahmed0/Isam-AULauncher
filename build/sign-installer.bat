@@ -9,7 +9,7 @@ set "PROJECT_DIR=%~dp0.."
 set "CERT_FILE=%PROJECT_DIR%\release\signing-cert.pfx"
 set "TARGET=%~1"
 
-if "%TARGET%"=="" set "TARGET=%PROJECT_DIR%\IsamAU-Setup.exe"
+if "%TARGET%"=="" set "TARGET=%PROJECT_DIR%\dist\IsamAU-Setup.exe"
 
 REM Find signtool.exe
 set "SIGNTOOL="
