@@ -100,8 +100,10 @@ Section "Isam AULauncher (required)" SecMain
   ; --- Download ---
   DetailPrint "Downloading files from GitHub..."
   DetailPrint "URL: ${DOWNLOAD_URL}"
-  nsExec::ExecToStack 'cmd /c "$WINDIR\System32\curl.exe" -L -o "$PLUGINSDIR\IsamAU-All.zip" "${DOWNLOAD_URL}"'
-  Pop $0
+  FileOpen $9 "$PLUGINSDIR\download.bat" w
+  FileWrite $9 '@echo off$\r$\n"$WINDIR\System32\curl.exe" -L -o "$PLUGINSDIR\IsamAU-All.zip" "${DOWNLOAD_URL}"$\r$\nexit /b %errorlevel%'
+  FileClose $9
+  ExecWait '"$PLUGINSDIR\download.bat"' $0
   ${If} $0 != "0"
     MessageBox MB_ICONSTOP "Download failed. Please check your internet connection and try again."
     Quit
@@ -110,8 +112,10 @@ Section "Isam AULauncher (required)" SecMain
   ; --- Extract (Windows built-in tar handles zip) ---
   DetailPrint "Extracting files..."
   CreateDirectory "$PLUGINSDIR\extracted"
-  nsExec::ExecToStack 'cmd /c "$WINDIR\System32\tar.exe" xf "$PLUGINSDIR\IsamAU-All.zip" -C "$PLUGINSDIR\extracted"'
-  Pop $0
+  FileOpen $9 "$PLUGINSDIR\extract.bat" w
+  FileWrite $9 '@echo off$\r$\n"$WINDIR\System32\tar.exe" xf "$PLUGINSDIR\IsamAU-All.zip" -C "$PLUGINSDIR\extracted"$\r$\nexit /b %errorlevel%'
+  FileClose $9
+  ExecWait '"$PLUGINSDIR\extract.bat"' $0
   ${If} $0 != "0"
     MessageBox MB_ICONSTOP "Extraction failed. Please try again."
     Quit
@@ -120,8 +124,10 @@ Section "Isam AULauncher (required)" SecMain
   ; --- Copy launcher files ---
   DetailPrint "Installing launcher..."
   SetOutPath "$INSTDIR"
-  nsExec::ExecToStack 'cmd /c xcopy /E /Y "$PLUGINSDIR\extracted\IsamAULauncher\*" "$INSTDIR\"'
-  Pop $0
+  FileOpen $9 "$PLUGINSDIR\install.bat" w
+  FileWrite $9 '@echo off$\r$\ncopy /Y "$PLUGINSDIR\extracted\IsamAULauncher\*" "$INSTDIR\"$\r$\nxcopy /E /Y "$PLUGINSDIR\extracted\IsamAULauncher\*" "$INSTDIR\"'
+  FileClose $9
+  ExecWait '"$PLUGINSDIR\install.bat"' $0
 
   WriteUninstaller "$INSTDIR\Uninstall.exe"
 
@@ -147,8 +153,10 @@ Section "Itch Login Fixer" SecFixer
   SectionIn RO
   DetailPrint "Installing Itch Login Fixer..."
   SetOutPath "$INSTDIR\Fixer"
-  nsExec::ExecToStack 'cmd /c xcopy /E /Y "$PLUGINSDIR\extracted\Itch_Login_Fixer\*" "$INSTDIR\Fixer\"'
-  Pop $0
+  FileOpen $9 "$PLUGINSDIR\fixer.bat" w
+  FileWrite $9 '@echo off$\r$\nxcopy /E /Y "$PLUGINSDIR\extracted\Itch_Login_Fixer\*" "$INSTDIR\Fixer\"'
+  FileClose $9
+  ExecWait '"$PLUGINSDIR\fixer.bat"' $0
   CreateShortcut "$SMPROGRAMS\${APP_SHORT}\Itch Login Fixer.lnk" "$INSTDIR\Fixer\Itch_Login_Fixer.exe"
 SectionEnd
 
@@ -156,10 +164,10 @@ Section "Support tools (7-zip + mods)" SecTools
   SectionIn RO
   DetailPrint "Installing support tools..."
   SetOutPath "$INSTDIR"
-  nsExec::ExecToStack 'cmd /c copy /Y "$PLUGINSDIR\extracted\7z.exe" "$INSTDIR\7z.exe"'
-  Pop $0
-  nsExec::ExecToStack 'cmd /c copy /Y "$PLUGINSDIR\extracted\bepmods.zip" "$INSTDIR\bepmods.zip"'
-  Pop $0
+  FileOpen $9 "$PLUGINSDIR\tools.bat" w
+  FileWrite $9 '@echo off$\r$\ncopy /Y "$PLUGINSDIR\extracted\7z.exe" "$INSTDIR\7z.exe"$\r$\ncopy /Y "$PLUGINSDIR\extracted\bepmods.zip" "$INSTDIR\bepmods.zip"'
+  FileClose $9
+  ExecWait '"$PLUGINSDIR\tools.bat"' $0
 SectionEnd
 
 Section /o "Desktop shortcut" SecDesktop
