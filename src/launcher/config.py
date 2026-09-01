@@ -15,7 +15,7 @@ logging.basicConfig(
 APP_NAME = "Isam AULauncher"
 BRAND_SHORT = "ISAM AU"
 MAKER = "Isam"
-LAUNCHER_VERSION = "0.5"
+LAUNCHER_VERSION = "0.6"
 
 VERSION_URL = "https://raw.githubusercontent.com/jogamerforgames2021/BootstrapperTEST/main/Version.txt"
 MESSAGE_URL = "https://raw.githubusercontent.com/jogamerforgames2021/AmongUsLauncherNew/refs/heads/main/message.txt"

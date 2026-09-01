@@ -14,7 +14,7 @@
 !define APP_SHORT     "Isam AULauncher"
 !define COMPANY       "Isam"
 !ifndef VERSION
-  !define VERSION     "0.5"
+  !define VERSION     "0.6"
 !endif
 !define VERSION_DOT   "${VERSION}.0.0"
 
