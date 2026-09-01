@@ -81,12 +81,12 @@ Function .onInit
   DetailPrint "Checking for latest version..."
 
   FileOpen $0 "$PLUGINSDIR\_resolve.ps1" w
-  FileWrite $0 '$ErrorActionPreference = "Stop"$\r$\n'
+  FileWrite $0 '$$ErrorActionPreference = "Stop"$\r$\n'
   FileWrite $0 '[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12$\r$\n'
   FileWrite $0 'ProgressPreference = "SilentlyContinue"$\r$\n'
   FileWrite $0 'try {$\r$\n'
-  FileWrite $0 '  $v = (Invoke-WebRequest -Uri "${VERSION_URL}" -UseBasicParsing).Content.Trim()$\r$\n'
-  FileWrite $0 '  [System.IO.File]::WriteAllText("$env:TEMP\isam_version.txt", $v)$\r$\n'
+  FileWrite $0 '  $$v = (Invoke-WebRequest -Uri "${VERSION_URL}" -UseBasicParsing).Content.Trim()$\r$\n'
+  FileWrite $0 '  [System.IO.File]::WriteAllText("$$env:TEMP\isam_version.txt", $$v)$\r$\n'
   FileWrite $0 '  exit 0$\r$\n'
   FileWrite $0 '} catch {$\r$\n'
   FileWrite $0 '  exit 1$\r$\n'
@@ -110,8 +110,8 @@ Function .onInit
   FileRead $1 $INST_VERSION
   FileClose $1
 
-  ; Trim whitespace/newline
-  ${TrimNewLines} $INST_VERSION $INST_VERSION
+  ; Trim trailing \r\n
+  StrCpy $INST_VERSION $INST_VERSION -2
 
   ${If} $INST_VERSION == ""
     MessageBox MB_ICONSTOP "Could not determine latest version."
