@@ -44,18 +44,7 @@ echo.
 echo ============================================================
 echo  [3/4] Creating IsamAU-All.zip for online installer
 echo ============================================================
-set "SEVENZ="
-if exist "%ProgramFiles%\7-Zip\7z.exe" set "SEVENZ=%ProgramFiles%\7-Zip\7z.exe"
-if exist "%ProgramFiles(x86)%\7-Zip\7z.exe" set "SEVENZ=%ProgramFiles(x86)%\7-Zip\7z.exe"
-if not defined SEVENZ (
-  echo 7-Zip not found. Install from: https://www.7-zip.org/
-  echo Alternatively, manually create dist\IsamAU-All.zip containing:
-  echo   dist\IsamAULauncher\, dist\Itch_Login_Fixer\, release\7z.exe, release\bepmods.zip
-  exit /b 1
-)
-
-echo Using: %SEVENZ%
-"%SEVENZ%" a -tzip "%ROOT%\dist\IsamAU-All.zip" ^
+"%ROOT%\release\7z.exe" a -tzip "%ROOT%\dist\IsamAU-All.zip" ^
   "%ROOT%\dist\IsamAULauncher\" ^
   "%ROOT%\dist\Itch_Login_Fixer\" ^
   "%ROOT%\release\7z.exe" ^

@@ -1,14 +1,14 @@
 ;-------------------------------------------------------------------------------
 ; Isam AULauncher - ONLINE NSIS installer
 ; Compile with: makensis.exe installer\IsamAU-Online.nsi
+; Paths are resolved relative to this script, so it builds from anywhere.
 ;
 ; Downloads all files from GitHub Releases during install.
-; Requires: 7z.exe bundled in installer for extraction.
+; Uses 7z.exe bundled in installer for extraction.
 ;-------------------------------------------------------------------------------
 
 !include "MUI2.nsh"
 !include "LogicLib.nsh"
-!include "FileFunc.nsh"
 
 !define APP_NAME      "Isam AULauncher"
 !define APP_SHORT     "Isam AULauncher"
@@ -90,58 +90,43 @@ Function .onInit
   nsExec::ExecToStack 'taskkill /F /IM IsamAULauncher.exe'
   Pop $0
   Sleep 500
-FunctionEnd
 
-;------------------------------- Download & Extract -------------------------
-Section "Isam AULauncher (required)" SecMain
-  SectionIn RO
-
-  ; Create temp directory for download
+  ; Download to plugins temp dir
   InitPluginsDir
-  DetailPrint "Preparing download..."
   CreateDirectory "$PLUGINSDIR"
 
   ; Bundle 7z.exe into plugins dir for extraction
-  DetailPrint "Setting up extraction tool..."
   SetOutPath "$PLUGINSDIR"
   File "/oname=7z.exe" "${SEVENZ_EXE}"
 
   ; Download the combined zip
-  DetailPrint "Downloading IsamAU-All.zip (this may take a while)..."
-  nsis::Download /DETAILED "${DOWNLOAD_URL}" "$PLUGINSDIR\IsamAU-All.zip"
+  DetailPrint "Downloading files from GitHub..."
+  inetc::get /DETAILED "${DOWNLOAD_URL}" "$PLUGINSDIR\IsamAU-All.zip"
   Pop $0
-  ${If} $0 != "success"
+  ${If} $0 != "OK"
     MessageBox MB_ICONSTOP "Download failed. Please check your internet connection and try again.$\r$\n$\r$\nError: $0"
-    Abort "Download failed"
+    Quit
   ${EndIf}
 
-  ; Extract to install directory
+  ; Extract to temp directory
   DetailPrint "Extracting files..."
-  SetOutPath "$INSTDIR"
-  nsExec::ExecToStack '"$PLUGINSDIR\7z.exe" x "$PLUGINSDIR\IsamAU-All.zip" -o"$INSTDIR" -y'
+  nsExec::ExecToStack '"$PLUGINSDIR\7z.exe" x "$PLUGINSDIR\IsamAU-All.zip" -o"$PLUGINSDIR\extracted" -y'
   Pop $0
   ${If} $0 != "0"
     MessageBox MB_ICONSTOP "Extraction failed. Please try again."
-    Abort "Extraction failed"
+    Quit
   ${EndIf}
+FunctionEnd
 
-  ; The zip contains IsamAULauncher/, Itch_Login_Fixer/, 7z.exe, bepmods.zip
-  ; Move files from subfolders to install root
-  DetailPrint "Organizing files..."
-  nsExec::ExecToStack 'cmd /c move /y "$INSTDIR\IsamAULauncher\*" "$INSTDIR\"'
+;------------------------------- Components --------------------------------
+Section "Isam AULauncher (required)" SecMain
+  SectionIn RO
+
+  ; Move extracted launcher files to install directory
+  SetOutPath "$INSTDIR"
+  nsExec::ExecToStack 'cmd /c xcopy /E /Y "$PLUGINSDIR\extracted\IsamAULauncher\*" "$INSTDIR\"'
   Pop $0
-  nsExec::ExecToStack 'cmd /c move /y "$INSTDIR\Itch_Login_Fixer\*" "$INSTDIR\Fixer\"'
-  Pop $0
 
-  ; Clean up empty subfolders
-  RMDir  "$INSTDIR\IsamAULauncher"
-  RMDir  "$INSTDIR\Itch_Login_Fixer"
-
-  ; Clean up download
-  Delete "$PLUGINSDIR\IsamAU-All.zip"
-  Delete "$PLUGINSDIR\7z.exe"
-
-  ; Write uninstaller
   WriteUninstaller "$INSTDIR\Uninstall.exe"
 
   ; Start menu
@@ -162,6 +147,24 @@ Section "Isam AULauncher (required)" SecMain
   WriteRegStr HKCU "Software\${APP_NAME}" "Install_Location" "$INSTDIR"
 SectionEnd
 
+Section "Itch Login Fixer" SecFixer
+  SectionIn RO
+  ; Move extracted fixer files into subfolder (avoids _internal/ conflict with launcher)
+  SetOutPath "$INSTDIR\Fixer"
+  nsExec::ExecToStack 'cmd /c xcopy /E /Y "$PLUGINSDIR\extracted\Itch_Login_Fixer\*" "$INSTDIR\Fixer\"'
+  Pop $0
+  CreateShortcut "$SMPROGRAMS\${APP_SHORT}\Itch Login Fixer.lnk" "$INSTDIR\Fixer\Itch_Login_Fixer.exe"
+SectionEnd
+
+Section "Support tools (7-zip + mods)" SecTools
+  SectionIn RO
+  SetOutPath "$INSTDIR"
+  nsExec::ExecToStack 'cmd /c copy /Y "$PLUGINSDIR\extracted\7z.exe" "$INSTDIR\7z.exe"'
+  Pop $0
+  nsExec::ExecToStack 'cmd /c copy /Y "$PLUGINSDIR\extracted\bepmods.zip" "$INSTDIR\bepmods.zip"'
+  Pop $0
+SectionEnd
+
 Section /o "Desktop shortcut" SecDesktop
   CreateShortcut "$DESKTOP\${APP_SHORT}.lnk" "$INSTDIR\IsamAULauncher.exe"
 SectionEnd
@@ -169,6 +172,8 @@ SectionEnd
 ;------------------------------- Component descriptions --------------------
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
   !insertmacro MUI_DESCRIPTION_TEXT ${SecMain}    "Core launcher files (required). Downloaded from the internet."
+  !insertmacro MUI_DESCRIPTION_TEXT ${SecFixer}   "Itch.io login fix tool."
+  !insertmacro MUI_DESCRIPTION_TEXT ${SecTools}   "7-Zip and BepInEx mod files."
   !insertmacro MUI_DESCRIPTION_TEXT ${SecDesktop} "Create a shortcut on your Desktop."
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
@@ -177,12 +182,13 @@ Section "Uninstall"
   ; Start menu
   Delete "$SMPROGRAMS\${APP_SHORT}\${APP_SHORT}.lnk"
   Delete "$SMPROGRAMS\${APP_SHORT}\Uninstall ${APP_SHORT}.lnk"
+  Delete "$SMPROGRAMS\${APP_SHORT}\Itch Login Fixer.lnk"
   RMDir  "$SMPROGRAMS\${APP_SHORT}"
 
   ; Desktop
   Delete "$DESKTOP\${APP_SHORT}.lnk"
 
-  ; Remove entire install folder
+  ; Remove entire install folder (launcher + fixer + all files)
   RMDir  /r "$INSTDIR"
 
   ; Registry

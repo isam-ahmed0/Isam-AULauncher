@@ -2,11 +2,10 @@
 REM Create IsamAU-All.zip and compile the online installer.
 REM
 REM Prerequisites: PyInstaller builds must already exist in dist\
-REM   (run build_installer.bat or build_online.bat steps 1-2 first)
+REM   (run build_installer.bat steps 1-2 first)
 REM
 REM Requires:
-REM   1. 7-Zip on PATH or in Program Files
-REM   2. NSIS (Unicode) installed from https://nsis.sourceforge.io/Download
+REM   1. NSIS (Unicode) installed from https://nsis.sourceforge.io/Download
 REM
 REM Produces: dist\IsamAU-All.zip + dist\IsamAU-Online.exe
 setlocal
@@ -32,16 +31,7 @@ echo Using version: %VERSION%
 echo ============================================================
 echo  [1/2] Creating IsamAU-All.zip
 echo ============================================================
-set "SEVENZ="
-if exist "%ProgramFiles%\7-Zip\7z.exe" set "SEVENZ=%ProgramFiles%\7-Zip\7z.exe"
-if exist "%ProgramFiles(x86)%\7-Zip\7z.exe" set "SEVENZ=%ProgramFiles(x86)%\7-Zip\7z.exe"
-if not defined SEVENZ (
-  echo 7-Zip not found. Install from: https://www.7-zip.org/
-  exit /b 1
-)
-
-echo Using: %SEVENZ%
-"%SEVENZ%" a -tzip "%ROOT%\dist\IsamAU-All.zip" ^
+"%ROOT%\release\7z.exe" a -tzip "%ROOT%\dist\IsamAU-All.zip" ^
   "%ROOT%\dist\IsamAULauncher\" ^
   "%ROOT%\dist\Itch_Login_Fixer\" ^
   "%ROOT%\release\7z.exe" ^
