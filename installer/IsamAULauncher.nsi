@@ -13,7 +13,9 @@
 !define APP_SHORT     "Isam AULauncher"
 !define COMPANY       "Isam"
 !ifndef VERSION
-  !searchparse/file "${ROOT}\src\launcher\config.py" `LAUNCHER_VERSION = "` VERSION `"`
+  !system 'cmd /c "for /f "delims=" %v in ('"${ROOT}\LAUNCHER_VERSION"') do @echo !define VERSION "%v"" > "${__FILEDIR__}\_ver.nsh"'
+  !include "${__FILEDIR__}\_ver.nsh"
+  !delfile "${__FILEDIR__}\_ver.nsh"
 !endif
 !define VERSION_DOT   "${VERSION}.0.0"
 
