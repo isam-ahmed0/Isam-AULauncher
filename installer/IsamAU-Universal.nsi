@@ -114,19 +114,11 @@ FunctionEnd
 Section "Isam AULauncher (required)" SecMain
   SectionIn RO
 
-  ; --- Download zip via PowerShell (URL baked in by NSIS FileWrite) ---
+  ; --- Download zip via curl.exe (built into Windows 10+, silent, no buffer) ---
   DetailPrint "Downloading $INST_VERSION..."
   DetailPrint "This may take a few minutes..."
 
-  FileOpen $0 "$PLUGINSDIR\_download.ps1" w
-  FileWrite $0 '$ErrorActionPreference = "Stop"$\r$\n'
-  FileWrite $0 '[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12$\r$\n'
-  FileWrite $0 'ProgressPreference = "SilentlyContinue"$\r$\n'
-  FileWrite $0 'Invoke-WebRequest -Uri "${GITHUB_BASE}/$INST_VERSION/IsamAU-All.zip" -OutFile "$PLUGINSDIR\IsamAU-All.zip" -UseBasicParsing$\r$\n'
-  FileClose $0
-
-  ; Redirect all output to log file to prevent nsExec buffer overflow
-  nsExec::ExecToStack 'cmd /c powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$PLUGINSDIR\_download.ps1" > "$PLUGINSDIR\_download.log" 2>&1'
+  nsExec::ExecToStack 'curl.exe -L -sS -o "$PLUGINSDIR\IsamAU-All.zip" "${GITHUB_BASE}/$INST_VERSION/IsamAU-All.zip"'
   Pop $0
   ${If} $0 != "0"
     MessageBox MB_ICONSTOP "Download failed (error $0). Please check your internet connection and try again."
