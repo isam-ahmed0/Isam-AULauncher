@@ -26,7 +26,7 @@
 !define SIDEBAR_BMP   "${ROOT}\installer\sidebar.bmp"
 !define SEVENZ_EXE    "${ROOT}\release\7z.exe"
 
-; Download URL — single zip with everything
+; Download URL - single zip with everything
 !define DOWNLOAD_URL  "https://github.com/isam-ahmed0/Isam-AULauncher/releases/download/${VERSION}/IsamAU-All.zip"
 
 Name    "${APP_NAME}"
@@ -101,9 +101,9 @@ Function .onInit
 
   ; Download the combined zip
   DetailPrint "Downloading files from GitHub..."
-  inetc::get /DETAILED "${DOWNLOAD_URL}" "$PLUGINSDIR\IsamAU-All.zip"
+  NSISdl::download /PROGRESS "${DOWNLOAD_URL}" "$PLUGINSDIR\IsamAU-All.zip"
   Pop $0
-  ${If} $0 != "OK"
+  ${If} $0 != "success"
     MessageBox MB_ICONSTOP "Download failed. Please check your internet connection and try again.$\r$\n$\r$\nError: $0"
     Quit
   ${EndIf}
