@@ -121,7 +121,7 @@ FunctionEnd
 Section "Isam AULauncher (required)" SecMain
   SectionIn RO
 
-  ; --- Download zip via PowerShell ExecWait (no buffer issues, handles large files) ---
+  ; --- Download zip via hidden PowerShell (no visible window, no buffer) ---
   DetailPrint "Downloading $INST_VERSION..."
   DetailPrint "This may take a few minutes..."
 
@@ -132,7 +132,13 @@ Section "Isam AULauncher (required)" SecMain
   FileWrite $0 'Invoke-WebRequest -Uri "$DOWNLOAD_URL" -OutFile "$PLUGINSDIR\IsamAU-All.zip" -UseBasicParsing$\r$\n'
   FileClose $0
 
-  ExecWait 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$PLUGINSDIR\_download.ps1"' $0
+  ; VBScript wrapper runs PowerShell completely hidden
+  FileOpen $0 "$PLUGINSDIR\_run.vbs" w
+  FileWrite $0 'Set oShell = CreateObject("WScript.Shell")$\r$\n'
+  FileWrite $0 'oShell.Run "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ""$PLUGINSDIR\_download.ps1""", 0, True$\r$\n'
+  FileClose $0
+
+  ExecWait 'wscript.exe "$PLUGINSDIR\_run.vbs"' $0
 
   ${If} $0 != "0"
     MessageBox MB_ICONSTOP "Download failed. Please check your internet connection and try again."
@@ -156,7 +162,12 @@ Section "Isam AULauncher (required)" SecMain
   FileWrite $0 'Expand-Archive -Path "$PLUGINSDIR\IsamAU-All.zip" -DestinationPath "$PLUGINSDIR\extracted" -Force$\r$\n'
   FileClose $0
 
-  ExecWait 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$PLUGINSDIR\_extract.ps1"' $0
+  FileOpen $0 "$PLUGINSDIR\_run2.vbs" w
+  FileWrite $0 'Set oShell = CreateObject("WScript.Shell")$\r$\n'
+  FileWrite $0 'oShell.Run "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ""$PLUGINSDIR\_extract.ps1""", 0, True$\r$\n'
+  FileClose $0
+
+  ExecWait 'wscript.exe "$PLUGINSDIR\_run2.vbs"' $0
   ${If} $0 != "0"
     MessageBox MB_ICONSTOP "Extraction failed. Please try again."
     Quit
