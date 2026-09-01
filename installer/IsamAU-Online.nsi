@@ -2,8 +2,8 @@
 ; Isam AULauncher - ONLINE NSIS installer
 ; Compile with: makensis.exe installer\IsamAU-Online.nsi
 ;
-; Downloads all files from GitHub Releases during install.
-; Uses ExecWait with PowerShell scripts (no nsExec buffer issues).
+; Downloads from GitHub Releases using Windows URLDownloadToFile API.
+; No external tools (no curl, no PowerShell, no .bat/.ps1 files).
 ;-------------------------------------------------------------------------------
 
 !include "MUI2.nsh"
@@ -84,55 +84,46 @@ FunctionEnd
 Section "Isam AULauncher (required)" SecMain
   SectionIn RO
 
-  ; --- Write download script to temp file ---
+  ; --- Download via Windows API (handles redirects, no external tools) ---
   DetailPrint "Downloading files from GitHub..."
   DetailPrint "URL: ${DOWNLOAD_URL}"
-  FileOpen $0 "$PLUGINSDIR\_download.ps1" w
-  FileWrite $0 '$ErrorActionPreference = "Stop"$\r$\n'
-  FileWrite $0 '[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12$\r$\n'
-  FileWrite $0 'ProgressPreference = "SilentlyContinue"$\r$\n'
-  FileWrite $0 'try {$\r$\n'
-  FileWrite $0 '  Invoke-WebRequest -Uri "${DOWNLOAD_URL}" -OutFile "$PLUGINSDIR\IsamAU-All.zip" -UseBasicParsing$\r$\n'
-  FileWrite $0 '  exit 0$\r$\n'
-  FileWrite $0 '} catch {$\r$\n'
-  FileWrite $0 '  exit 1$\r$\n'
-  FileWrite $0 '}$\r$\n'
-  FileClose $0
+  DetailPrint "This may take a few minutes..."
 
-  ; --- Run download script (ExecWait — no output buffer, won't kill process) ---
-  DetailPrint "Downloading..."
-  ExecWait 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$PLUGINSDIR\_download.ps1"' $0
+  ; Force TLS 1.2 before download
+  System::Call 'wininet::InternetSetOption(0, 11, 0, 0) i'
+
+  ; URLDownloadToFile — handles HTTPS + redirects natively
+  System::Call 'urlmon::URLDownloadToFile(0, t"${DOWNLOAD_URL}", t"$PLUGINSDIR\IsamAU-All.zip", i0, i0) i .r0'
+
   ${If} $0 != "0"
-    MessageBox MB_ICONSTOP "Download failed. Please check your internet connection and try again."
+    MessageBox MB_ICONSTOP "Download failed (error $0). Please check your internet connection and try again."
     Quit
   ${EndIf}
 
-  ; --- Verify download ---
+  ; Verify download
   IfFileExists "$PLUGINSDIR\IsamAU-All.zip" 0 download_failed
     Goto download_ok
   download_failed:
     MessageBox MB_ICONSTOP "Download failed. The file was not created."
     Quit
   download_ok:
+  DetailPrint "Download complete."
 
-  ; --- Write extract script to temp file ---
+  ; --- Extract via PowerShell (built-in, no .bat files) ---
   DetailPrint "Extracting files..."
   CreateDirectory "$PLUGINSDIR\extracted"
+
   FileOpen $0 "$PLUGINSDIR\_extract.ps1" w
-  FileWrite $0 '$ErrorActionPreference = "Stop"$\r$\n'
-  FileWrite $0 'try {$\r$\n'
-  FileWrite $0 '  Expand-Archive -Path "$PLUGINSDIR\IsamAU-All.zip" -DestinationPath "$PLUGINSDIR\extracted" -Force$\r$\n'
-  FileWrite $0 '  exit 0$\r$\n'
-  FileWrite $0 '} catch {$\r$\n'
-  FileWrite $0 '  exit 1$\r$\n'
-  FileWrite $0 '}$\r$\n'
+  FileWrite $0 'Expand-Archive -Path "$PLUGINSDIR\IsamAU-All.zip" -DestinationPath "$PLUGINSDIR\extracted" -Force$\r$\n'
   FileClose $0
 
-  ExecWait 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$PLUGINSDIR\_extract.ps1"' $0
+  nsExec::ExecToStack 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$PLUGINSDIR\_extract.ps1"'
+  Pop $0
   ${If} $0 != "0"
     MessageBox MB_ICONSTOP "Extraction failed. Please try again."
     Quit
   ${EndIf}
+  DetailPrint "Extraction complete."
 
   ; --- Copy launcher files ---
   DetailPrint "Installing launcher..."
