@@ -77,32 +77,22 @@ Function .onInit
   InitPluginsDir
   CreateDirectory "$PLUGINSDIR"
 
-  ; --- Resolve latest version from GitHub ---
+  ; --- Resolve latest version from GitHub (plain text file, no API) ---
   DetailPrint "Checking for latest version..."
 
-  FileOpen $0 "$PLUGINSDIR\_resolve.ps1" w
-  FileWrite $0 '$$ErrorActionPreference = "Stop"$\r$\n'
-  FileWrite $0 '[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12$\r$\n'
-  FileWrite $0 'ProgressPreference = "SilentlyContinue"$\r$\n'
-  FileWrite $0 'try {$\r$\n'
-  FileWrite $0 '  $$v = (Invoke-WebRequest -Uri "${VERSION_URL}" -UseBasicParsing).Content.Trim()$\r$\n'
-  FileWrite $0 '  [System.IO.File]::WriteAllText("$$env:TEMP\isam_version.txt", $$v)$\r$\n'
-  FileWrite $0 '  exit 0$\r$\n'
-  FileWrite $0 '} catch {$\r$\n'
-  FileWrite $0 '  exit 1$\r$\n'
-  FileWrite $0 '}$\r$\n'
-  FileClose $0
+  ; Force TLS 1.2
+  System::Call 'wininet::InternetSetOption(0, 11, 0, 0) i'
 
-  nsExec::ExecToStack 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$PLUGINSDIR\_resolve.ps1"'
-  Pop $0
+  ; Download version file (3 bytes, instant)
+  System::Call 'urlmon::URLDownloadToFile(0, t"${VERSION_URL}", t"$PLUGINSDIR\_version.txt", i0, i0) i .r0'
 
   ${If} $0 != "0"
     MessageBox MB_ICONSTOP "Could not check for updates. Please check your internet connection and try again."
     Quit
   ${EndIf}
 
-  ; Read resolved version
-  FileOpen $1 "$TEMP\isam_version.txt" r
+  ; Read version from file
+  FileOpen $1 "$PLUGINSDIR\_version.txt" r
   ${If} $1 == ""
     MessageBox MB_ICONSTOP "Could not determine latest version."
     Quit
