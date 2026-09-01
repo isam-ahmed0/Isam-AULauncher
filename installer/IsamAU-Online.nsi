@@ -92,7 +92,7 @@ Section "Isam AULauncher (required)" SecMain
   ; Force TLS 1.2 before download
   System::Call 'wininet::InternetSetOption(0, 11, 0, 0) i'
 
-  ; URLDownloadToFile — handles HTTPS + redirects natively
+  ; URLDownloadToFile - handles HTTPS + redirects natively
   System::Call 'urlmon::URLDownloadToFile(0, t"${DOWNLOAD_URL}", t"$PLUGINSDIR\IsamAU-All.zip", i0, i0) i .r0'
 
   ${If} $0 != "0"
