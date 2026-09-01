@@ -46,6 +46,7 @@ if __name__ == "__main__":
             launcher = LauncherApp(qapp)
 
             if args.no_splash:
+                launcher._load_initial_data()
                 launcher._load_itch_profile()
                 launcher.window.show()
                 qapp.exec()
@@ -61,12 +62,19 @@ if __name__ == "__main__":
 
             def boot():
                 splash.update_status("Loading profile...")
-                launcher._load_itch_profile()
+                qapp.processEvents()
+                launcher._load_itch_profile_sync()
+
                 splash.update_status("Checking updates...")
-                QTimer.singleShot(1800, splash.finish)
+                qapp.processEvents()
+                launcher._load_initial_data_sync()
+
+                splash.update_status("Ready")
+                qapp.processEvents()
+                splash.finish()
 
             splash.show()
-            QTimer.singleShot(300, boot)
+            QTimer.singleShot(50, boot)
 
             qapp.exec()
             launcher.shutdown()

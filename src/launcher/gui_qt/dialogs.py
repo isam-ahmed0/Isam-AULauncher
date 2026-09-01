@@ -128,8 +128,8 @@ class SettingsDialog(QDialog):
             self.accept()
 
         save_btn = QPushButton("Save")
-        save_btn.setObjectName("successBtn")
-        save_btn.setFixedHeight(40)
+        save_btn.setObjectName("modalPrimary")
+        save_btn.setFixedHeight(36)
         save_btn.clicked.connect(save)
         layout.addWidget(save_btn)
 
@@ -172,21 +172,25 @@ class AboutDialog(QDialog):
         if DISCORD_INVITE:
             discord_btn = QPushButton("Discord")
             discord_btn.setObjectName("toolBtn")
+            discord_btn.setFixedHeight(36)
             discord_btn.clicked.connect(lambda: webbrowser.open(DISCORD_INVITE))
             links_row.addWidget(discord_btn)
         else:
             discord_btn = QPushButton("Discord (Coming soon)")
             discord_btn.setObjectName("toolBtn")
+            discord_btn.setFixedHeight(36)
             discord_btn.clicked.connect(self._cb_coming_soon)
             links_row.addWidget(discord_btn)
 
         yt_btn = QPushButton("YouTube")
         yt_btn.setObjectName("toolBtn")
+        yt_btn.setFixedHeight(36)
         yt_btn.clicked.connect(lambda: webbrowser.open(YOUTUBE_CHANNEL))
         links_row.addWidget(yt_btn)
 
         src_btn = QPushButton("Source Code")
         src_btn.setObjectName("toolBtn")
+        src_btn.setFixedHeight(36)
         src_btn.clicked.connect(lambda: webbrowser.open(SOURCE_CODE_URL))
         links_row.addWidget(src_btn)
         layout.addLayout(links_row)

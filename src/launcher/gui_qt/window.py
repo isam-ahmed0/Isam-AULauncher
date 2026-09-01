@@ -107,7 +107,6 @@ class LauncherApp:
         self._build_ui()
         self._setup_tray()
         self._setup_game_timer()
-        self._load_initial_data()
         self.window.closeEvent = self._close_event
 
     # ------------------------------------------------------------------ setup
@@ -337,7 +336,7 @@ class LauncherApp:
         btn_layout.setContentsMargins(28, 16, 28, 0)
         self.main_action_btn = QPushButton("INSTALL GAME")
         self.main_action_btn.setObjectName("successBtn")
-        self.main_action_btn.setFixedHeight(52)
+        self.main_action_btn.setFixedHeight(44)
         self.main_action_btn.clicked.connect(self._cb_main_action)
         btn_layout.addWidget(self.main_action_btn)
         layout.addWidget(btn_row)
@@ -433,7 +432,7 @@ class LauncherApp:
         ]:
             btn = QPushButton(label)
             btn.setObjectName("toolBtn")
-            btn.setFixedHeight(44)
+            btn.setFixedHeight(36)
             btn.clicked.connect(cb)
             row1.addWidget(btn)
         layout.addLayout(row1)
@@ -448,7 +447,7 @@ class LauncherApp:
         ]:
             btn = QPushButton(label)
             btn.setObjectName(obj_name)
-            btn.setFixedHeight(44)
+            btn.setFixedHeight(36)
             btn.clicked.connect(cb)
             row2.addWidget(btn)
         layout.addLayout(row2)
@@ -550,7 +549,7 @@ class LauncherApp:
         self._zip_progress = QProgressBar()
         self._zip_progress.setRange(0, 100)
         self._zip_progress.setValue(0)
-        self._zip_progress.setFixedHeight(16)
+        self._zip_progress.setFixedHeight(18)
         self._zip_progress.hide()
         layout.addWidget(self._zip_progress)
 
@@ -596,7 +595,7 @@ class LauncherApp:
 
         self._bep_setup_btn = QPushButton("Setup BepInEx")
         self._bep_setup_btn.setObjectName("successBtn")
-        self._bep_setup_btn.setFixedHeight(40)
+        self._bep_setup_btn.setFixedHeight(36)
         self._bep_setup_btn.clicked.connect(self._cb_setup_bepinex)
         bep_btn_row.addWidget(self._bep_setup_btn)
 
@@ -654,7 +653,7 @@ class LauncherApp:
 
         self._profile_switch_btn = QPushButton("Switch to This Profile")
         self._profile_switch_btn.setObjectName("primaryBtn")
-        self._profile_switch_btn.setFixedHeight(40)
+        self._profile_switch_btn.setFixedHeight(36)
         self._profile_switch_btn.clicked.connect(self._cb_switch_profile)
         switch_row.addWidget(self._profile_switch_btn)
 
@@ -1597,6 +1596,22 @@ class LauncherApp:
             self._check_launcher_update()
         self._run(go)
 
+    def _load_initial_data_sync(self):
+        """Synchronous version for splash screen — runs network calls directly."""
+        try:
+            v = self.config.get_version()
+            if v:
+                self.current_version = v
+            latest = self.network.fetch_text(VERSION_URL)
+            if latest:
+                self.latest_version = latest
+            self._update_version_display()
+            self._update_main_btn()
+            if self.config.settings.get("discord_rpc"):
+                self.discord.connect()
+        except Exception as e:
+            logging.warning(f"Initial data load failed: {e}")
+
     def _check_launcher_update(self):
         try:
             remote = self.network.fetch_text(LAUNCHER_UPDATE_URL)
@@ -1691,7 +1706,7 @@ class LauncherApp:
         layout.addWidget(step1_desc)
 
         open_btn = QPushButton("Open itch.io")
-        open_btn.setObjectName("primaryBtn")
+        open_btn.setObjectName("modalPrimary")
         open_btn.setFixedHeight(36)
         open_btn.clicked.connect(lambda: webbrowser.open("https://itch.io/login"))
         layout.addWidget(open_btn)
@@ -1709,8 +1724,8 @@ class LauncherApp:
         layout.addWidget(step2_desc)
 
         auth_btn = QPushButton("Authenticate")
-        auth_btn.setObjectName("successBtn")
-        auth_btn.setFixedHeight(40)
+        auth_btn.setObjectName("modalPrimary")
+        auth_btn.setFixedHeight(36)
         layout.addWidget(auth_btn)
 
         def do_authenticate():
@@ -1792,6 +1807,14 @@ class LauncherApp:
             profile = self._fetch_itch_profile()
             self._invoke_main(lambda p=profile: self._update_profile_ui(p))
         self._run(go)
+
+    def _load_itch_profile_sync(self):
+        """Synchronous version for splash screen — runs network calls directly."""
+        try:
+            profile = self._fetch_itch_profile()
+            self._update_profile_ui(profile)
+        except Exception as e:
+            logging.warning(f"Itch profile load failed: {e}")
 
     def _update_profile_ui(self, profile):
         """Update all profile-related UI elements."""

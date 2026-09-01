@@ -10,8 +10,8 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 
 from .theme import (
-    BG_BASE, BG_SURFACE, BG_ELEVATED, BORDER_SUBTLE,
-    ACCENT, ACCENT_2, DANGER, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_BRIGHT,
+    BG_ELEVATED, BORDER_SUBTLE,
+    DANGER, TEXT_SECONDARY,
 )
 
 _KIND_STYLES = {
@@ -25,8 +25,7 @@ class ModWarningDialog(QDialog):
     def __init__(self, issues, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Mod Warnings Detected")
-        self.setMinimumSize(520, 380)
-        self.setMaximumSize(620, 500)
+        self.setFixedSize(520, 400)
         self.setObjectName("modWarningDialog")
         self.setStyleSheet(f"""
             #modWarningDialog {{
@@ -104,35 +103,18 @@ class ModWarningDialog(QDialog):
         btn_row.addStretch()
 
         cancel_btn = QPushButton("Cancel")
+        cancel_btn.setObjectName("modalSecondary")
+        cancel_btn.setFixedHeight(36)
         cancel_btn.setMinimumWidth(120)
         cancel_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        cancel_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {BG_ELEVATED};
-                color: {TEXT_SECONDARY};
-                border: 1px solid {BORDER_SUBTLE};
-            }}
-            QPushButton:hover {{
-                background-color: {BG_BASE};
-                color: {TEXT_PRIMARY};
-            }}
-        """)
         cancel_btn.clicked.connect(self.reject)
         btn_row.addWidget(cancel_btn)
 
         launch_btn = QPushButton("Launch Anyway")
+        launch_btn.setObjectName("modalDanger")
+        launch_btn.setFixedHeight(36)
         launch_btn.setMinimumWidth(140)
         launch_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        launch_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {ACCENT_2};
-                color: #000000;
-                font-weight: 700;
-            }}
-            QPushButton:hover {{
-                background-color: #10b981;
-            }}
-        """)
         launch_btn.clicked.connect(self.accept)
         btn_row.addWidget(launch_btn)
 
