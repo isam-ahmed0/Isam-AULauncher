@@ -27,3 +27,6 @@ launcher.txt
 
 # Local scratch / staging
 scratch/
+
+# Prevent accidental commits with full Windows absolute paths
+C:/Users/
