@@ -29,11 +29,6 @@ class Issue:
         return f"[{self.kind.upper()}] {self.description}"
 
 
-def _utf16le(s: str) -> bytes:
-    """Convert ASCII pattern to UTF-16LE bytes for .NET assembly matching."""
-    return s.encode("utf-16-le")
-
-
 # ASCII patterns — match if values happen to be ASCII in the binary
 _RE_PLUGIN_ASCII = re.compile(
     rb'BepInPlugin\s*\(\s*"([^"]+)"\s*,\s*"([^"]*?)"\s*,\s*"([^"]*?)"\s*\)'
@@ -45,20 +40,41 @@ _RE_INC_ASCII = re.compile(
     rb'BepInIncompatibility\s*\(\s*"([^"]+)"\s*\)'
 )
 
-# UTF-16LE patterns — match .NET user strings heap encoding
+# UTF-16LE patterns — .NET stores string literals as UTF-16LE in #US heap.
+# We match the ASCII prefix "BepInPlugin" then scan for quoted UTF-16LE values.
 _RE_PLUGIN_UTF16 = re.compile(
-    _utf16le(r'BepInPlugin\s*\(\s*"') + rb'([^\x00"]{1,200}?)' + _utf16le(r'"\s*,\s*"') + rb'([^\x00"]{0,200}?)' + _utf16le(r'"\s*,\s*"') + rb'([^\x00"]{0,100}?)' + _utf16le(r'"\s*\)')
+    rb'BepInPlugin'
+    rb'[\x00-\xff]{0,20}?'   # skip to first quote (variable spacing)
+    rb'\x22\x00'              # " in UTF-16LE
+    rb'([^\x00\x22]{1,200}?)' # guid (UTF-16LE, no null/quote)
+    rb'\x22\x00'              # closing "
+    rb'[\x00-\xff]{0,10}?'   # skip comma+whitespace
+    rb'\x22\x00'              # "
+    rb'([^\x00\x22]{0,200}?)' # name
+    rb'\x22\x00'              # "
+    rb'[\x00-\xff]{0,10}?'   # skip comma+whitespace
+    rb'\x22\x00'              # "
+    rb'([^\x00\x22]{0,100}?)' # version
+    rb'\x22\x00'              # "
 )
 _RE_DEP_UTF16 = re.compile(
-    _utf16le(r'BepInDependency\s*\(\s*"') + rb'([^\x00"]{1,200}?)' + _utf16le(r'"')
+    rb'BepInDependency'
+    rb'[\x00-\xff]{0,20}?'
+    rb'\x22\x00'
+    rb'([^\x00\x22]{1,200}?)'
+    rb'\x22\x00'
 )
 _RE_INC_UTF16 = re.compile(
-    _utf16le(r'BepInIncompatibility\s*\(\s*"') + rb'([^\x00"]{1,200}?)' + _utf16le(r'"\s*\)')
+    rb'BepInIncompatibility'
+    rb'[\x00-\xff]{0,20}?'
+    rb'\x22\x00'
+    rb'([^\x00\x22]{1,200}?)'
+    rb'\x22\x00'
 )
 
 
-def _decode(raw: bytes) -> str:
-    """Decode bytes to string, handling both raw ASCII and stripped UTF-16LE."""
+def _decode_utf16(raw: bytes) -> str:
+    """Decode raw UTF-16LE bytes to string."""
     try:
         return raw.decode("utf-16-le").strip()
     except Exception:
@@ -86,9 +102,9 @@ def _read_dll_metadata(dll_path: Path) -> ModInfo:
         # Try UTF-16LE (.NET user strings heap)
         m16 = _RE_PLUGIN_UTF16.search(data)
         if m16:
-            mod.guid = _decode(m16.group(1))
-            mod.name = _decode(m16.group(2))
-            mod.version = _decode(m16.group(3))
+            mod.guid = _decode_utf16(m16.group(1))
+            mod.name = _decode_utf16(m16.group(2))
+            mod.version = _decode_utf16(m16.group(3))
             logging.debug(f"[UTF16] {dll_path.name}: guid={mod.guid} name={mod.name} ver={mod.version}")
         else:
             logging.debug(f"[NONE]  {dll_path.name}: no BepInPlugin attribute found")
@@ -102,7 +118,7 @@ def _read_dll_metadata(dll_path: Path) -> ModInfo:
             seen_deps.add(dep)
     if not mod.dependencies:
         for m in _RE_DEP_UTF16.finditer(data):
-            dep = _decode(m.group(1))
+            dep = _decode_utf16(m.group(1))
             if dep and dep not in seen_deps:
                 mod.dependencies.append(dep)
                 seen_deps.add(dep)
@@ -116,7 +132,7 @@ def _read_dll_metadata(dll_path: Path) -> ModInfo:
             seen_inc.add(inc)
     if not mod.incompatibilities:
         for m in _RE_INC_UTF16.finditer(data):
-            inc = _decode(m.group(1))
+            inc = _decode_utf16(m.group(1))
             if inc and inc not in seen_inc:
                 mod.incompatibilities.append(inc)
                 seen_inc.add(inc)
