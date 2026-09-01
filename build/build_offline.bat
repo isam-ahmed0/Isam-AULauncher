@@ -1,11 +1,11 @@
 @echo off
-REM Build the Isam AULauncher installer with NSIS.
+REM Build the offline installer for Isam AULauncher.
 REM
 REM Requirements:
-REM   1. Python on PATH (or activate your venv) with build\requirements.txt installed
+REM   1. Python on PATH with build\requirements.txt installed
 REM   2. NSIS (Unicode) installed from https://nsis.sourceforge.io/Download
 REM
-REM Produces: dist\IsamAU-Setup.exe
+REM Produces: dist\IsamAU-Setup-Offline.exe
 setlocal
 cd /d "%~dp0.."
 set "ROOT=%CD%"
@@ -42,7 +42,7 @@ pyinstaller --noconfirm --onedir --windowed --noupx ^
 
 echo.
 echo ============================================================
-echo  [3/3] Locating NSIS and compiling installer
+echo  [3/3] Compiling offline installer
 echo ============================================================
 set "MAKENSIS="
 if exist "%ProgramFiles(x86)%\NSIS\makensis.exe" set "MAKENSIS=%ProgramFiles(x86)%\NSIS\makensis.exe"
@@ -54,15 +54,15 @@ if not defined MAKENSIS (
 )
 
 echo Using: %MAKENSIS%
-"%MAKENSIS%" "/DROOT=%ROOT%" "/DVERSION=%VERSION%" "installer\IsamAU-Online.nsi"
+"%MAKENSIS%" "/DROOT=%ROOT%" "/DVERSION=%VERSION%" "installer\IsamAULauncher.nsi"
 if errorlevel 1 (
   echo.
-  echo Installer build FAILED.
+  echo Offline installer build FAILED.
   exit /b 1
 )
 
 echo.
 echo ============================================================
-echo  Done! Installer: dist\IsamAU-Setup.exe (v%VERSION%)
+echo  Done! Offline installer: dist\IsamAU-Setup-Offline.exe (v%VERSION%)
 echo ============================================================
 pause

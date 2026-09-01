@@ -29,7 +29,7 @@
 !define BEPMODS_ZIP   "${ROOT}\release\bepmods.zip"
 
 Name    "${APP_NAME}"
-OutFile "${ROOT}\dist\IsamAU-Setup.exe"
+OutFile "${ROOT}\dist\IsamAU-Setup-Offline.exe"
 
 InstallDir "$LOCALAPPDATA\Programs\${APP_NAME}"
 InstallDirRegKey HKCU "Software\${APP_NAME}" "Install_Location"
