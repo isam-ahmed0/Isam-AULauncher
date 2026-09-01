@@ -11,10 +11,7 @@ from PySide6.QtCore import Qt
 
 from config import DEFAULT_GAME_DIR, VERSION_URL
 from file_manager import FileManager
-from gui_qt.theme import (
-    SUCCESS, INFO, DANGER, WARNING,
-    TEXT_PRIMARY, TEXT_MUTED,
-)
+import gui_qt.theme as theme
 from gui_qt.zipextract import list_contents, extract_to
 
 
@@ -320,7 +317,7 @@ class GameActionsMixin:
             return
         self._selected_zip = Path(path)
         self._zip_path_label.setText(str(self._selected_zip))
-        self._zip_path_label.setStyleSheet(f"color: {TEXT_PRIMARY};")
+        self._zip_path_label.setStyleSheet(f"color: {theme.TEXT_PRIMARY};")
         contents = list_contents(self._selected_zip)
         if contents:
             preview = contents[:15]

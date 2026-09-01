@@ -9,6 +9,12 @@ from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout
 from PySide6.QtGui import QPainter, QColor, QFont, QPen, QBrush, QLinearGradient, QFontMetrics
 
 from config import APP_NAME, BRAND_SHORT, LAUNCHER_VERSION
+import gui_qt.theme as theme
+
+
+def _hex_to_qcolor(hex_str: str, alpha: int = 255) -> QColor:
+    h = hex_str.lstrip("#")
+    return QColor(int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16), alpha)
 
 
 class SplashScreen(QWidget):
@@ -90,33 +96,39 @@ class SplashScreen(QWidget):
 
         w, h = self.width(), self.height()
 
+        accent = _hex_to_qcolor(theme.ACCENT)
+        accent2 = _hex_to_qcolor(theme.ACCENT_2)
+        bg_base = _hex_to_qcolor(theme.BG_BASE)
+        bg_elevated = _hex_to_qcolor(theme.BG_ELEVATED)
+        text_secondary = _hex_to_qcolor(theme.TEXT_SECONDARY)
+
         # --- Dark semi-transparent background ---
-        bg = QColor(18, 20, 26, 230)
+        bg = QColor(bg_base.red(), bg_base.green(), bg_base.blue(), 230)
         p.setPen(Qt.PenStyle.NoPen)
         p.setBrush(bg)
         p.drawRoundedRect(0, 0, w, h, 16, 16)
 
         # --- Subtle border glow (pulsing) ---
         glow_intensity = int(40 + 30 * math.sin(self._glow_phase))
-        border_color = QColor(99, 102, 241, glow_intensity)  # accent blue
+        border_color = QColor(accent.red(), accent.green(), accent.blue(), glow_intensity)
         p.setPen(QPen(border_color, 1.5))
         p.setBrush(Qt.BrushStyle.NoBrush)
         p.drawRoundedRect(1, 1, w - 2, h - 2, 15, 15)
 
         # --- Accent line at top ---
         grad = QLinearGradient(0, 0, w, 0)
-        grad.setColorAt(0.0, QColor(99, 102, 241, 0))
-        grad.setColorAt(0.3, QColor(99, 102, 241, 180))
-        grad.setColorAt(0.5, QColor(52, 211, 153, 220))
-        grad.setColorAt(0.7, QColor(99, 102, 241, 180))
-        grad.setColorAt(1.0, QColor(99, 102, 241, 0))
+        grad.setColorAt(0.0, QColor(accent.red(), accent.green(), accent.blue(), 0))
+        grad.setColorAt(0.3, QColor(accent.red(), accent.green(), accent.blue(), 180))
+        grad.setColorAt(0.5, QColor(accent2.red(), accent2.green(), accent2.blue(), 220))
+        grad.setColorAt(0.7, QColor(accent.red(), accent.green(), accent.blue(), 180))
+        grad.setColorAt(1.0, QColor(accent.red(), accent.green(), accent.blue(), 0))
         p.setPen(QPen(QBrush(grad), 2))
         p.drawLine(40, 3, w - 40, 3)
 
         # --- Brand text ---
         brand_font = QFont("Segoe UI", 36, QFont.Weight.Bold)
         p.setFont(brand_font)
-        p.setPen(QColor(99, 102, 241))
+        p.setPen(accent)
         brand_rect = p.fontMetrics().boundingRect(BRAND_SHORT)
         bx = (w - brand_rect.width()) // 2
         p.drawText(bx, h // 2 - 30, BRAND_SHORT)
@@ -129,16 +141,16 @@ class SplashScreen(QWidget):
         tw = fm.horizontalAdvance(ver_text) + 20
         bx = (w - tw) // 2
         by = h // 2 + 10
-        p.setPen(QColor(99, 102, 241, 100))
-        p.setBrush(QColor(32, 36, 46, 200))
+        p.setPen(QColor(accent.red(), accent.green(), accent.blue(), 100))
+        p.setBrush(QColor(bg_elevated.red(), bg_elevated.green(), bg_elevated.blue(), 200))
         p.drawRoundedRect(bx, by, tw, 24, 12, 12)
-        p.setPen(QColor(52, 211, 153))
+        p.setPen(accent2)
         p.drawText(bx, by, tw, 24, Qt.AlignmentFlag.AlignCenter, ver_text)
 
         # --- Loading status at bottom ---
         status_font = QFont("Segoe UI", 10)
         p.setFont(status_font)
-        p.setPen(QColor(156, 163, 175))
+        p.setPen(text_secondary)
         sfm = p.fontMetrics()
         stw = sfm.horizontalAdvance(self._status)
         sx = (w - stw) // 2

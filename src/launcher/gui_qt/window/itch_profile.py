@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 
-from gui_qt.theme import SUCCESS, INFO, TEXT_SECONDARY, TEXT_MUTED
+import gui_qt.theme as theme
 
 
 ITCH_FIXER_NAME = "Itch_Login_Fixer.exe"
@@ -194,11 +194,11 @@ class ItchProfileMixin:
         """Update all profile-related UI elements."""
         if not profile:
             self.profile_game_text.setText("Not logged in")
-            self.profile_game_text.setStyleSheet(f"color: {TEXT_MUTED};")
+            self.profile_game_text.setStyleSheet(f"color: {theme.TEXT_MUTED};")
             self.profile_game_detail.setText("Click Profile to authenticate")
-            self.profile_game_detail.setStyleSheet(f"color: {TEXT_MUTED};")
+            self.profile_game_detail.setStyleSheet(f"color: {theme.TEXT_MUTED};")
             self.profile_page_status.setText("Not logged in")
-            self.profile_page_status.setStyleSheet(f"color: {TEXT_MUTED};")
+            self.profile_page_status.setStyleSheet(f"color: {theme.TEXT_MUTED};")
             self.profile_page_name.setText("")
             self.profile_page_au.setText("")
             self.profile_page_platforms.setText("")
@@ -212,27 +212,27 @@ class ItchProfileMixin:
         platforms = profile.get("platforms") or []
 
         self.profile_game_text.setText(f"Logged in as {username}")
-        self.profile_game_text.setStyleSheet(f"color: {SUCCESS}; font-weight: 600;")
+        self.profile_game_text.setStyleSheet(f"color: {theme.SUCCESS}; font-weight: 600;")
         detail_parts = []
         if au_name:
             detail_parts.append(f"Among Us: {au_name}")
         if platforms:
             detail_parts.append(f"Linked: {', '.join(platforms)}")
         self.profile_game_detail.setText(" — ".join(detail_parts) if detail_parts else "")
-        self.profile_game_detail.setStyleSheet(f"color: {TEXT_SECONDARY};")
+        self.profile_game_detail.setStyleSheet(f"color: {theme.TEXT_SECONDARY};")
 
         self.profile_page_status.setText("Logged in")
-        self.profile_page_status.setStyleSheet(f"color: {SUCCESS}; font-weight: 600;")
+        self.profile_page_status.setStyleSheet(f"color: {theme.SUCCESS}; font-weight: 600;")
         self.profile_page_name.setText(username)
         if au_name:
             self.profile_page_au.setText(f"Among Us: {au_name}")
-            self.profile_page_au.setStyleSheet(f"color: {INFO};")
+            self.profile_page_au.setStyleSheet(f"color: {theme.INFO};")
         else:
             self.profile_page_au.setText("No Among Us data yet")
-            self.profile_page_au.setStyleSheet(f"color: {TEXT_MUTED};")
+            self.profile_page_au.setStyleSheet(f"color: {theme.TEXT_MUTED};")
         if platforms:
             self.profile_page_platforms.setText(f"Linked: {', '.join(platforms)}")
-            self.profile_page_platforms.setStyleSheet(f"color: {TEXT_SECONDARY};")
+            self.profile_page_platforms.setStyleSheet(f"color: {theme.TEXT_SECONDARY};")
         else:
             self.profile_page_platforms.setText("No platforms linked")
-            self.profile_page_platforms.setStyleSheet(f"color: {TEXT_MUTED};")
+            self.profile_page_platforms.setStyleSheet(f"color: {theme.TEXT_MUTED};")

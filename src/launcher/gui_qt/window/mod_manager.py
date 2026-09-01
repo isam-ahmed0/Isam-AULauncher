@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 
 from file_manager import FileManager
-from gui_qt.theme import SUCCESS, INFO, WARNING, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED
+import gui_qt.theme as theme
 from gui_qt.mod_details import ModInfoDialog
 
 
@@ -30,15 +30,15 @@ class ModManagerMixin:
         gp = self.config.get_game_path()
         if not gp:
             self._bep_status.setText("Game not installed — set a game location first")
-            self._bep_status.setStyleSheet(f"color: {TEXT_MUTED};")
+            self._bep_status.setStyleSheet(f"color: {theme.TEXT_MUTED};")
             return False
         core_dll = gp / "BepInEx" / "core" / "BepInEx.dll"
         if core_dll.exists():
             self._bep_status.setText("BepInEx: Installed")
-            self._bep_status.setStyleSheet(f"color: {SUCCESS};")
+            self._bep_status.setStyleSheet(f"color: {theme.SUCCESS};")
             return True
         self._bep_status.setText("BepInEx: Not installed")
-        self._bep_status.setStyleSheet(f"color: {WARNING};")
+        self._bep_status.setStyleSheet(f"color: {theme.WARNING};")
         return False
 
     def _cb_setup_bepinex(self):
@@ -94,7 +94,7 @@ class ModManagerMixin:
     def _update_profile_label(self):
         active = self.config.get_active_profile()
         self._profile_active_label.setText(f"Active profile: {active}")
-        self._profile_active_label.setStyleSheet(f"color: {INFO}; font-weight: 600;")
+        self._profile_active_label.setStyleSheet(f"color: {theme.INFO}; font-weight: 600;")
 
     def _on_profile_selected(self, name):
         """When user selects a different profile in the combo (not the active one)."""
@@ -103,7 +103,7 @@ class ModManagerMixin:
         active = self.config.get_active_profile()
         if name != active:
             self._profile_active_label.setText(f"Selected: {name}  (click Switch to activate)")
-            self._profile_active_label.setStyleSheet(f"color: {TEXT_SECONDARY};")
+            self._profile_active_label.setStyleSheet(f"color: {theme.TEXT_SECONDARY};")
         else:
             self._update_profile_label()
         self._cb_refresh_mods()
@@ -200,17 +200,17 @@ class ModManagerMixin:
         name = self._profile_combo.currentText()
         if not name:
             self._mods_status.setText("No profile selected")
-            self._mods_status.setStyleSheet(f"color: {TEXT_MUTED};")
+            self._mods_status.setStyleSheet(f"color: {theme.TEXT_MUTED};")
             return
         profile_dir = self.profile_mgr.profile_path(name)
         if not profile_dir.exists():
             self._mods_status.setText("Profile folder not found")
-            self._mods_status.setStyleSheet(f"color: {TEXT_MUTED};")
+            self._mods_status.setStyleSheet(f"color: {theme.TEXT_MUTED};")
             return
         dlls = sorted(profile_dir.glob("*.dll"), key=lambda f: f.name.lower())
         if not dlls:
             self._mods_status.setText("No mods in this profile")
-            self._mods_status.setStyleSheet(f"color: {TEXT_MUTED};")
+            self._mods_status.setStyleSheet(f"color: {theme.TEXT_MUTED};")
             return
         for dll in dlls:
             size = FileManager.format_size(dll.stat().st_size)
@@ -218,7 +218,7 @@ class ModManagerMixin:
             item.setData(Qt.ItemDataRole.UserRole, str(dll))
             self._mods_list.addItem(item)
         self._mods_status.setText(f"{len(dlls)} mod(s) in '{name}'")
-        self._mods_status.setStyleSheet(f"color: {INFO};")
+        self._mods_status.setStyleSheet(f"color: {theme.INFO};")
 
     def _cb_move_mods(self):
         selected = self._mods_list.selectedItems()
@@ -246,7 +246,7 @@ class ModManagerMixin:
             return
         moved = self.profile_mgr.move_mods(current_profile, item, names)
         self._mods_status.setText(f"Moved {moved} mod(s) to '{item}'")
-        self._mods_status.setStyleSheet(f"color: {SUCCESS};")
+        self._mods_status.setStyleSheet(f"color: {theme.SUCCESS};")
         self._cb_refresh_mods()
 
     def _cb_remove_mods(self):
@@ -271,7 +271,7 @@ class ModManagerMixin:
             except OSError as e:
                 logging.error(f"Failed to remove mod {dll_path}: {e}")
         self._mods_status.setText(f"Removed {removed} mod(s)")
-        self._mods_status.setStyleSheet(f"color: {SUCCESS};")
+        self._mods_status.setStyleSheet(f"color: {theme.SUCCESS};")
         self._cb_refresh_mods()
 
     def _cb_mod_info(self):
@@ -306,5 +306,5 @@ class ModManagerMixin:
             return
         copied = self.profile_mgr.import_mods(name, [Path(f) for f in files])
         self._mods_status.setText(f"Added {copied} mod(s) to '{name}'")
-        self._mods_status.setStyleSheet(f"color: {SUCCESS};")
+        self._mods_status.setStyleSheet(f"color: {theme.SUCCESS};")
         self._cb_refresh_mods()

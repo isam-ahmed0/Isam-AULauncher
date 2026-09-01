@@ -13,7 +13,7 @@ from PySide6.QtWidgets import (
     QStatusBar, QComboBox, QScrollArea, QSystemTrayIcon, QMenu,
     QListWidget,
 )
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt, QTimer, QEvent
 from PySide6.QtGui import QIcon, QAction
 
 from gui_qt.worker import _UISignaler, Worker
@@ -24,11 +24,8 @@ from config import (
     Config, APP_NAME, BRAND_SHORT, MAKER, LAUNCHER_VERSION,
 )
 from network import NetworkManager, DiscordRPC
-from gui_qt.theme import (
-    apply_theme, SUCCESS,
-    INFO, DANGER, WARNING, TEXT_PRIMARY,
-    TEXT_SECONDARY, TEXT_MUTED,
-)
+import gui_qt.theme as theme
+from gui_qt.theme import apply_theme
 from gui_qt.game import GameManager
 from gui_qt.regions import RegionManager
 from gui_qt.profiles import ProfileManager
@@ -76,6 +73,16 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         self._setup_tray()
         self._setup_game_timer()
         self.window.closeEvent = self._close_event
+        self.window.installEventFilter(self)
+
+    def eventFilter(self, obj, event):
+        if event.type() == QEvent.Type.User and hasattr(event, 'theme_name'):
+            # Theme changed — repaint custom-painted widgets
+            for w in [self._hero_game, self._hero_profile]:
+                if w:
+                    w.update()
+            return False
+        return super().eventFilter(obj, event)
 
     # ------------------------------------------------------------------ setup
     def _setup_app(self):
@@ -265,18 +272,18 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        hero = HeroBanner(
+        self._hero_game = HeroBanner(
             "Game Management",
             "Install, update, and manage your Among Us installation",
         )
-        layout.addWidget(hero)
+        layout.addWidget(self._hero_game)
 
         profile_widget = QWidget()
         profile_layout = QHBoxLayout(profile_widget)
         profile_layout.setContentsMargins(28, 12, 28, 0)
         profile_icon = QLabel("●")
         profile_icon.setObjectName("statusDot")
-        profile_icon.setStyleSheet(f"color: {TEXT_MUTED};")
+        profile_icon.setStyleSheet(f"color: {theme.TEXT_MUTED};")
         profile_layout.addWidget(profile_icon)
         self.profile_game_text = QLabel("Loading...")
         self.profile_game_text.setObjectName("profileDetail")
@@ -662,11 +669,11 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        hero = HeroBanner(
+        self._hero_profile = HeroBanner(
             "ITCH.IO PROFILE",
             "Your itch.io account and Among Us identity",
         )
-        layout.addWidget(hero)
+        layout.addWidget(self._hero_profile)
 
         card = QFrame()
         card.setObjectName("profileCard")
@@ -726,10 +733,10 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         self.status_text_label.setText(text)
         if color_name:
             color_map = {
-                "success": SUCCESS, "info": INFO,
-                "danger": DANGER, "warning": WARNING,
+                "success": theme.SUCCESS, "info": theme.INFO,
+                "danger": theme.DANGER, "warning": theme.WARNING,
             }
-            c = color_map.get(color_name, TEXT_SECONDARY)
+            c = color_map.get(color_name, theme.TEXT_SECONDARY)
             self.game_status_icon.setStyleSheet(f"color: {c};")
             self.status_icon_label.setStyleSheet(f"color: {c};")
 

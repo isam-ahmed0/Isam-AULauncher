@@ -3,7 +3,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 
-from gui_qt.theme import SUCCESS, WARNING, INFO, DANGER
+import gui_qt.theme as theme
 
 
 class RegionEditorMixin:
@@ -41,10 +41,10 @@ class RegionEditorMixin:
             self.region_mgr.save()
             self._load_region_list()
             self._region_status.setText(f"Added region: {name.strip()}")
-            self._region_status.setStyleSheet(f"color: {SUCCESS};")
+            self._region_status.setStyleSheet(f"color: {theme.SUCCESS};")
         else:
             self._region_status.setText(f"Region '{name.strip()}' already exists")
-            self._region_status.setStyleSheet(f"color: {WARNING};")
+            self._region_status.setStyleSheet(f"color: {theme.WARNING};")
 
     def _cb_remove_region(self):
         item = self._region_list.currentItem()
@@ -62,7 +62,7 @@ class RegionEditorMixin:
             self.region_mgr.save()
             self._load_region_list()
             self._region_status.setText(f"Removed: {name}")
-            self._region_status.setStyleSheet(f"color: {INFO};")
+            self._region_status.setStyleSheet(f"color: {theme.INFO};")
 
     def _cb_apply_region(self):
         item = self._region_list.currentItem()
@@ -73,11 +73,11 @@ class RegionEditorMixin:
         if self.region_mgr.save():
             name = self.region_mgr.regions[idx]["Name"]
             self._region_status.setText(f"Active region set to: {name}")
-            self._region_status.setStyleSheet(f"color: {SUCCESS};")
+            self._region_status.setStyleSheet(f"color: {theme.SUCCESS};")
             self._load_region_list()
         else:
             self._region_status.setText("Failed to save region settings")
-            self._region_status.setStyleSheet(f"color: {DANGER};")
+            self._region_status.setStyleSheet(f"color: {theme.DANGER};")
 
     def _cb_reset_regions(self):
         reply = QMessageBox.question(
@@ -90,4 +90,4 @@ class RegionEditorMixin:
             self.region_mgr.save()
             self._load_region_list()
             self._region_status.setText("Reset to official regions")
-            self._region_status.setStyleSheet(f"color: {INFO};")
+            self._region_status.setStyleSheet(f"color: {theme.INFO};")
