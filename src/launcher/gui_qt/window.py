@@ -1686,7 +1686,7 @@ class LauncherApp:
         settings = self.config.settings
         dialog = QDialog(self.window)
         dialog.setWindowTitle("Settings")
-        dialog.setFixedSize(480, 480)
+        dialog.setFixedSize(480, 420)
 
         layout = QVBoxLayout(dialog)
         layout.setContentsMargins(24, 20, 24, 20)
@@ -1714,14 +1714,6 @@ class LauncherApp:
         layout.addWidget(desc2)
         layout.addSpacing(12)
 
-        cb_verify = QCheckBox("Verify file integrity")
-        cb_verify.setChecked(settings.get("check_integrity", True))
-        layout.addWidget(cb_verify)
-        desc3 = QLabel("  Check checksums after download")
-        desc3.setObjectName("mutedText")
-        layout.addWidget(desc3)
-
-        layout.addSpacing(16)
         layout.addWidget(QFrame(frameShape=QFrame.Shape.HLine))
         layout.addSpacing(8)
 
@@ -1794,7 +1786,6 @@ class LauncherApp:
         def save():
             settings["discord_rpc"] = cb_rpc.isChecked()
             settings["auto_update"] = cb_auto.isChecked()
-            settings["check_integrity"] = cb_verify.isChecked()
             self.config.save_settings()
             if settings["discord_rpc"] and not self.discord.connected:
                 self.discord.connect()

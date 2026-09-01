@@ -51,7 +51,7 @@ class Config:
     def _load_settings(self) -> Dict:
         defaults = {
             "auto_update": True, "create_shortcuts": True,
-            "discord_rpc": True, "check_integrity": True, "ui_mode": "gui",
+            "discord_rpc": True, "ui_mode": "gui",
             "active_profile": "Default",
         }
         try:
