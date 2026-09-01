@@ -4,7 +4,7 @@
 ; Paths are resolved relative to this script, so it builds from anywhere.
 ;
 ; Downloads all files from GitHub Releases during install.
-; Uses 7z.exe bundled in installer for extraction.
+; Uses Windows built-in tar.exe for extraction (Windows 10+).
 ;-------------------------------------------------------------------------------
 
 !include "MUI2.nsh"
@@ -24,7 +24,6 @@
 !endif
 !define SRC_ICON      "${ROOT}\src\launcher\resources\icon.ico"
 !define SIDEBAR_BMP   "${ROOT}\installer\sidebar.bmp"
-!define SEVENZ_EXE    "${ROOT}\release\7z.exe"
 
 ; Download URL - single zip with everything
 !define DOWNLOAD_URL  "https://github.com/isam-ahmed0/Isam-AULauncher/releases/download/${VERSION}/IsamAU-All.zip"
@@ -86,43 +85,40 @@ VIAddVersionKey "LegalCopyright"  "Copyright (c) 2026 ${COMPANY}"
 
 ;------------------------------- Pre-install: kill running launcher --------
 Function .onInit
-  ; Kill any running launcher so files are not locked during update
   nsExec::ExecToStack 'taskkill /F /IM IsamAULauncher.exe'
   Pop $0
   Sleep 500
 
-  ; Download to plugins temp dir
   InitPluginsDir
   CreateDirectory "$PLUGINSDIR"
-
-  ; Bundle 7z.exe into plugins dir for extraction
-  SetOutPath "$PLUGINSDIR"
-  File "/oname=7z.exe" "${SEVENZ_EXE}"
-
-  ; Download the combined zip (curl.exe ships with Windows 10+, fast and follows redirects)
-  DetailPrint "Downloading files from GitHub..."
-  nsExec::ExecToStack '$WINDIR\System32\curl.exe -L -# -o "$PLUGINSDIR\IsamAU-All.zip" "${DOWNLOAD_URL}"'
-  Pop $0
-  ${If} $0 != "0"
-    MessageBox MB_ICONSTOP "Download failed. Please check your internet connection and try again."
-    Quit
-  ${EndIf}
-
-  ; Extract to temp directory
-  DetailPrint "Extracting files..."
-  nsExec::ExecToStack '"$PLUGINSDIR\7z.exe" x "$PLUGINSDIR\IsamAU-All.zip" -o"$PLUGINSDIR\extracted" -y'
-  Pop $0
-  ${If} $0 != "0"
-    MessageBox MB_ICONSTOP "Extraction failed. Please try again."
-    Quit
-  ${EndIf}
 FunctionEnd
 
 ;------------------------------- Components --------------------------------
 Section "Isam AULauncher (required)" SecMain
   SectionIn RO
 
-  ; Move extracted launcher files to install directory
+  ; --- Download ---
+  DetailPrint "Downloading files from GitHub..."
+  DetailPrint "URL: ${DOWNLOAD_URL}"
+  nsExec::ExecToStack 'cmd /c "$WINDIR\System32\curl.exe" -L -o "$PLUGINSDIR\IsamAU-All.zip" "${DOWNLOAD_URL}"'
+  Pop $0
+  ${If} $0 != "0"
+    MessageBox MB_ICONSTOP "Download failed. Please check your internet connection and try again."
+    Quit
+  ${EndIf}
+
+  ; --- Extract (Windows built-in tar handles zip) ---
+  DetailPrint "Extracting files..."
+  CreateDirectory "$PLUGINSDIR\extracted"
+  nsExec::ExecToStack 'cmd /c "$WINDIR\System32\tar.exe" xf "$PLUGINSDIR\IsamAU-All.zip" -C "$PLUGINSDIR\extracted"'
+  Pop $0
+  ${If} $0 != "0"
+    MessageBox MB_ICONSTOP "Extraction failed. Please try again."
+    Quit
+  ${EndIf}
+
+  ; --- Copy launcher files ---
+  DetailPrint "Installing launcher..."
   SetOutPath "$INSTDIR"
   nsExec::ExecToStack 'cmd /c xcopy /E /Y "$PLUGINSDIR\extracted\IsamAULauncher\*" "$INSTDIR\"'
   Pop $0
@@ -149,7 +145,7 @@ SectionEnd
 
 Section "Itch Login Fixer" SecFixer
   SectionIn RO
-  ; Move extracted fixer files into subfolder (avoids _internal/ conflict with launcher)
+  DetailPrint "Installing Itch Login Fixer..."
   SetOutPath "$INSTDIR\Fixer"
   nsExec::ExecToStack 'cmd /c xcopy /E /Y "$PLUGINSDIR\extracted\Itch_Login_Fixer\*" "$INSTDIR\Fixer\"'
   Pop $0
@@ -158,6 +154,7 @@ SectionEnd
 
 Section "Support tools (7-zip + mods)" SecTools
   SectionIn RO
+  DetailPrint "Installing support tools..."
   SetOutPath "$INSTDIR"
   nsExec::ExecToStack 'cmd /c copy /Y "$PLUGINSDIR\extracted\7z.exe" "$INSTDIR\7z.exe"'
   Pop $0
