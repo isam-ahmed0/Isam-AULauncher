@@ -1,20 +1,21 @@
 """
-VideoSplash — plays a WebM video as a frameless splash screen.
+VideoSplash — plays a transparent WebM video as a frameless splash screen.
+Uses QVideoSink for frame-by-frame rendering with alpha channel support.
 Falls back to the default SplashScreen when the video ends.
 """
 import logging
 from pathlib import Path
 
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, Signal, QUrl
 from PySide6.QtWidgets import QWidget
-from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
-from PySide6.QtMultimediaWidgets import QVideoWidget
+from PySide6.QtGui import QImage, QPixmap, QPainter
+from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput, QVideoSink, QVideoFrame
 
 _RESOURCES_DIR = Path(__file__).parent.parent / "resources"
 
 
 class VideoSplash(QWidget):
-    """Frameless video splash — plays once, then emits finished."""
+    """Frameless video splash with alpha support — plays once, then emits finished."""
 
     finished = Signal()
 
@@ -39,17 +40,19 @@ class VideoSplash(QWidget):
             y = (geo.height() - self.HEIGHT) // 2 + geo.y()
             self.move(x, y)
 
-        # Video widget fills the entire splash
-        self._video_widget = QVideoWidget(self)
-        self._video_widget.setGeometry(0, 0, self.WIDTH, self.HEIGHT)
+        self._pixmap = None
 
-        # Audio (muted — splash has no sound)
+        # Audio (muted)
         self._audio = QAudioOutput()
         self._audio.setVolume(0)
 
+        # Video sink for frame-by-frame rendering
+        self._sink = QVideoSink()
+        self._sink.videoFrameChanged.connect(self._on_frame)
+
         # Media player
         self._player = QMediaPlayer()
-        self._player.setVideoOutput(self._video_widget)
+        self._player.setVideoSink(self._sink)
         self._player.setAudioOutput(self._audio)
         self._player.mediaStatusChanged.connect(self._on_status)
         self._player.errorOccurred.connect(self._on_error)
@@ -61,8 +64,35 @@ class VideoSplash(QWidget):
             logging.warning(f"Video splash not found: {webm}")
             self.finished.emit()
             return
-        self._player.setSource(webm.as_uri())
+        self._player.setSource(QUrl.fromLocalFile(str(webm)))
         self._player.play()
+
+    def _on_frame(self, frame: QVideoFrame):
+        """Convert each video frame to QPixmap and repaint."""
+        if not frame.isValid():
+            return
+        image = frame.toImage()
+        if image.isNull():
+            return
+        # Scale to fit splash size, keeping aspect ratio
+        self._pixmap = QPixmap.fromImage(image).scaled(
+            self.WIDTH, self.HEIGHT,
+            Qt.AspectRatioMode.KeepAspectRatio,
+            Qt.TransformationMode.SmoothTransformation,
+        )
+        self.update()
+
+    def paintEvent(self, event):
+        """Paint the current frame on a transparent background."""
+        if self._pixmap is None:
+            return
+        p = QPainter(self)
+        p.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
+        # Center the scaled frame
+        x = (self.WIDTH - self._pixmap.width()) // 2
+        y = (self.HEIGHT - self._pixmap.height()) // 2
+        p.drawPixmap(x, y, self._pixmap)
+        p.end()
 
     def _on_status(self, status):
         from PySide6.QtMultimedia import QMediaPlayer
