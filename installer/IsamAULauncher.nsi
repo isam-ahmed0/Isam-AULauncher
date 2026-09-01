@@ -85,10 +85,6 @@ VIAddVersionKey "LegalCopyright"  "Copyright (c) 2026 ${COMPANY}"
 
 ;------------------------------- Pre-install: kill running launcher --------
 Function .onInit
-  ; Kill any running launcher so files are not locked during update
-  nsExec::ExecToStack 'taskkill /F /IM IsamAULauncher.exe'
-  Pop $0
-  Sleep 500
 FunctionEnd
 
 ;------------------------------- Components --------------------------------

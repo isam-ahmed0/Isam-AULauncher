@@ -1,10 +1,9 @@
 ;-------------------------------------------------------------------------------
 ; Isam AULauncher - ONLINE NSIS installer
 ; Compile with: makensis.exe installer\IsamAU-Online.nsi
-; Paths are resolved relative to this script, so it builds from anywhere.
 ;
 ; Downloads all files from GitHub Releases during install.
-; Uses Windows built-in tar.exe for extraction (Windows 10+).
+; Uses nsExec for direct command execution (no .bat file intermediaries).
 ;-------------------------------------------------------------------------------
 
 !include "MUI2.nsh"
@@ -41,10 +40,8 @@ SetCompressor /SOLID lzma
 Icon    "${SRC_ICON}"
 UninstallIcon "${SRC_ICON}"
 
-; Replace "Nullsoft Install System" branding
 BrandingText "Isam Installer"
 
-; Installer / uninstaller metadata
 VIProductVersion "${VERSION_DOT}"
 VIAddVersionKey "ProductName"    "${APP_NAME}"
 VIAddVersionKey "FileDescription" "${APP_NAME} ${VERSION} (Online)"
@@ -58,15 +55,12 @@ VIAddVersionKey "LegalCopyright"  "Copyright (c) 2026 ${COMPANY}"
 !define MUI_ICON   "${SRC_ICON}"
 !define MUI_UNICON "${SRC_ICON}"
 
-; Custom sidebar image
 !define MUI_WELCOMEFINISHPAGE_BITMAP "${SIDEBAR_BMP}"
 !define MUI_UNWELCOMEFINISHPAGE_BITMAP "${SIDEBAR_BMP}"
 
-; Welcome page
 !define MUI_WELCOMEPAGE_TITLE "Welcome"
 !define MUI_WELCOMEPAGE_TEXT "A clean, modern launcher for Among Us.$\r$\n$\r$\nThis installer will download the latest version from the internet."
 
-; Finish page
 !define MUI_FINISHPAGE_TITLE "Done"
 !define MUI_FINISHPAGE_TEXT "Setup is complete."
 !define MUI_FINISHPAGE_RUN "$INSTDIR\IsamAULauncher.exe"
@@ -83,12 +77,7 @@ VIAddVersionKey "LegalCopyright"  "Copyright (c) 2026 ${COMPANY}"
 
 !insertmacro MUI_LANGUAGE "English"
 
-;------------------------------- Pre-install: kill running launcher --------
 Function .onInit
-  nsExec::ExecToStack 'taskkill /F /IM IsamAULauncher.exe'
-  Pop $0
-  Sleep 500
-
   InitPluginsDir
   CreateDirectory "$PLUGINSDIR"
 FunctionEnd
@@ -100,23 +89,17 @@ Section "Isam AULauncher (required)" SecMain
   ; --- Download ---
   DetailPrint "Downloading files from GitHub..."
   DetailPrint "URL: ${DOWNLOAD_URL}"
-  FileOpen $9 "$PLUGINSDIR\download.bat" w
-  FileWrite $9 '@echo off$\r$\n"$WINDIR\System32\curl.exe" -L -o "$PLUGINSDIR\IsamAU-All.zip" "${DOWNLOAD_URL}"$\r$\nexit /b %errorlevel%'
-  FileClose $9
-  nsExec::ExecToStack '"$PLUGINSDIR\download.bat"'
+  nsExec::ExecToStack 'cmd /c "$WINDIR\System32\curl.exe" -L --progress-bar -o "$PLUGINSDIR\IsamAU-All.zip" "${DOWNLOAD_URL}"'
   Pop $0
   ${If} $0 != "0"
     MessageBox MB_ICONSTOP "Download failed. Please check your internet connection and try again."
     Quit
   ${EndIf}
 
-  ; --- Extract (Windows built-in tar handles zip) ---
+  ; --- Extract ---
   DetailPrint "Extracting files..."
   CreateDirectory "$PLUGINSDIR\extracted"
-  FileOpen $9 "$PLUGINSDIR\extract.bat" w
-  FileWrite $9 '@echo off$\r$\n"$WINDIR\System32\tar.exe" xf "$PLUGINSDIR\IsamAU-All.zip" -C "$PLUGINSDIR\extracted"$\r$\nexit /b %errorlevel%'
-  FileClose $9
-  nsExec::ExecToStack '"$PLUGINSDIR\extract.bat"'
+  nsExec::ExecToStack 'cmd /c "$WINDIR\System32\tar.exe" xf "$PLUGINSDIR\IsamAU-All.zip" -C "$PLUGINSDIR\extracted"'
   Pop $0
   ${If} $0 != "0"
     MessageBox MB_ICONSTOP "Extraction failed. Please try again."
@@ -126,20 +109,15 @@ Section "Isam AULauncher (required)" SecMain
   ; --- Copy launcher files ---
   DetailPrint "Installing launcher..."
   SetOutPath "$INSTDIR"
-  FileOpen $9 "$PLUGINSDIR\install.bat" w
-  FileWrite $9 '@echo off$\r$\ncopy /Y "$PLUGINSDIR\extracted\IsamAULauncher\*" "$INSTDIR\"$\r$\nxcopy /E /Y "$PLUGINSDIR\extracted\IsamAULauncher\*" "$INSTDIR\"'
-  FileClose $9
-  nsExec::ExecToStack '"$PLUGINSDIR\install.bat"'
+  nsExec::ExecToStack 'cmd /c xcopy /E /Y "$PLUGINSDIR\extracted\IsamAULauncher\*" "$INSTDIR\"'
   Pop $0
 
   WriteUninstaller "$INSTDIR\Uninstall.exe"
 
-  ; Start menu
   CreateDirectory "$SMPROGRAMS\${APP_SHORT}"
   CreateShortcut "$SMPROGRAMS\${APP_SHORT}\${APP_SHORT}.lnk" "$INSTDIR\IsamAULauncher.exe"
   CreateShortcut "$SMPROGRAMS\${APP_SHORT}\Uninstall ${APP_SHORT}.lnk" "$INSTDIR\Uninstall.exe"
 
-  ; Uninstall registry entry
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" "DisplayName"     "${APP_NAME} ${VERSION}"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" "DisplayVersion"  "${VERSION}"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" "Publisher"       "${COMPANY}"
@@ -156,10 +134,7 @@ Section "Itch Login Fixer" SecFixer
   SectionIn RO
   DetailPrint "Installing Itch Login Fixer..."
   SetOutPath "$INSTDIR\Fixer"
-  FileOpen $9 "$PLUGINSDIR\fixer.bat" w
-  FileWrite $9 '@echo off$\r$\nxcopy /E /Y "$PLUGINSDIR\extracted\Itch_Login_Fixer\*" "$INSTDIR\Fixer\"'
-  FileClose $9
-  nsExec::ExecToStack '"$PLUGINSDIR\fixer.bat"'
+  nsExec::ExecToStack 'cmd /c xcopy /E /Y "$PLUGINSDIR\extracted\Itch_Login_Fixer\*" "$INSTDIR\Fixer\"'
   Pop $0
   CreateShortcut "$SMPROGRAMS\${APP_SHORT}\Itch Login Fixer.lnk" "$INSTDIR\Fixer\Itch_Login_Fixer.exe"
 SectionEnd
@@ -168,10 +143,9 @@ Section "Support tools (7-zip + mods)" SecTools
   SectionIn RO
   DetailPrint "Installing support tools..."
   SetOutPath "$INSTDIR"
-  FileOpen $9 "$PLUGINSDIR\tools.bat" w
-  FileWrite $9 '@echo off$\r$\ncopy /Y "$PLUGINSDIR\extracted\7z.exe" "$INSTDIR\7z.exe"$\r$\ncopy /Y "$PLUGINSDIR\extracted\bepmods.zip" "$INSTDIR\bepmods.zip"'
-  FileClose $9
-  nsExec::ExecToStack '"$PLUGINSDIR\tools.bat"'
+  nsExec::ExecToStack 'cmd /c copy /Y "$PLUGINSDIR\extracted\7z.exe" "$INSTDIR\7z.exe"'
+  Pop $0
+  nsExec::ExecToStack 'cmd /c copy /Y "$PLUGINSDIR\extracted\bepmods.zip" "$INSTDIR\bepmods.zip"'
   Pop $0
 SectionEnd
 
@@ -189,19 +163,15 @@ SectionEnd
 
 ;------------------------------- Uninstall --------------------------------
 Section "Uninstall"
-  ; Start menu
   Delete "$SMPROGRAMS\${APP_SHORT}\${APP_SHORT}.lnk"
   Delete "$SMPROGRAMS\${APP_SHORT}\Uninstall ${APP_SHORT}.lnk"
   Delete "$SMPROGRAMS\${APP_SHORT}\Itch Login Fixer.lnk"
   RMDir  "$SMPROGRAMS\${APP_SHORT}"
 
-  ; Desktop
   Delete "$DESKTOP\${APP_SHORT}.lnk"
 
-  ; Remove entire install folder (launcher + fixer + all files)
   RMDir  /r "$INSTDIR"
 
-  ; Registry
   DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}"
   DeleteRegKey HKCU "Software\${APP_NAME}"
 SectionEnd
