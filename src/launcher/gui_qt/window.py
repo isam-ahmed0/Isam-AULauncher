@@ -19,17 +19,13 @@ from PySide6.QtWidgets import (
     QInputDialog, QScrollArea, QSystemTrayIcon, QMenu,
     QComboBox,
 )
-from PySide6.QtCore import Qt, QThread, Signal, QTimer, QObject
+from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtGui import QIcon, QPixmap, QPainter, QColor, QLinearGradient, QFont, QFontMetrics, QAction
+from gui_qt.worker import _UISignaler, Worker
 
 from mod_inspector import inspect_profile_dlls
 from .mod_warnings import ModWarningDialog
 from .mod_details import ModInfoDialog
-
-
-class _UISignaler(QObject):
-    """Bridge to dispatch callables from background threads to the main thread."""
-    invoke = Signal(object)
 
 from config import (
     Config, APP_NAME, BRAND_SHORT, MAKER, LAUNCHER_VERSION,
@@ -157,24 +153,6 @@ class HeroBanner(QLabel):
         painter.drawText(bx, by, tw, 24, Qt.AlignmentFlag.AlignCenter, badge_text)
 
         painter.end()
-
-
-# ---------------------------------------------------------------------------
-# Background worker thread
-# ---------------------------------------------------------------------------
-class Worker(QThread):
-    """Run a function in a background thread, emit finished signal."""
-    finished = Signal()
-
-    def __init__(self, fn, parent=None):
-        super().__init__(parent)
-        self._fn = fn
-
-    def run(self):
-        try:
-            self._fn()
-        finally:
-            self.finished.emit()
 
 
 # ---------------------------------------------------------------------------
