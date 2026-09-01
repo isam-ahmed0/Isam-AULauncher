@@ -14,9 +14,7 @@
 !define APP_SHORT     "Isam AULauncher"
 !define COMPANY       "Isam"
 !ifndef VERSION
-  !system '"${__FILEDIR__}\_read_ver.bat" "${ROOT}\LAUNCHER_VERSION" > "${__FILEDIR__}\_ver.nsh"'
-  !include "${__FILEDIR__}\_ver.nsh"
-  !delfile "${__FILEDIR__}\_ver.nsh"
+  !define VERSION     "0.5"
 !endif
 !define VERSION_DOT   "${VERSION}.0.0"
 

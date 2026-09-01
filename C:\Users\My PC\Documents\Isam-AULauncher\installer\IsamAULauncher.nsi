@@ -3,7 +3,9 @@
 ; Compile with: makensis.exe installer\IsamAULauncher.nsi
 ; Paths are resolved relative to this script, so it builds from anywhere.
 ;
-; Packages PyInstaller --onedir output (folders with exe + _internal/).
+; Supports two build modes:
+;   PyInstaller (default): packages single .exe files
+;   Cx_Freeze (/DBUILD_CX=1): packages folder with shared lib/
 ;-------------------------------------------------------------------------------
 
 !include "MUI2.nsh"
@@ -13,7 +15,7 @@
 !define APP_SHORT     "Isam AULauncher"
 !define COMPANY       "Isam"
 !ifndef VERSION
-  !define VERSION     "0.5"
+  !define VERSION     "0.1"
 !endif
 !define VERSION_DOT   "${VERSION}.0.0"
 
@@ -22,9 +24,15 @@
   !define ROOT "${__FILEDIR__}\.."
 !endif
 !define SRC_ICON      "${ROOT}\src\launcher\resources\icon.ico"
-!define SIDEBAR_BMP   "${ROOT}\installer\sidebar.bmp"
-!define LAUNCHER_DIR  "${ROOT}\dist\IsamAULauncher"
-!define FIXER_DIR     "${ROOT}\dist\Itch_Login_Fixer"
+
+; --- Build mode: Cx_Freeze or PyInstaller ---
+!ifdef BUILD_CX
+  !define CX_DIR     "${ROOT}\dist\IsamAULauncher_cx"
+!else
+  !define LAUNCHER_EXE  "${ROOT}\dist\IsamAULauncher.exe"
+  !define FIXER_EXE     "${ROOT}\dist\Itch_Login_Fixer.exe"
+!endif
+
 !define SEVENZ_EXE    "${ROOT}\release\7z.exe"
 !define BEPMODS_ZIP   "${ROOT}\release\bepmods.zip"
 
@@ -41,9 +49,6 @@ SetCompressor /SOLID lzma
 Icon    "${SRC_ICON}"
 UninstallIcon "${SRC_ICON}"
 
-; Replace "Nullsoft Install System" branding
-BrandingText "Isam Installer"
-
 ; Installer / uninstaller metadata
 VIProductVersion "${VERSION_DOT}"
 VIAddVersionKey "ProductName"    "${APP_NAME}"
@@ -57,20 +62,8 @@ VIAddVersionKey "LegalCopyright"  "Copyright (c) 2026 ${COMPANY}"
 !define MUI_ABORTWARNING
 !define MUI_ICON   "${SRC_ICON}"
 !define MUI_UNICON "${SRC_ICON}"
-
-; Custom sidebar image
-!define MUI_WELCOMEFINISHPAGE_BITMAP "${SIDEBAR_BMP}"
-!define MUI_UNWELCOMEFINISHPAGE_BITMAP "${SIDEBAR_BMP}"
-
-; Welcome page
-!define MUI_WELCOMEPAGE_TITLE "Welcome"
-!define MUI_WELCOMEPAGE_TEXT "A clean, modern launcher for Among Us."
-
-; Finish page
-!define MUI_FINISHPAGE_TITLE "Done"
-!define MUI_FINISHPAGE_TEXT "Setup is complete."
 !define MUI_FINISHPAGE_RUN "$INSTDIR\IsamAULauncher.exe"
-!define MUI_FINISHPAGE_RUN_TEXT "Launch ${APP_NAME} now"
+!define MUI_FINISHPAGE_RUN_TEXT "Run ${APP_NAME} now"
 
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_DIRECTORY
@@ -83,21 +76,20 @@ VIAddVersionKey "LegalCopyright"  "Copyright (c) 2026 ${COMPANY}"
 
 !insertmacro MUI_LANGUAGE "English"
 
-;------------------------------- Pre-install: kill running launcher --------
-Function .onInit
-  ; Kill any running launcher so files are not locked during update
-  nsExec::ExecToStack 'taskkill /F /IM IsamAULauncher.exe'
-  Pop $0
-  Sleep 500
-FunctionEnd
-
 ;------------------------------- Components --------------------------------
 Section "Isam AULauncher (required)" SecMain
   SectionIn RO
 
-  ; Install entire --onedir folder to $INSTDIR
   SetOutPath "$INSTDIR"
-  File /r "${LAUNCHER_DIR}\*.*"
+
+!ifdef BUILD_CX
+  ; Cx_Freeze: install entire build folder (exes + lib/ + other files)
+  File /r "${CX_DIR}\*.*"
+!else
+  ; PyInstaller: install single exe files
+  File /oname=IsamAULauncher.exe "${LAUNCHER_EXE}"
+  File /oname=icon.ico "${SRC_ICON}"
+!endif
 
   WriteUninstaller "$INSTDIR\Uninstall.exe"
 
@@ -120,15 +112,17 @@ Section "Isam AULauncher (required)" SecMain
 SectionEnd
 
 Section "Itch Login Fixer" SecFixer
-  SectionIn RO
-  ; Install fixer into subfolder (avoids _internal/ conflict with launcher)
-  SetOutPath "$INSTDIR\Fixer"
-  File /r "${FIXER_DIR}\*.*"
-  CreateShortcut "$SMPROGRAMS\${APP_SHORT}\Itch Login Fixer.lnk" "$INSTDIR\Fixer\Itch_Login_Fixer.exe"
+!ifdef BUILD_CX
+  ; Cx_Freeze: Itch_Login_Fixer.exe already installed with folder copy above
+!else
+  ; PyInstaller: install fixer as separate exe
+  SetOutPath "$INSTDIR"
+  File /oname=Itch_Login_Fixer.exe "${FIXER_EXE}"
+!endif
+  CreateShortcut "$SMPROGRAMS\${APP_SHORT}\Itch Login Fixer.lnk" "$INSTDIR\Itch_Login_Fixer.exe"
 SectionEnd
 
 Section "Support tools (7-zip + mods)" SecTools
-  SectionIn RO
   SetOutPath "$INSTDIR"
   File /oname=7z.exe "${SEVENZ_EXE}"
   File /oname=bepmods.zip "${BEPMODS_ZIP}"
@@ -137,14 +131,6 @@ SectionEnd
 Section /o "Desktop shortcut" SecDesktop
   CreateShortcut "$DESKTOP\${APP_SHORT}.lnk" "$INSTDIR\IsamAULauncher.exe"
 SectionEnd
-
-;------------------------------- Component descriptions --------------------
-!insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
-  !insertmacro MUI_DESCRIPTION_TEXT ${SecMain}    "Core launcher files (required)."
-  !insertmacro MUI_DESCRIPTION_TEXT ${SecFixer}   "Itch.io login fix tool."
-  !insertmacro MUI_DESCRIPTION_TEXT ${SecTools}   "7-Zip and BepInEx mod files."
-  !insertmacro MUI_DESCRIPTION_TEXT ${SecDesktop} "Create a shortcut on your Desktop."
-!insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 ;------------------------------- Uninstall --------------------------------
 Section "Uninstall"
@@ -157,7 +143,14 @@ Section "Uninstall"
   ; Desktop
   Delete "$DESKTOP\${APP_SHORT}.lnk"
 
-  ; Remove entire install folder (launcher + fixer + all files)
+  ; Files + folder (RMDir /r handles all files including Cx_Freeze lib/ folder)
+  Delete "$INSTDIR\IsamAULauncher.exe"
+  Delete "$INSTDIR\Itch_Login_Fixer.exe"
+  Delete "$INSTDIR\icon.ico"
+  Delete "$INSTDIR\7z.exe"
+  Delete "$INSTDIR\bepmods.zip"
+  Delete "$INSTDIR\Uninstall.exe"
+  Delete "$INSTDIR\launcher.log"
   RMDir  /r "$INSTDIR"
 
   ; Registry

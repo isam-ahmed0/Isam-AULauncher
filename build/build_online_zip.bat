@@ -1,23 +1,17 @@
 @echo off
-REM Create IsamAU-All.zip and compile the online installer.
+REM Compile the online installer.
 REM
-REM Prerequisites: PyInstaller builds must already exist in dist\
-REM   (run build_installer.bat steps 1-2 first)
+REM Prerequisites:
+REM   1. dist\IsamAU-All.zip already created (zip it yourself)
+REM   2. NSIS (Unicode) installed from https://nsis.sourceforge.io/Download
 REM
-REM Requires:
-REM   1. NSIS (Unicode) installed from https://nsis.sourceforge.io/Download
-REM
-REM Produces: dist\IsamAU-All.zip + dist\IsamAU-Online.exe
+REM Produces: dist\IsamAU-Online.exe
 setlocal
 cd /d "%~dp0.."
 set "ROOT=%CD%"
 
-if not exist "dist\IsamAULauncher" (
-  echo ERROR: dist\IsamAULauncher not found. Run PyInstaller builds first.
-  exit /b 1
-)
-if not exist "dist\Itch_Login_Fixer" (
-  echo ERROR: dist\Itch_Login_Fixer not found. Run PyInstaller builds first.
+if not exist "dist\IsamAU-All.zip" (
+  echo ERROR: dist\IsamAU-All.zip not found. Create it first.
   exit /b 1
 )
 
@@ -29,28 +23,7 @@ if not defined VERSION set "VERSION=0.1"
 echo Using version: %VERSION%
 
 echo ============================================================
-echo  [1/2] Creating IsamAU-All.zip
-echo ============================================================
-set "SEVENZ="
-where 7z >nul 2>&1 && set "SEVENZ=7z"
-if not defined SEVENZ if exist "%ProgramFiles%\7-Zip\7z.exe" set "SEVENZ=%ProgramFiles%\7-Zip\7z.exe"
-if not defined SEVENZ if exist "%ProgramFiles(x86)%\7-Zip\7z.exe" set "SEVENZ=%ProgramFiles(x86)%\7-Zip\7z.exe"
-if not defined SEVENZ (
-  echo 7-Zip not found. Install from: https://www.7-zip.org/
-  exit /b 1
-)
-
-echo Using: %SEVENZ%
-"%SEVENZ%" a -tzip "%ROOT%\dist\IsamAU-All.zip" ^
-  "%ROOT%\dist\IsamAULauncher\" ^
-  "%ROOT%\dist\Itch_Login_Fixer\" ^
-  "%ROOT%\release\7z.exe" ^
-  "%ROOT%\release\bepmods.zip" || exit /b 1
-echo Created dist\IsamAU-All.zip
-
-echo.
-echo ============================================================
-echo  [2/2] Compiling online installer
+echo  Compiling online installer
 echo ============================================================
 set "MAKENSIS="
 if exist "%ProgramFiles(x86)%\NSIS\makensis.exe" set "MAKENSIS=%ProgramFiles(x86)%\NSIS\makensis.exe"
