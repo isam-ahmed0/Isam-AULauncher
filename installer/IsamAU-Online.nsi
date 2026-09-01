@@ -99,11 +99,13 @@ Function .onInit
   SetOutPath "$PLUGINSDIR"
   File "/oname=7z.exe" "${SEVENZ_EXE}"
 
-  ; Download the combined zip (PowerShell handles HTTPS redirects, NSISdl does not)
+  ; Download the combined zip (write PS1 script to avoid nsExec quoting issues)
   DetailPrint "Downloading files from GitHub..."
-  nsExec::ExecToStack 'powershell -NoProfile -Command "Invoke-WebRequest -Uri \'${DOWNLOAD_URL}\' -OutFile \'$PLUGINSDIR\IsamAU-All.zip\' -UseBasicParsing"'
-  Pop $0
-  ${If} $0 != "0"
+  FileOpen $0 "$PLUGINSDIR\download.ps1" w
+  FileWrite $0 'Invoke-WebRequest -Uri "${DOWNLOAD_URL}" -OutFile "$PLUGINSDIR\IsamAU-All.zip" -UseBasicParsing'
+  FileClose $0
+  ExecWait 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$PLUGINSDIR\download.ps1"' $0
+  ${If} $0 != 0
     MessageBox MB_ICONSTOP "Download failed. Please check your internet connection and try again."
     Quit
   ${EndIf}
