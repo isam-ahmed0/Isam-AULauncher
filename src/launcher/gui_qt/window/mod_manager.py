@@ -1,4 +1,3 @@
-import sys
 import logging
 from pathlib import Path
 
@@ -13,69 +12,6 @@ from gui_qt.mod_details import ModInfoDialog
 
 
 class ModManagerMixin:
-    # ------------------------------------------------------------------ bep
-    def _find_bepmods_zip(self):
-        if getattr(sys, 'frozen', False):
-            base = Path(sys.executable).parent
-            zp = base / "_internal" / "bepmods.zip"
-            if zp.exists():
-                return zp
-        else:
-            zp = Path(__file__).parent.parent.parent.parent / "release" / "bepmods.zip"
-            if zp.exists():
-                return zp
-        return None
-
-    def _update_bep_status(self):
-        gp = self.config.get_game_path()
-        if not gp:
-            self._bep_status.setText("Game not installed — set a game location first")
-            self._bep_status.setStyleSheet(f"color: {theme.TEXT_MUTED};")
-            return False
-        core_dll = gp / "BepInEx" / "core" / "BepInEx.dll"
-        if core_dll.exists():
-            self._bep_status.setText("BepInEx: Installed")
-            self._bep_status.setStyleSheet(f"color: {theme.SUCCESS};")
-            return True
-        self._bep_status.setText("BepInEx: Not installed")
-        self._bep_status.setStyleSheet(f"color: {theme.WARNING};")
-        return False
-
-    def _cb_setup_bepinex(self):
-        gp = self.config.get_game_path()
-        if not gp:
-            QMessageBox.warning(self.window, "Error", "Game not installed! Set a game location first.")
-            return
-        zp = self._find_bepmods_zip()
-        if not zp:
-            QMessageBox.warning(self.window, "Error", "bepmods.zip not found in launcher files.")
-            return
-        if (gp / "BepInEx" / "core" / "BepInEx.dll").exists():
-            reply = QMessageBox.question(
-                self.window, "Confirm",
-                "BepInEx is already installed. Reinstall?",
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            )
-            if reply != QMessageBox.StandardButton.Yes:
-                return
-
-        def go():
-            self._invoke_main(lambda: self._set_status("Installing BepInEx...", "info"))
-            self._invoke_main(self._busy_on)
-            ok = FileManager.extract_zip(zp, gp)
-            if ok:
-                self._invoke_main(lambda: self._set_status("BepInEx installed!", "success"))
-                self._invoke_main(lambda: QMessageBox.information(
-                    self.window, "Success", "BepInEx installed successfully!"))
-                self._invoke_main(self._run_first_time_migration)
-            else:
-                self._invoke_main(lambda: self._set_status("BepInEx installation failed", "danger"))
-                self._invoke_main(lambda: QMessageBox.warning(
-                    self.window, "Error", "Failed to extract BepInEx files."))
-            self._invoke_main(self._update_bep_status)
-            self._invoke_main(self._busy_off)
-        self._run(go)
-
     # ------------------------------------------------------------------ profiles
     def _refresh_profile_list(self):
         """Reload profile combo box and update active profile label."""
@@ -167,9 +103,6 @@ class ModManagerMixin:
         gp = self.config.get_game_path()
         if not gp:
             QMessageBox.warning(self.window, "Error", "Game not installed!")
-            return
-        if not (gp / "BepInEx" / "core" / "BepInEx.dll").exists():
-            QMessageBox.warning(self.window, "Error", "BepInEx is not installed!\nSet it up first.")
             return
         if self.game.is_running:
             QMessageBox.warning(self.window, "Error", "Close Among Us before switching profiles!")
@@ -294,10 +227,6 @@ class ModManagerMixin:
         gp = self.config.get_game_path()
         if not gp:
             QMessageBox.warning(self.window, "Error", "Game not installed! Set a game location first.")
-            return
-        if not (gp / "BepInEx" / "core" / "BepInEx.dll").exists():
-            QMessageBox.warning(self.window, "Error",
-                                "BepInEx is not installed!\nSet it up on the Mods page first.")
             return
         files, _ = QFileDialog.getOpenFileNames(
             self.window, "Select Mod Files", "", "DLL Files (*.dll);;All Files (*)"
