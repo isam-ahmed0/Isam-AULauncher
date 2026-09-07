@@ -518,6 +518,26 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         layout.addWidget(desc)
         layout.addSpacing(8)
 
+        bep_title = QLabel("BepInEx Setup")
+        bep_title.setObjectName("sectionTitle")
+        layout.addWidget(bep_title)
+
+        self._bep_status = QLabel("")
+        self._bep_status.setObjectName("statusText")
+        layout.addWidget(self._bep_status)
+
+        bep_btn_row = QHBoxLayout()
+        bep_btn_row.setSpacing(8)
+
+        self._bep_setup_btn = QPushButton("Setup BepInEx")
+        self._bep_setup_btn.setObjectName("successBtn")
+        self._bep_setup_btn.setFixedHeight(36)
+        self._bep_setup_btn.clicked.connect(self._cb_setup_bepinex)
+        bep_btn_row.addWidget(self._bep_setup_btn)
+
+        bep_btn_row.addStretch()
+        layout.addLayout(bep_btn_row)
+
         layout.addSpacing(4)
         layout.addWidget(QFrame(frameShape=QFrame.Shape.HLine))
         layout.addSpacing(4)
@@ -627,6 +647,7 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
 
         layout.addStretch()
 
+        self._update_bep_status()
         self._run_first_time_migration()
         self._refresh_profile_list()
 

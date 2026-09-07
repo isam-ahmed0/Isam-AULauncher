@@ -27,12 +27,11 @@ class ProfileManager:
         return self.profiles_dir / name
 
     def create_profile(self, name: str) -> bool:
-        """Create a new empty profile folder and copy cached plugin."""
+        """Create a new empty profile folder."""
         if not name or name in self.list_profiles():
             return False
         try:
             self.profile_path(name).mkdir(parents=True, exist_ok=True)
-            self._copy_cached_plugin_to_profile(name)
             return True
         except OSError as e:
             log.error(f"Failed to create profile {name}: {e}")
@@ -188,7 +187,6 @@ class ProfileManager:
     def ensure_first_profiles(self, game_path: Path) -> str:
         """On first run: if BepInEx/plugins has real files (not junction),
         move them into 'Default' profile, create junction, and create 'Vanilla'.
-        Also copies cached isam-client.dll into all new profiles.
         Returns the name of the active profile."""
         plugins = game_path / "BepInEx" / "plugins"
         profiles = self.list_profiles()
@@ -209,26 +207,11 @@ class ProfileManager:
                     shutil.move(str(dll), str(self.profile_path("Default") / dll.name))
                 except OSError:
                     pass
-            # Copy cached isam-client.dll if available
-            self._copy_cached_plugin_to_profile("Default")
             # Create junction
             self.switch_to("Default", game_path)
             return "Default"
         else:
             # No existing plugins — create Default empty too
             self.create_profile("Default")
-            self._copy_cached_plugin_to_profile("Default")
             self.switch_to("Default", game_path)
             return "Default"
-
-    def _copy_cached_plugin_to_profile(self, profile_name: str):
-        """Copy cached isam-client.dll from appdata to the given profile."""
-        cached = self.profiles_dir.parent / "isam-client.dll"
-        if not cached.exists():
-            return
-        target = self.profile_path(profile_name)
-        try:
-            target.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(str(cached), str(target / "isam-client.dll"))
-        except OSError:
-            pass

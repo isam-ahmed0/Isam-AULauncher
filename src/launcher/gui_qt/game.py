@@ -2,14 +2,13 @@
 GameManager — game launch, stop, update, and process tracking.
 All game lifecycle logic lives here; window.py just calls these methods.
 """
-import sys
 import logging
 import subprocess
 from pathlib import Path
 
 from PySide6.QtCore import QObject, Signal
 
-from config import VERSION_URL, GAME_DOWNLOAD_URL, PLUGIN_DLL_URL
+from config import VERSION_URL, GITHUB_REPO
 from network import NetworkManager
 from file_manager import FileManager
 
@@ -109,7 +108,7 @@ class GameManager(QObject):
 
     def download_update(self, version: str, game_path: Path) -> bool:
         """Download and extract game update. Blocks until done."""
-        url = GAME_DOWNLOAD_URL
+        url = f"https://github.com/{GITHUB_REPO}/releases/download/{version}/app.zip"
         zf = Path("game.zip")
 
         self.status_message.emit(f"Downloading v{version}...", "info")
@@ -147,60 +146,7 @@ class GameManager(QObject):
                 self.status_message.emit("Among Us.exe not found after extraction!", "danger")
                 return False
 
-        self.status_message.emit("Installing BepInEx...", "info")
-        self._install_bepinex(game_path)
-
-        self.status_message.emit("Installing isam-client.dll to all profiles...", "info")
-        self._install_plugin_to_all_profiles(game_path)
-
         self.config.set_version(version)
         self.config.set_game_path(game_path)
         self.status_message.emit("Installation complete!", "success")
         return True
-
-    def _find_bepmods_zip(self) -> Path | None:
-        """Locate the bundled bepmods.zip."""
-        if getattr(sys, 'frozen', False):
-            base = Path(sys.executable).parent
-            zp = base / "_internal" / "bepmods.zip"
-            if zp.exists():
-                return zp
-        else:
-            zp = Path(__file__).parent.parent.parent.parent / "release" / "bepmods.zip"
-            if zp.exists():
-                return zp
-        return None
-
-    def _install_bepinex(self, game_path: Path):
-        """Extract bepmods.zip into the game folder if found."""
-        zp = self._find_bepmods_zip()
-        if not zp:
-            self.status_message.emit("bepmods.zip not found — skipping BepInEx", "warning")
-            return
-        self.status_message.emit("Extracting BepInEx...", "info")
-        if not FileManager.extract_zip(zp, game_path):
-            self.status_message.emit("BepInEx extraction failed", "warning")
-            return
-        self.status_message.emit("BepInEx installed!", "success")
-
-    def _install_plugin_to_all_profiles(self, game_path: Path):
-        """Download isam-client.dll, cache it, and copy it to every profile folder."""
-        from gui_qt.profiles import ProfileManager
-
-        profiles_dir = self.config.appdata_dir / "Profiles"
-        profile_mgr = ProfileManager(profiles_dir)
-
-        cached_dll = self.config.appdata_dir / "isam-client.dll"
-        if not self.network.download_file(PLUGIN_DLL_URL, cached_dll):
-            self.status_message.emit("Failed to download isam-client.dll", "warning")
-            return
-
-        for name in profile_mgr.list_profiles():
-            target = profile_mgr.profile_path(name)
-            try:
-                target.mkdir(parents=True, exist_ok=True)
-                import shutil
-                shutil.copy2(str(cached_dll), str(target / "isam-client.dll"))
-                self.status_message.emit(f"Copied isam-client.dll to profile: {name}", "info")
-            except OSError as e:
-                self.status_message.emit(f"Failed to copy to profile {name}: {e}", "warning")

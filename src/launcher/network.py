@@ -8,9 +8,8 @@ from dataclasses import dataclass
 import requests
 
 from config import (
-    REQUEST_TIMEOUT, CHUNK_SIZE,
-    DISCORD_CLIENT_ID, APP_NAME, LAUNCHER_VERSION,
-    GAME_DOWNLOAD_URL
+    GITHUB_REPO, REQUEST_TIMEOUT, CHUNK_SIZE,
+    DISCORD_CLIENT_ID, APP_NAME, LAUNCHER_VERSION
 )
 
 try:
@@ -82,8 +81,22 @@ class NetworkManager:
             return False
 
     def get_releases(self) -> List[GameVersion]:
-        """Return a single GameVersion pointing to the raw app.zip in repo root."""
-        return [GameVersion(version="latest", url=GAME_DOWNLOAD_URL)]
+        url = f"https://api.github.com/repos/{GITHUB_REPO}/releases"
+        try:
+            r = self.session.get(url, timeout=REQUEST_TIMEOUT)
+            r.raise_for_status()
+            versions = []
+            for rel in r.json():
+                for asset in rel.get("assets", []):
+                    if asset["name"] == "app.zip":
+                        versions.append(GameVersion(
+                            version=rel.get("tag_name"),
+                            url=asset["browser_download_url"]
+                        ))
+            return versions
+        except Exception as e:
+            logging.error(f"Failed to fetch releases: {e}")
+            return []
 
 
 class DiscordRPC:
