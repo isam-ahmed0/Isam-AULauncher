@@ -3,8 +3,8 @@ import webbrowser
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFontMetrics, QColor
 from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QCheckBox,
-    QPushButton, QMessageBox, QGridLayout, QWidget,
+    QVBoxLayout, QHBoxLayout, QLabel, QFrame, QCheckBox,
+    QPushButton, QMessageBox, QGridLayout, QWidget, QScrollArea,
 )
 
 from config import APP_NAME, LAUNCHER_VERSION, MAKER, DISCORD_INVITE, YOUTUBE_CHANNEL, SOURCE_CODE_URL
@@ -86,26 +86,37 @@ class _ThemeCard(QFrame):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
+            # Walk up to find SettingsPage widget
             parent = self.parent()
-            while parent and not isinstance(parent, SettingsDialog):
+            while parent and not isinstance(parent, SettingsPage):
                 parent = parent.parent()
             if parent:
                 parent._select_theme(self._name)
         super().mousePressEvent(event)
 
 
-class SettingsDialog(QDialog):
+class SettingsPage(QWidget):
+    """Settings page widget (embedded in stacked widget, not a dialog)."""
+
     def __init__(self, config, discord, profile_mgr, parent=None):
         super().__init__(parent)
         self.config = config
         self.discord = discord
         self.profile_mgr = profile_mgr
+        self._selected_theme = config.settings.get("theme", "Indigo")
 
-        self.setWindowTitle("Settings")
-        self.setFixedSize(480, 560)
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
 
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(24, 20, 24, 20)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        outer.addWidget(scroll)
+
+        container = QWidget()
+        layout = QVBoxLayout(container)
+        layout.setContentsMargins(28, 20, 28, 20)
+        layout.setSpacing(12)
 
         title = QLabel("Settings")
         title.setObjectName("sectionTitle")
@@ -118,6 +129,7 @@ class SettingsDialog(QDialog):
 
         cb_rpc = QCheckBox("Discord Rich Presence")
         cb_rpc.setChecked(settings.get("discord_rpc", True))
+        cb_rpc.stateChanged.connect(lambda: self._save_setting("discord_rpc", cb_rpc.isChecked()))
         layout.addWidget(cb_rpc)
         desc1 = QLabel("  Show your activity on Discord")
         desc1.setObjectName("mutedText")
@@ -126,6 +138,7 @@ class SettingsDialog(QDialog):
 
         cb_auto = QCheckBox("Auto-update game")
         cb_auto.setChecked(settings.get("auto_update", True))
+        cb_auto.stateChanged.connect(lambda: self._save_setting("auto_update", cb_auto.isChecked()))
         layout.addWidget(cb_auto)
         desc2 = QLabel("  Download game updates automatically")
         desc2.setObjectName("mutedText")
@@ -142,7 +155,6 @@ class SettingsDialog(QDialog):
         layout.addSpacing(6)
 
         self._theme_cards = {}
-        self._selected_theme = settings.get("theme", "Indigo")
 
         grid = QGridLayout()
         grid.setSpacing(8)
@@ -218,62 +230,53 @@ class SettingsDialog(QDialog):
             row_layout.addStretch()
             layout.addLayout(row_layout)
 
-        layout.addSpacing(16)
-        layout.addWidget(QFrame(frameShape=QFrame.Shape.HLine))
-        layout.addSpacing(12)
+        layout.addStretch()
+        scroll.setWidget(container)
 
-        def save():
-            settings["discord_rpc"] = cb_rpc.isChecked()
-            settings["auto_update"] = cb_auto.isChecked()
-            settings["theme"] = self._selected_theme
-            self.config.save_settings()
-            if settings["discord_rpc"] and not self.discord.connected:
+    def _save_setting(self, key, value):
+        self.config.settings[key] = value
+        self.config.save_settings()
+        if key == "discord_rpc":
+            if value and not self.discord.connected:
                 self.discord.connect()
-            elif not settings["discord_rpc"] and self.discord.connected:
+            elif not value and self.discord.connected:
                 self.discord.disconnect()
-            self.accept()
-
-        save_btn = QPushButton("Save")
-        save_btn.setObjectName("modalPrimary")
-        save_btn.setFixedHeight(36)
-        save_btn.clicked.connect(save)
-        layout.addWidget(save_btn)
 
     def _select_theme(self, name: str):
         self._selected_theme = name
         for tname, card in self._theme_cards.items():
             card.set_selected(tname == name)
+        self.config.settings["theme"] = name
+        self.config.save_settings()
         # Live preview
         from PySide6.QtWidgets import QApplication
         app = QApplication.instance()
         if app:
             theme.set_theme(app, name)
-            # Repaint custom-painted widgets (HeroBanner)
             from gui_qt.widgets import HeroBanner
             for w in app.topLevelWidgets():
                 for banner in w.findChildren(HeroBanner):
                     banner.update()
 
-    def done(self, result):
-        # Revert theme if cancelled
-        if result != QDialog.DialogCode.Accepted:
-            current = self.config.settings.get("theme", "Indigo")
-            if current != self._selected_theme:
-                from PySide6.QtWidgets import QApplication
-                app = QApplication.instance()
-                if app:
-                    theme.set_theme(app, current)
-        super().done(result)
 
+class AboutPage(QWidget):
+    """About page widget (embedded in stacked widget, not a dialog)."""
 
-class AboutDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("About")
-        self.setFixedSize(460, 340)
 
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(24, 20, 24, 20)
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        outer.addWidget(scroll)
+
+        container = QWidget()
+        layout = QVBoxLayout(container)
+        layout.setContentsMargins(28, 20, 28, 20)
+        layout.setSpacing(12)
 
         title = QLabel("About")
         title.setObjectName("sectionTitle")
@@ -327,15 +330,8 @@ class AboutDialog(QDialog):
         links_row.addWidget(src_btn)
         layout.addLayout(links_row)
 
-        layout.addSpacing(20)
-        layout.addWidget(QFrame(frameShape=QFrame.Shape.HLine))
-        layout.addSpacing(8)
-
-        ok_btn = QPushButton("OK")
-        ok_btn.setObjectName("modalPrimary")
-        ok_btn.setFixedHeight(36)
-        ok_btn.clicked.connect(self.accept)
-        layout.addWidget(ok_btn)
+        layout.addStretch()
+        scroll.setWidget(container)
 
     def _cb_coming_soon(self):
         QMessageBox.information(self, "Discord", "Discord server coming soon!")

@@ -18,7 +18,7 @@ from PySide6.QtGui import QIcon, QAction
 
 from gui_qt.worker import _UISignaler, Worker
 from ..widgets import HeroBanner, _ICON_PATH, SIDEBAR_W
-from ..dialogs import SettingsDialog, AboutDialog
+from ..dialogs import SettingsPage, AboutPage
 
 from config import (
     Config, APP_NAME, BRAND_SHORT, MAKER, LAUNCHER_VERSION,
@@ -203,36 +203,25 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         self.page_game = self._build_game_page()
         self.page_tools = self._build_tools_page()
         self.page_profile = self._build_profile_page()
+        self.page_mods = self._build_mods_page()
+        self.page_settings = SettingsPage(self.config, self.discord, self.profile_mgr)
+        self.page_about = AboutPage()
         self.pages.addWidget(self.page_game)
         self.pages.addWidget(self.page_tools)
         self.pages.addWidget(self.page_profile)
-        self.page_mods = self._build_mods_page()
         self.pages.addWidget(self.page_mods)
+        self.pages.addWidget(self.page_settings)
+        self.pages.addWidget(self.page_about)
 
         self.nav_buttons = {}
-        for label, idx in [("Game", 0), ("Tools", 1), ("Profile", 2), ("Mods", 3)]:
+        for label, idx in [("Game", 0), ("Tools", 1), ("Profile", 2), ("Mods", 3),
+                           ("Settings", 4), ("About", 5)]:
             btn = QPushButton(f"  {label}")
             btn.setCheckable(True)
             btn.setFixedHeight(40)
             btn.clicked.connect(lambda checked, i=idx, l=label: self._switch_page(i, l))
             sidebar_layout.addWidget(btn)
             self.nav_buttons[label] = btn
-
-        sidebar_layout.addSpacing(8)
-        sep2 = QFrame()
-        sep2.setFrameShape(QFrame.Shape.HLine)
-        sidebar_layout.addWidget(sep2)
-        sidebar_layout.addSpacing(8)
-
-        btn_settings = QPushButton("  Settings")
-        btn_settings.setFixedHeight(40)
-        btn_settings.clicked.connect(self._show_settings)
-        sidebar_layout.addWidget(btn_settings)
-
-        btn_about = QPushButton("  About")
-        btn_about.setFixedHeight(40)
-        btn_about.clicked.connect(self._show_about)
-        sidebar_layout.addWidget(btn_about)
 
         sidebar_layout.addStretch()
 
@@ -771,15 +760,6 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
     def _busy_off(self):
         self._busy = False
         self.main_action_btn.setEnabled(True)
-
-    # ------------------------------------------------------------------ modals
-    def _show_settings(self):
-        dlg = SettingsDialog(self.config, self.discord, self.profile_mgr, self.window)
-        dlg.exec()
-
-    def _show_about(self):
-        dlg = AboutDialog(self.window)
-        dlg.exec()
 
     # ------------------------------------------------------------------ run
     def run(self):
