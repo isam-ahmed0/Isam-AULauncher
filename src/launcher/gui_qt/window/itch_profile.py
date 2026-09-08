@@ -227,6 +227,8 @@ class ItchProfileMixin:
             self.profile_page_name.setText("")
             self.profile_page_au.setText("")
             self.profile_page_platforms.setText("")
+            if hasattr(self, '_itch_login_btn'):
+                self._itch_login_btn.show()
             return
 
         username = profile.get("username") or "Unknown"
@@ -258,3 +260,6 @@ class ItchProfileMixin:
         else:
             self.profile_page_platforms.setText("No platforms linked")
             self.profile_page_platforms.setStyleSheet(f"color: {theme.TEXT_MUTED};")
+
+        if hasattr(self, '_itch_login_btn'):
+            self._itch_login_btn.hide()
