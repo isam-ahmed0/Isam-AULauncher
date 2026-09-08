@@ -1,6 +1,7 @@
 """
 LoginWindow — full-page Steam/Epic-style login for Isam AULauncher.
 Uses the existing itch.io OAuth from itch_profile.py.
+Right sidebar supports image, GIF, and slideshow.
 """
 import os
 import sys
@@ -13,7 +14,10 @@ from pathlib import Path
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QPainter, QColor, QFont, QLinearGradient, QBrush, QIcon
+from PySide6.QtGui import (
+    QPainter, QColor, QFont, QLinearGradient, QBrush, QIcon,
+    QPixmap, QMovie,
+)
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QPushButton, QFrame, QApplication,
@@ -21,13 +25,15 @@ from PySide6.QtWidgets import (
 
 from config import APP_NAME, BRAND_SHORT, LAUNCHER_VERSION, MAKER
 import gui_qt.theme as theme
-from gui_qt.widgets import HeroBanner, _ICON_PATH
+from gui_qt.widgets import HeroBanner, _ICON_PATH, _hex_to_qcolor
 
 # Reuse existing OAuth infrastructure from itch_profile.py
 from gui_qt.window.itch_profile import (
     ITCH_CLIENT_ID, ITCH_OAUTH_PORT,
     ITCH_TOKEN_DIR, ITCH_TOKEN_FILE,
 )
+
+_LOGIN_DIR = Path(__file__).parent.parent / "resources" / "login"
 
 _LOADING_PAGE = b"""<!DOCTYPE html>
 <html lang="en">
@@ -94,6 +100,131 @@ class _OAuthHandler(BaseHTTPRequestHandler):
         pass
 
 
+class _RightSidebar(QWidget):
+    """Right sidebar panel that displays image, GIF, or slideshow."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setFixedWidth(400)
+        self._mode = "gradient"
+        self._movie = None
+        self._slides = []
+        self._slide_index = 0
+        self._slide_timer = QTimer(self)
+        self._slide_timer.timeout.connect(self._next_slide)
+
+        self._load_content()
+
+    def _load_content(self):
+        """Determine display mode and load content."""
+        if not _LOGIN_DIR.exists():
+            self._mode = "gradient"
+            return
+
+        gif_path = _LOGIN_DIR / "login_promo.gif"
+        if gif_path.exists():
+            self._mode = "gif"
+            self._movie = QMovie(str(gif_path))
+            if self._movie.isValid():
+                self._movie.start()
+            else:
+                self._mode = "gradient"
+                self._movie = None
+            return
+
+        slides = sorted(_LOGIN_DIR.glob("slide_*.png"))
+        if slides:
+            self._mode = "slideshow"
+            self._slides = slides
+            self._slide_index = 0
+            self._slide_timer.start(5000)
+            return
+
+        static_path = _LOGIN_DIR / "login_promo.png"
+        if static_path.exists():
+            self._mode = "static"
+            return
+
+        self._mode = "gradient"
+
+    def _next_slide(self):
+        """Advance to next slide."""
+        if self._slides:
+            self._slide_index = (self._slide_index + 1) % len(self._slides)
+            self.update()
+
+    def paintEvent(self, event):
+        p = QPainter(self)
+        p.setRenderHint(QPainter.RenderHint.Antialiasing)
+        p.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
+        w, h = self.width(), self.height()
+
+        if self._mode == "gif" and self._movie and self._movie.isValid():
+            frame = self._movie.currentPixmap()
+            if not frame.isNull():
+                scaled = frame.scaled(w, h, Qt.AspectRatioMode.KeepAspectRatioByExpanding,
+                                      Qt.TransformationMode.SmoothTransformation)
+                x = (w - scaled.width()) // 2
+                y = (h - scaled.height()) // 2
+                p.drawPixmap(x, y, scaled)
+                p.end()
+                return
+
+        if self._mode == "slideshow" and self._slides:
+            pixmap = QPixmap(str(self._slides[self._slide_index]))
+            if not pixmap.isNull():
+                scaled = pixmap.scaled(w, h, Qt.AspectRatioMode.KeepAspectRatioByExpanding,
+                                       Qt.TransformationMode.SmoothTransformation)
+                x = (w - scaled.width()) // 2
+                y = (h - scaled.height()) // 2
+                p.drawPixmap(x, y, scaled)
+                p.end()
+                return
+
+        if self._mode == "static":
+            static_path = _LOGIN_DIR / "login_promo.png"
+            pixmap = QPixmap(str(static_path))
+            if not pixmap.isNull():
+                scaled = pixmap.scaled(w, h, Qt.AspectRatioMode.KeepAspectRatioByExpanding,
+                                       Qt.TransformationMode.SmoothTransformation)
+                x = (w - scaled.width()) // 2
+                y = (h - scaled.height()) // 2
+                p.drawPixmap(x, y, scaled)
+                p.end()
+                return
+
+        # Gradient fallback
+        accent = _hex_to_qcolor(theme.ACCENT)
+        accent2 = _hex_to_qcolor(theme.ACCENT_2)
+        bg_base = _hex_to_qcolor(theme.BG_BASE)
+        bg_surface = _hex_to_qcolor(theme.BG_SURFACE)
+
+        gradient = QLinearGradient(0, 0, w, h)
+        gradient.setColorAt(0, bg_surface)
+        gradient.setColorAt(0.5, bg_base)
+        gradient.setColorAt(1, bg_surface)
+        p.fillRect(0, 0, w, h, gradient)
+
+        # Glow orbs
+        p.setPen(Qt.PenStyle.NoPen)
+        p.setBrush(QColor(accent.red(), accent.green(), accent.blue(), 25))
+        p.drawEllipse(int(w * 0.3) - 80, int(h * 0.3) - 80, 160, 160)
+        p.setBrush(QColor(accent2.red(), accent2.green(), accent2.blue(), 20))
+        p.drawEllipse(int(w * 0.7) - 60, int(h * 0.65) - 60, 120, 120)
+        p.setBrush(QColor(accent.red(), accent.green(), accent.blue(), 12))
+        p.drawEllipse(int(w * 0.5) - 100, int(h * 0.8) - 100, 200, 200)
+
+        # Brand text centered
+        p.setPen(QColor(accent.red(), accent.green(), accent.blue(), 80))
+        f = QFont("Segoe UI", 28)
+        f.setFamilies(["Segoe UI", "Inter", "Helvetica Neue", "Arial"])
+        f.setBold(True)
+        p.setFont(f)
+        p.drawText(0, 0, w, h, Qt.AlignmentFlag.AlignCenter, BRAND_SHORT)
+
+        p.end()
+
+
 class LoginWindow(QMainWindow):
     """Full-page login window matching the main launcher style."""
 
@@ -114,26 +245,30 @@ class LoginWindow(QMainWindow):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        # Hero banner
+        # Hero banner (full width)
         self._hero = HeroBanner(
             "Sign In",
             "Authenticate with itch.io to play Among Us online",
         )
         layout.addWidget(self._hero)
 
-        # Content area
-        content = QWidget()
-        content_layout = QVBoxLayout(content)
-        content_layout.setContentsMargins(28, 24, 28, 0)
-        content_layout.setSpacing(12)
+        # Split: left content + right sidebar
+        body = QHBoxLayout()
+        body.setContentsMargins(0, 0, 0, 0)
+        body.setSpacing(0)
 
-        # Section title
+        # Left content
+        left = QWidget()
+        left_layout = QVBoxLayout(left)
+        left_layout.setContentsMargins(28, 24, 28, 0)
+        left_layout.setSpacing(12)
+
         title = QLabel("ITCH.IO LOGIN")
         title.setObjectName("sectionTitle")
-        content_layout.addWidget(title)
-        content_layout.addSpacing(4)
-        content_layout.addWidget(QFrame(frameShape=QFrame.Shape.HLine))
-        content_layout.addSpacing(20)
+        left_layout.addWidget(title)
+        left_layout.addSpacing(4)
+        left_layout.addWidget(QFrame(frameShape=QFrame.Shape.HLine))
+        left_layout.addSpacing(20)
 
         # Login button
         self._login_btn = QPushButton("Sign in with itch.io")
@@ -145,9 +280,9 @@ class LoginWindow(QMainWindow):
         login_row = QHBoxLayout()
         login_row.addWidget(self._login_btn)
         login_row.addStretch()
-        content_layout.addLayout(login_row)
+        left_layout.addLayout(login_row)
 
-        content_layout.addSpacing(12)
+        left_layout.addSpacing(12)
 
         # Warning notice
         warn_widget = QWidget()
@@ -175,23 +310,29 @@ class LoginWindow(QMainWindow):
         warn_text.setObjectName("warningText")
         warn_text.setWordWrap(True)
         warn_layout.addWidget(warn_text, 1)
-        content_layout.addWidget(warn_widget)
+        left_layout.addWidget(warn_widget)
 
-        content_layout.addSpacing(8)
+        left_layout.addSpacing(8)
 
         # Status label
         self._status_label = QLabel("")
         self._status_label.setObjectName("statusText")
-        content_layout.addWidget(self._status_label)
+        left_layout.addWidget(self._status_label)
 
-        content_layout.addStretch()
+        left_layout.addStretch()
 
         # Footer
         footer = QLabel(f"{APP_NAME} v{LAUNCHER_VERSION} — Made by {MAKER}")
         footer.setObjectName("footerText")
-        content_layout.addWidget(footer)
+        left_layout.addWidget(footer)
 
-        layout.addWidget(content)
+        body.addWidget(left, 1)
+
+        # Right sidebar
+        self._sidebar = _RightSidebar()
+        body.addWidget(self._sidebar)
+
+        layout.addWidget(body)
 
     # ------------------------------------------------------------------ OAuth
     def _start_login(self):
@@ -248,4 +389,6 @@ class LoginWindow(QMainWindow):
         self._status_label.setText(text)
 
     def closeEvent(self, event):
+        if self._sidebar._movie:
+            self._sidebar._movie.stop()
         QApplication.quit()
