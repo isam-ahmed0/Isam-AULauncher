@@ -253,7 +253,8 @@ class LoginWindow(QMainWindow):
         layout.addWidget(self._hero)
 
         # Split: left content + right sidebar
-        body = QHBoxLayout()
+        body_widget = QWidget()
+        body = QHBoxLayout(body_widget)
         body.setContentsMargins(0, 0, 0, 0)
         body.setSpacing(0)
 
@@ -332,7 +333,7 @@ class LoginWindow(QMainWindow):
         self._sidebar = _RightSidebar()
         body.addWidget(self._sidebar)
 
-        layout.addWidget(body)
+        layout.addWidget(body_widget)
 
     # ------------------------------------------------------------------ OAuth
     def _start_login(self):
