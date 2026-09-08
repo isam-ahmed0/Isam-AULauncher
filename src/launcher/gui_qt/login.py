@@ -1,5 +1,5 @@
 """
-LoginWindow — Steam/Epic-style login page for Isam AULauncher.
+LoginWindow — full-page Steam/Epic-style login for Isam AULauncher.
 Uses the existing itch.io OAuth from itch_profile.py.
 """
 import os
@@ -21,14 +21,13 @@ from PySide6.QtWidgets import (
 
 from config import APP_NAME, BRAND_SHORT, LAUNCHER_VERSION, MAKER
 import gui_qt.theme as theme
+from gui_qt.widgets import HeroBanner, _ICON_PATH
 
-# Reuse existing OAuth infrastructure from itch_profile.py — no changes there
+# Reuse existing OAuth infrastructure from itch_profile.py
 from gui_qt.window.itch_profile import (
     ITCH_CLIENT_ID, ITCH_OAUTH_PORT,
     ITCH_TOKEN_DIR, ITCH_TOKEN_FILE,
 )
-
-ITCHIO_API = "https://itch.io/api/1/key/me"
 
 _LOADING_PAGE = b"""<!DOCTYPE html>
 <html lang="en">
@@ -79,8 +78,6 @@ _SUCCESS_PAGE = b"""<!DOCTYPE html>
 
 
 class _OAuthHandler(BaseHTTPRequestHandler):
-    """Handles the OAuth redirect from itch.io."""
-
     def do_GET(self):
         if self.path.startswith("/token"):
             params = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
@@ -98,24 +95,15 @@ class _OAuthHandler(BaseHTTPRequestHandler):
 
 
 class LoginWindow(QMainWindow):
-    """Steam/Epic-style login page using itch.io OAuth."""
-
-    WIDTH = 500
-    HEIGHT = 400
+    """Full-page login window matching the main launcher style."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle(f"{APP_NAME} — Sign In")
-        self.setFixedSize(self.WIDTH, self.HEIGHT)
-        self.setWindowFlags(Qt.WindowType.Dialog)
-
-        # Center on screen
-        screen = self.screen()
-        if screen:
-            geo = screen.availableGeometry()
-            x = (geo.width() - self.WIDTH) // 2 + geo.x()
-            y = (geo.height() - self.HEIGHT) // 2 + geo.y()
-            self.move(x, y)
+        self.setMinimumSize(960, 580)
+        self.resize(1100, 680)
+        if _ICON_PATH.exists():
+            self.setWindowIcon(_ICON_PATH)
 
         self._status = ""
         self._logging_in = False
@@ -126,39 +114,25 @@ class LoginWindow(QMainWindow):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
+        # Hero banner
+        self._hero = HeroBanner(
+            "Sign In",
+            "Authenticate with itch.io to play Among Us online",
+        )
+        layout.addWidget(self._hero)
+
         # Content area
         content = QWidget()
         content_layout = QVBoxLayout(content)
-        content_layout.setContentsMargins(40, 40, 40, 30)
-        content_layout.setSpacing(0)
+        content_layout.setContentsMargins(28, 24, 28, 0)
+        content_layout.setSpacing(12)
 
-        # Brand
-        brand = QLabel(BRAND_SHORT)
-        brand.setObjectName("brandLabel")
-        brand.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        content_layout.addWidget(brand)
-
-        app_name = QLabel(APP_NAME)
-        app_name.setObjectName("brandSubLabel")
-        app_name.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        content_layout.addWidget(app_name)
-
-        content_layout.addSpacing(30)
-
-        # Separator
-        sep = QFrame()
-        sep.setFrameShape(QFrame.Shape.HLine)
-        content_layout.addWidget(sep)
-
-        content_layout.addSpacing(30)
-
-        # Welcome text
-        welcome = QLabel("Sign in to continue")
-        welcome.setObjectName("sectionTitle")
-        welcome.setStyleSheet(f"font-size: 13px; color: {theme.TEXT_SECONDARY};")
-        welcome.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        content_layout.addWidget(welcome)
-
+        # Section title
+        title = QLabel("ITCH.IO LOGIN")
+        title.setObjectName("sectionTitle")
+        content_layout.addWidget(title)
+        content_layout.addSpacing(4)
+        content_layout.addWidget(QFrame(frameShape=QFrame.Shape.HLine))
         content_layout.addSpacing(20)
 
         # Login button
@@ -169,31 +143,45 @@ class LoginWindow(QMainWindow):
         self._login_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self._login_btn.clicked.connect(self._start_login)
         login_row = QHBoxLayout()
-        login_row.addStretch()
         login_row.addWidget(self._login_btn)
         login_row.addStretch()
         content_layout.addLayout(login_row)
 
         content_layout.addSpacing(12)
 
-        # Register link
-        register_btn = QPushButton("Create a free account")
-        register_btn.setObjectName("toolBtn")
-        register_btn.setFixedHeight(32)
-        register_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        register_btn.clicked.connect(lambda: webbrowser.open("https://itch.io/register"))
-        register_row = QHBoxLayout()
-        register_row.addStretch()
-        register_row.addWidget(register_btn)
-        register_row.addStretch()
-        content_layout.addLayout(register_row)
+        # Warning notice
+        warn_widget = QWidget()
+        warn_layout = QHBoxLayout(warn_widget)
+        warn_layout.setContentsMargins(12, 12, 12, 12)
+        warn_layout.setSpacing(10)
+
+        warn_icon = QLabel("!")
+        warn_icon.setObjectName("warningText")
+        warn_icon.setFixedSize(28, 28)
+        warn_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        warn_icon.setStyleSheet(f"""
+            background-color: {theme.WARNING};
+            color: #000000;
+            border-radius: 14px;
+            font-weight: 700;
+            font-size: 14px;
+        """)
+        warn_layout.addWidget(warn_icon)
+
+        warn_text = QLabel(
+            "You need a free itch.io account to play Among Us online.\n"
+            "Create one at itch.io before signing in."
+        )
+        warn_text.setObjectName("warningText")
+        warn_text.setWordWrap(True)
+        warn_layout.addWidget(warn_text, 1)
+        content_layout.addWidget(warn_widget)
 
         content_layout.addSpacing(8)
 
         # Status label
         self._status_label = QLabel("")
         self._status_label.setObjectName("statusText")
-        self._status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         content_layout.addWidget(self._status_label)
 
         content_layout.addStretch()
@@ -201,14 +189,12 @@ class LoginWindow(QMainWindow):
         # Footer
         footer = QLabel(f"{APP_NAME} v{LAUNCHER_VERSION} — Made by {MAKER}")
         footer.setObjectName("footerText")
-        footer.setAlignment(Qt.AlignmentFlag.AlignCenter)
         content_layout.addWidget(footer)
 
         layout.addWidget(content)
 
     # ------------------------------------------------------------------ OAuth
     def _start_login(self):
-        """Start the OAuth flow: launch HTTP server in a thread, open browser."""
         if self._logging_in:
             return
         self._logging_in = True
@@ -243,7 +229,6 @@ class LoginWindow(QMainWindow):
         )
 
     def _save_token(self, token: str):
-        """Save the itch.io access token to the file Among Us reads."""
         try:
             ITCH_TOKEN_DIR.mkdir(parents=True, exist_ok=True)
             ITCH_TOKEN_FILE.write_text(token)
@@ -252,7 +237,6 @@ class LoginWindow(QMainWindow):
             logging.error(f"Failed to save itch token: {e}")
 
     def _restart_app(self):
-        """Restart the launcher app."""
         os.execv(sys.executable, [sys.executable] + sys.argv)
 
     def _reset_btn(self):
@@ -263,40 +247,5 @@ class LoginWindow(QMainWindow):
         self._status = text
         self._status_label.setText(text)
 
-    # ------------------------------------------------------------------ paint
-    def paintEvent(self, event):
-        p = QPainter(self)
-        p.setRenderHint(QPainter.RenderHint.Antialiasing)
-        w, h = self.width(), self.height()
-
-        accent = QColor(theme.ACCENT)
-        accent2 = QColor(theme.ACCENT_2)
-        bg_base = QColor(theme.BG_BASE)
-        bg_surface = QColor(theme.BG_SURFACE)
-
-        # Background gradient
-        gradient = QLinearGradient(0, 0, w, h)
-        gradient.setColorAt(0, bg_base)
-        gradient.setColorAt(0.5, bg_surface)
-        gradient.setColorAt(1, bg_base)
-        p.fillRect(0, 0, w, h, gradient)
-
-        # Subtle glow orb
-        p.setPen(Qt.PenStyle.NoPen)
-        p.setBrush(QColor(accent.red(), accent.green(), accent.blue(), 15))
-        p.drawEllipse(int(w * 0.75) - 80, int(h * 0.3) - 80, 160, 160)
-        p.setBrush(QColor(accent2.red(), accent2.green(), accent2.blue(), 12))
-        p.drawEllipse(int(w * 0.2) - 60, int(h * 0.7) - 60, 120, 120)
-
-        # Bottom accent line
-        grad = QLinearGradient(0, 0, w, 0)
-        grad.setColorAt(0, QColor(accent.red(), accent.green(), accent.blue(), 200))
-        grad.setColorAt(1, QColor(accent2.red(), accent2.green(), accent2.blue(), 200))
-        p.setBrush(grad)
-        p.drawRect(0, h - 3, w, 3)
-
-        p.end()
-
     def closeEvent(self, event):
-        """Quit app on close."""
         QApplication.quit()
