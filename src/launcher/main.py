@@ -55,8 +55,8 @@ if __name__ == "__main__":
                     launcher.window.show()
                 else:
                     from gui_qt.login import LoginWindow
-                    login = LoginWindow()
-                    login.show()
+                    launcher._login_window = LoginWindow()
+                    launcher._login_window.show()
                 qapp.exec()
                 launcher.shutdown()
                 break
@@ -74,8 +74,8 @@ if __name__ == "__main__":
                             launcher.window.show()
                         else:
                             from gui_qt.login import LoginWindow
-                            login = LoginWindow()
-                            login.show()
+                            launcher._login_window = LoginWindow()
+                            launcher._login_window.show()
 
                     splash.finished.connect(on_splash_done)
 
@@ -110,8 +110,8 @@ if __name__ == "__main__":
                     launcher.window.show()
                 else:
                     from gui_qt.login import LoginWindow
-                    login = LoginWindow()
-                    login.show()
+                    launcher._login_window = LoginWindow()
+                    launcher._login_window.show()
 
             splash.finished.connect(on_splash_done)
 
