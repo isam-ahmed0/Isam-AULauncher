@@ -216,7 +216,7 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         self.nav_buttons = {}
         for label, idx in [("Game", 0), ("Tools", 1), ("Profile", 2), ("Mods", 3),
                            ("Settings", 4), ("About", 5)]:
-            btn = QPushButton(f"  {label}")
+            btn = QPushButton(label)
             btn.setCheckable(True)
             btn.setFixedHeight(40)
             btn.clicked.connect(lambda checked, i=idx, l=label: self._switch_page(i, l))
@@ -236,9 +236,9 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         self.status_text_label.setObjectName("statusText")
         self.status_bar.addWidget(self.status_icon_label)
         self.status_bar.addWidget(self.status_text_label)
-        self.status_bar.addPermanentWidget(
-            QLabel(f"{APP_NAME} v{LAUNCHER_VERSION} — Made by {MAKER}")
-        )
+        permanent_label = QLabel(f"{APP_NAME} v{LAUNCHER_VERSION} — Made by {MAKER}")
+        permanent_label.setObjectName("footerText")
+        self.status_bar.addPermanentWidget(permanent_label)
 
         self.nav_buttons["Game"].setChecked(True)
 
@@ -308,7 +308,7 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         left.addWidget(self.ver_latest)
         info_layout.addLayout(left)
 
-        info_layout.addSpacing(32)
+        info_layout.addSpacing(16)
 
         right = QVBoxLayout()
         right.addWidget(self._muted_label("STATUS"))
@@ -395,7 +395,8 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
 
         self._region_list = QListWidget()
         self._region_list.setObjectName("regionList")
-        self._region_list.setFixedHeight(160)
+        self._region_list.setMinimumHeight(100)
+        self._region_list.setMaximumHeight(250)
         layout.addWidget(self._region_list)
 
         region_btn_row = QHBoxLayout()
@@ -491,7 +492,12 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
 
     def _build_mods_page(self):
         page = QWidget()
-        layout = QVBoxLayout(page)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+
+        content = QWidget()
+        layout = QVBoxLayout(content)
         layout.setContentsMargins(28, 20, 28, 20)
         layout.setSpacing(16)
 
@@ -500,7 +506,7 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         layout.addWidget(title)
 
         desc = QLabel("Manage BepInEx mod profiles for Among Us.\nEach profile is an isolated set of mods — zero file duplication.")
-        desc.setObjectName("statusText")
+        desc.setObjectName("bodyText")
         desc.setWordWrap(True)
         layout.addWidget(desc)
         layout.addSpacing(8)
@@ -617,11 +623,21 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         self._run_first_time_migration()
         self._refresh_profile_list()
 
+        scroll.setWidget(content)
+        outer = QVBoxLayout(page)
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.addWidget(scroll)
+
         return page
 
     def _build_profile_page(self):
         page = QWidget()
-        layout = QVBoxLayout(page)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+
+        content = QWidget()
+        layout = QVBoxLayout(content)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
@@ -680,6 +696,12 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         layout.addWidget(btn_row)
 
         layout.addStretch()
+
+        scroll.setWidget(content)
+        outer = QVBoxLayout(page)
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.addWidget(scroll)
+
         return page
 
     # ------------------------------------------------------------------ helpers

@@ -11,8 +11,6 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 import requests as _req
 from PySide6.QtCore import Qt, Signal
 
-import gui_qt.theme as theme
-
 
 ITCH_CLIENT_ID = "1ba9b4bfa1ac7759e8420eed4ec863ba"
 ITCH_OAUTH_PORT = 7890
@@ -219,11 +217,14 @@ class ItchProfileMixin:
         """Update all profile-related UI elements."""
         if not profile:
             self.profile_game_text.setText("Not logged in")
-            self.profile_game_text.setStyleSheet(f"color: {theme.TEXT_MUTED};")
+            self.profile_game_text.setObjectName("mutedText")
+            self.profile_game_text.style().polish(self.profile_game_text)
             self.profile_game_detail.setText("Click Profile to authenticate")
-            self.profile_game_detail.setStyleSheet(f"color: {theme.TEXT_MUTED};")
+            self.profile_game_detail.setObjectName("mutedText")
+            self.profile_game_detail.style().polish(self.profile_game_detail)
             self.profile_page_status.setText("Not logged in")
-            self.profile_page_status.setStyleSheet(f"color: {theme.TEXT_MUTED};")
+            self.profile_page_status.setObjectName("mutedText")
+            self.profile_page_status.style().polish(self.profile_page_status)
             self.profile_page_name.setText("")
             self.profile_page_au.setText("")
             self.profile_page_platforms.setText("")
@@ -236,30 +237,35 @@ class ItchProfileMixin:
         platforms = profile.get("platforms") or []
 
         self.profile_game_text.setText(f"Logged in as {username}")
-        self.profile_game_text.setStyleSheet(f"color: {theme.SUCCESS}; font-weight: 600;")
+        self.profile_game_text.setObjectName("successText")
+        self.profile_game_text.style().polish(self.profile_game_text)
         detail_parts = []
         if au_name:
             detail_parts.append(f"Among Us: {au_name}")
         if platforms:
             detail_parts.append(f"Linked: {', '.join(platforms)}")
         self.profile_game_detail.setText(" — ".join(detail_parts) if detail_parts else "")
-        self.profile_game_detail.setStyleSheet(f"color: {theme.TEXT_SECONDARY};")
+        self.profile_game_detail.setObjectName("statusText")
+        self.profile_game_detail.style().polish(self.profile_game_detail)
 
         self.profile_page_status.setText("Logged in")
-        self.profile_page_status.setStyleSheet(f"color: {theme.SUCCESS}; font-weight: 600;")
+        self.profile_page_status.setObjectName("successText")
+        self.profile_page_status.style().polish(self.profile_page_status)
         self.profile_page_name.setText(username)
         if au_name:
             self.profile_page_au.setText(f"Among Us: {au_name}")
-            self.profile_page_au.setStyleSheet(f"color: {theme.INFO};")
+            self.profile_page_au.setObjectName("infoText")
         else:
             self.profile_page_au.setText("No Among Us data yet")
-            self.profile_page_au.setStyleSheet(f"color: {theme.TEXT_MUTED};")
+            self.profile_page_au.setObjectName("mutedText")
+        self.profile_page_au.style().polish(self.profile_page_au)
         if platforms:
             self.profile_page_platforms.setText(f"Linked: {', '.join(platforms)}")
-            self.profile_page_platforms.setStyleSheet(f"color: {theme.TEXT_SECONDARY};")
+            self.profile_page_platforms.setObjectName("statusText")
         else:
             self.profile_page_platforms.setText("No platforms linked")
-            self.profile_page_platforms.setStyleSheet(f"color: {theme.TEXT_MUTED};")
+            self.profile_page_platforms.setObjectName("mutedText")
+        self.profile_page_platforms.style().polish(self.profile_page_platforms)
 
         if hasattr(self, '_itch_login_btn'):
             self._itch_login_btn.hide()

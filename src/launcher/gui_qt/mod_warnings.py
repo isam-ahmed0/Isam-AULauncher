@@ -13,8 +13,8 @@ import gui_qt.theme as theme
 
 _KIND_STYLES = lambda: {
     "duplicate":   theme.DANGER,
-    "missing_dep": "#f59e0b",
-    "conflict":    "#f59e0b",
+    "missing_dep": theme.WARNING,
+    "conflict":    theme.WARNING,
 }
 
 
@@ -85,7 +85,7 @@ class ModWarningDialog(QDialog):
             color = _KIND_STYLES().get(issue.kind, theme.TEXT_SECONDARY)
             tag = issue.kind.upper().replace("_", " ")
             item = QListWidgetItem(f"  {tag}   {issue.description}")
-            item.setForeground(Qt.GlobalColor.white)
+            item.setForeground(theme.TEXT_PRIMARY)
             issue_list.addItem(item)
         layout.addWidget(issue_list, 1)
 

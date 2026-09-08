@@ -1,7 +1,7 @@
 import webbrowser
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QFontMetrics, QColor
+from PySide6.QtGui import QFontMetrics, QColor, QPainter, QLinearGradient, QBrush, QFont
 from PySide6.QtWidgets import (
     QVBoxLayout, QHBoxLayout, QLabel, QFrame, QCheckBox,
     QPushButton, QMessageBox, QGridLayout, QWidget, QScrollArea,
@@ -36,12 +36,11 @@ class _ThemeCard(QFrame):
     def _update_style(self):
         accent = self._palette["accent"]
         bg = self._palette["bg_surface"]
-        border = accent if self._selected else self._palette.get("border_subtle", "#282c38")
-        border_w = "2px" if self._selected else "1px"
+        border = accent if self._selected else self._palette["border_subtle"]
         self.setStyleSheet(f"""
             QFrame {{
                 background-color: {bg};
-                border: {border_w} solid {border};
+                border: 2px solid {border};
                 border-radius: 8px;
             }}
             QFrame:hover {{
@@ -50,7 +49,6 @@ class _ThemeCard(QFrame):
         """)
 
     def paintEvent(self, event):
-        from PySide6.QtGui import QPainter, QColor, QLinearGradient
         from PySide6.QtCore import Qt as Qt2
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
@@ -64,12 +62,10 @@ class _ThemeCard(QFrame):
         grad.setColorAt(0, accent)
         grad.setColorAt(1, accent2)
         p.setPen(Qt2.PenStyle.NoPen)
-        from PySide6.QtGui import QBrush
         p.setBrush(QBrush(grad))
         p.drawRoundedRect(0, 0, w, 4, 8, 8)
 
         # Theme name
-        from PySide6.QtGui import QFont
         p.setPen(QColor(self._palette["text_bright"]))
         f = QFont("Segoe UI", 11)
         f.setBold(True)
@@ -131,8 +127,9 @@ class SettingsPage(QWidget):
         cb_rpc.setChecked(settings.get("discord_rpc", True))
         cb_rpc.stateChanged.connect(lambda: self._save_setting("discord_rpc", cb_rpc.isChecked()))
         layout.addWidget(cb_rpc)
-        desc1 = QLabel("  Show your activity on Discord")
+        desc1 = QLabel("Show your activity on Discord")
         desc1.setObjectName("mutedText")
+        desc1.setContentsMargins(26, 0, 0, 0)
         layout.addWidget(desc1)
         layout.addSpacing(12)
 
@@ -140,8 +137,9 @@ class SettingsPage(QWidget):
         cb_auto.setChecked(settings.get("auto_update", True))
         cb_auto.stateChanged.connect(lambda: self._save_setting("auto_update", cb_auto.isChecked()))
         layout.addWidget(cb_auto)
-        desc2 = QLabel("  Download game updates automatically")
+        desc2 = QLabel("Download game updates automatically")
         desc2.setObjectName("mutedText")
+        desc2.setContentsMargins(26, 0, 0, 0)
         layout.addWidget(desc2)
         layout.addSpacing(12)
 
@@ -199,18 +197,18 @@ class SettingsPage(QWidget):
             disk_usage = "N/A"
 
         bep_text = "Installed" if bepinstalled else "Not installed"
-        bep_color = theme.SUCCESS if bepinstalled else theme.TEXT_MUTED
+        bep_obj = "successText" if bepinstalled else "mutedText"
 
         fields = [
-            ("Version:", version, theme.TEXT_BRIGHT),
-            ("Install Path:", install_path, theme.TEXT_BRIGHT),
-            ("BepInEx:", bep_text, bep_color),
-            ("Active Profile:", active_profile, theme.TEXT_BRIGHT),
-            ("Mods Installed:", str(mod_count), theme.TEXT_BRIGHT),
-            ("Disk Usage:", disk_usage or "N/A", theme.TEXT_BRIGHT),
+            ("Version:", version, "gameInfoLabel"),
+            ("Install Path:", install_path, "gameInfoLabel"),
+            ("BepInEx:", bep_text, bep_obj),
+            ("Active Profile:", active_profile, "gameInfoLabel"),
+            ("Mods Installed:", str(mod_count), "gameInfoLabel"),
+            ("Disk Usage:", disk_usage or "N/A", "gameInfoLabel"),
         ]
 
-        for row, (label, value, color) in enumerate(fields):
+        for row, (label, value, obj_name) in enumerate(fields):
             row_layout = QHBoxLayout()
             row_layout.setContentsMargins(8, 0, 8, 0)
             lbl = QLabel(label)
@@ -218,7 +216,7 @@ class SettingsPage(QWidget):
             lbl.setFixedWidth(120)
             row_layout.addWidget(lbl)
             val = QLabel(value)
-            val.setStyleSheet(f"color: {color};")
+            val.setObjectName(obj_name)
             val.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
             val.setWordWrap(False)
             val.setMaximumWidth(300)
@@ -286,7 +284,7 @@ class AboutPage(QWidget):
         layout.addSpacing(12)
 
         name = QLabel(APP_NAME)
-        name.setStyleSheet(f"font-size: 16px; font-weight: 700; color: {theme.TEXT_BRIGHT};")
+        name.setObjectName("profileName")
         layout.addWidget(name)
         ver = QLabel(f"Version {LAUNCHER_VERSION}")
         ver.setObjectName("statusText")

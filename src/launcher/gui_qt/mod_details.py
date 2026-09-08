@@ -59,12 +59,12 @@ class ModInfoDialog(QDialog):
 
         layout = QVBoxLayout(self)
         layout.setSpacing(10)
-        layout.setContentsMargins(18, 16, 18, 16)
+        layout.setContentsMargins(20, 16, 20, 16)
 
         # Header: name + version
         name_label = QLabel(display_name)
         name_label.setFont(QFont("Segoe UI", 15, QFont.Weight.Bold))
-        name_label.setStyleSheet(f"color: #ffffff;")
+        name_label.setStyleSheet(f"color: {theme.TEXT_BRIGHT};")
         layout.addWidget(name_label)
 
         # Version + size badge row
@@ -74,7 +74,7 @@ class ModInfoDialog(QDialog):
             ver = QLabel(f"v{mod.version}")
             ver.setStyleSheet(f"""
                 background-color: {theme.ACCENT};
-                color: #ffffff;
+                color: {theme.TEXT_BRIGHT};
                 border-radius: 4px;
                 padding: 2px 8px;
                 font-size: 11px;

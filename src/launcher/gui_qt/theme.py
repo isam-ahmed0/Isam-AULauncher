@@ -22,7 +22,7 @@ ACCENT_2 = "#34d399"
 SUCCESS = "#34d399"
 SUCCESS_HOVER = "#10b981"
 INFO = "#818cf8"
-WARNING = "#6366f1"
+WARNING = "#f59e0b"
 DANGER = "#f87171"
 DANGER_HOVER = "#ef4444"
 
@@ -100,7 +100,7 @@ QPushButton#primaryBtn:disabled {{
 
 /* ===== SUCCESS BUTTON ===== */
 QPushButton#successBtn {{
-    background-color: {p["success_hover"]};
+    background-color: {p["success"]};
     color: {p["text_bright"]};
     border: none;
     border-radius: 10px;
@@ -111,7 +111,7 @@ QPushButton#successBtn {{
 }}
 
 QPushButton#successBtn:hover {{
-    background-color: {p["success"]};
+    background-color: {p["success_hover"]};
 }}
 
 QPushButton#successBtn:disabled {{
@@ -288,6 +288,21 @@ QLabel#footerText {{
     font-size: 11px;
 }}
 
+QLabel#warningText {{
+    color: {p["warning"]};
+    font-weight: 600;
+}}
+
+QLabel#dangerText {{
+    color: {p["danger"]};
+    font-weight: 600;
+}}
+
+QLabel#bodyText {{
+    font-size: 13px;
+    color: {p["text_secondary"]};
+}}
+
 /* ===== SCROLLBAR ===== */
 QScrollBar:vertical {{
     background-color: {p["bg_base"]};
@@ -384,6 +399,7 @@ QToolTip {{
 }}
 
 /* ===== SEPARATOR ===== */
+/* frameShape="4" = HLine, frameShape="5" = VLine (PySide6 QFrame enum values) */
 QFrame[frameShape="4"],
 QFrame[frameShape="5"] {{
     color: {p["border_subtle"]};

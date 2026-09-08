@@ -13,7 +13,7 @@ PALETTE = {
     "success": "#34d399",
     "success_hover": "#10b981",
     "info": "#818cf8",
-    "warning": "#6366f1",
+    "warning": "#f59e0b",
     "danger": "#f87171",
     "danger_hover": "#ef4444",
     "text_primary": "#e5e7eb",

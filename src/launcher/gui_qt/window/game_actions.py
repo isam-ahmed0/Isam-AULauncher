@@ -317,7 +317,8 @@ class GameActionsMixin:
             return
         self._selected_zip = Path(path)
         self._zip_path_label.setText(str(self._selected_zip))
-        self._zip_path_label.setStyleSheet(f"color: {theme.TEXT_PRIMARY};")
+        self._zip_path_label.setObjectName("statusText")
+        self._zip_path_label.style().polish(self._zip_path_label)
         contents = list_contents(self._selected_zip)
         if contents:
             preview = contents[:15]

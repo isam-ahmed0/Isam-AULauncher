@@ -14,6 +14,8 @@ _ICON_PATH = _RESOURCES_DIR / "icon.ico"
 
 SIDEBAR_W = 200
 
+_FONT_FAMILY = "Segoe UI, Inter, Helvetica Neue, Arial"
+
 
 def _hex_to_qcolor(hex_str: str, alpha: int = 255) -> QColor:
     h = hex_str.lstrip("#")
@@ -28,8 +30,8 @@ class HeroBanner(QLabel):
         self._title = title
         self._subtitle = subtitle
         self._hero_image = None
-        self.setMinimumHeight(220)
-        self.setMaximumHeight(220)
+        self.setMinimumHeight(180)
+        self.setMaximumHeight(180)
 
         if _HERO_IMAGE_PATH.exists():
             self._hero_image = QPixmap(str(_HERO_IMAGE_PATH))
@@ -80,6 +82,7 @@ class HeroBanner(QLabel):
         # Title text
         painter.setPen(text_bright)
         title_font = QFont("Segoe UI", 24)
+        title_font.setFamilies(["Segoe UI", "Inter", "Helvetica Neue", "Arial"])
         title_font.setBold(True)
         painter.setFont(title_font)
         painter.drawText(28, int(h * 0.45), self._title)
@@ -87,12 +90,14 @@ class HeroBanner(QLabel):
         # Subtitle text
         painter.setPen(text_secondary)
         sub_font = QFont("Segoe UI", 13)
+        sub_font.setFamilies(["Segoe UI", "Inter", "Helvetica Neue", "Arial"])
         painter.setFont(sub_font)
         painter.drawText(28, int(h * 0.45) + 32, self._subtitle)
 
         # Version badge
         badge_text = f"v{LAUNCHER_VERSION}"
         badge_font = QFont("Segoe UI", 10)
+        badge_font.setFamilies(["Segoe UI", "Inter", "Helvetica Neue", "Arial"])
         painter.setFont(badge_font)
         fm = painter.fontMetrics()
         tw = fm.horizontalAdvance(badge_text) + 20
