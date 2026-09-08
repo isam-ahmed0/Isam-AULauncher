@@ -140,10 +140,11 @@ class _RightSidebar(QWidget):
             self._slide_timer.start(5000)
             return
 
-        static_path = _LOGIN_DIR / "login_promo.png"
-        if static_path.exists():
-            self._mode = "static"
-            return
+        for ext in ("png", "ico"):
+            static_path = _LOGIN_DIR / f"login_promo.{ext}"
+            if static_path.exists():
+                self._mode = "static"
+                return
 
         self._mode = "gradient"
 
@@ -182,16 +183,18 @@ class _RightSidebar(QWidget):
                 return
 
         if self._mode == "static":
-            static_path = _LOGIN_DIR / "login_promo.png"
-            pixmap = QPixmap(str(static_path))
-            if not pixmap.isNull():
-                scaled = pixmap.scaled(w, h, Qt.AspectRatioMode.KeepAspectRatioByExpanding,
-                                       Qt.TransformationMode.SmoothTransformation)
-                x = (w - scaled.width()) // 2
-                y = (h - scaled.height()) // 2
-                p.drawPixmap(x, y, scaled)
-                p.end()
-                return
+            for ext in ("png", "ico"):
+                static_path = _LOGIN_DIR / f"login_promo.{ext}"
+                if static_path.exists():
+                    pixmap = QPixmap(str(static_path))
+                    if not pixmap.isNull():
+                        scaled = pixmap.scaled(w, h, Qt.AspectRatioMode.KeepAspectRatioByExpanding,
+                                               Qt.TransformationMode.SmoothTransformation)
+                        x = (w - scaled.width()) // 2
+                        y = (h - scaled.height()) // 2
+                        p.drawPixmap(x, y, scaled)
+                        p.end()
+                        return
 
         # Gradient fallback
         accent = _hex_to_qcolor(theme.ACCENT)
