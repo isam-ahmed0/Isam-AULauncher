@@ -13,7 +13,7 @@ from pathlib import Path
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QPainter, QColor, QFont, QLinearGradient, QBrush
+from PySide6.QtGui import QPainter, QColor, QFont, QLinearGradient, QBrush, QIcon
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QPushButton, QFrame, QApplication,
@@ -103,7 +103,7 @@ class LoginWindow(QMainWindow):
         self.setMinimumSize(960, 580)
         self.resize(1100, 680)
         if _ICON_PATH.exists():
-            self.setWindowIcon(_ICON_PATH)
+            self.setWindowIcon(QIcon(str(_ICON_PATH)))
 
         self._status = ""
         self._logging_in = False
