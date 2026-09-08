@@ -19,8 +19,8 @@ class VideoSplash(QWidget):
 
     finished = Signal()
 
-    WIDTH = 520
-    HEIGHT = 320
+    WIDTH = 700
+    HEIGHT = 400
 
     def __init__(self, parent=None):
         super().__init__(parent)
