@@ -25,7 +25,7 @@ from PySide6.QtWidgets import (
 
 from config import APP_NAME, BRAND_SHORT, LAUNCHER_VERSION, MAKER
 import gui_qt.theme as theme
-from gui_qt.widgets import HeroBanner, _ICON_PATH, _hex_to_qcolor
+from gui_qt.widgets import _ICON_PATH, _hex_to_qcolor
 
 # Reuse existing OAuth infrastructure from itch_profile.py
 from gui_qt.window.itch_profile import (
@@ -248,14 +248,7 @@ class LoginWindow(QMainWindow):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        # Hero banner (full width)
-        self._hero = HeroBanner(
-            "Sign In",
-            "Authenticate with itch.io to play Among Us online",
-        )
-        layout.addWidget(self._hero)
-
-        # Split: left content + right sidebar
+        # Split: left content + right sidebar (full height)
         body_widget = QWidget()
         body = QHBoxLayout(body_widget)
         body.setContentsMargins(0, 0, 0, 0)
@@ -264,15 +257,27 @@ class LoginWindow(QMainWindow):
         # Left content
         left = QWidget()
         left_layout = QVBoxLayout(left)
-        left_layout.setContentsMargins(28, 24, 28, 0)
+        left_layout.setContentsMargins(40, 40, 40, 0)
         left_layout.setSpacing(12)
 
+        # Brand header
+        brand = QLabel(BRAND_SHORT)
+        brand.setObjectName("brandLabel")
+        left_layout.addWidget(brand)
+
+        app_name = QLabel(APP_NAME)
+        app_name.setObjectName("brandSubLabel")
+        left_layout.addWidget(app_name)
+
+        left_layout.addSpacing(30)
+        left_layout.addWidget(QFrame(frameShape=QFrame.Shape.HLine))
+        left_layout.addSpacing(20)
+
+        # Section title
         title = QLabel("ITCH.IO LOGIN")
         title.setObjectName("sectionTitle")
         left_layout.addWidget(title)
-        left_layout.addSpacing(4)
-        left_layout.addWidget(QFrame(frameShape=QFrame.Shape.HLine))
-        left_layout.addSpacing(20)
+        left_layout.addSpacing(16)
 
         # Login button
         self._login_btn = QPushButton("Sign in with itch.io")
