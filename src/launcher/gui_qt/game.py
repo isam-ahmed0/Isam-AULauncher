@@ -9,7 +9,7 @@ from pathlib import Path
 
 from PySide6.QtCore import QObject, Signal
 
-from config import VERSION_URL, GITHUB_REPO, PLUGIN_DLL_URL
+from config import VERSION_URL, GITHUB_REPO, ISAM_CLIENT_URL
 from network import NetworkManager
 from file_manager import FileManager
 
@@ -150,8 +150,8 @@ class GameManager(QObject):
         self.status_message.emit("Installing BepInEx...", "info")
         self._install_bepinex(game_path)
 
-        self.status_message.emit("Installing isam-client.dll to all profiles...", "info")
-        self._install_plugin_to_all_profiles(game_path)
+        self.status_message.emit("Installing isam-client...", "info")
+        self._install_isam_client(game_path)
 
         self.config.set_version(version)
         self.config.set_game_path(game_path)
@@ -183,24 +183,21 @@ class GameManager(QObject):
             return
         self.status_message.emit("BepInEx installed!", "success")
 
-    def _install_plugin_to_all_profiles(self, game_path: Path):
-        """Download isam-client.dll, cache it, and copy it to every profile folder."""
-        from gui_qt.profiles import ProfileManager
+    def _install_isam_client(self, game_path: Path):
+        """Download and extract isam-client.zip into the game folder."""
+        zf = Path("isam-client.zip")
+        self.status_message.emit("Downloading isam-client.zip...", "info")
 
-        profiles_dir = self.config.appdata_dir / "Profiles"
-        profile_mgr = ProfileManager(profiles_dir)
+        def prog(cur, total, spd):
+            pct = cur / total * 100 if total else 0
+            self.update_progress.emit(pct)
 
-        cached_dll = self.config.appdata_dir / "isam-client.dll"
-        if not self.network.download_file(PLUGIN_DLL_URL, cached_dll):
-            self.status_message.emit("Failed to download isam-client.dll", "warning")
+        if not self.network.download_file(ISAM_CLIENT_URL, zf, prog):
+            self.status_message.emit("Failed to download isam-client.zip", "warning")
             return
-
-        for name in profile_mgr.list_profiles():
-            target = profile_mgr.profile_path(name)
-            try:
-                target.mkdir(parents=True, exist_ok=True)
-                import shutil
-                shutil.copy2(str(cached_dll), str(target / "isam-client.dll"))
-                self.status_message.emit(f"Copied isam-client.dll to profile: {name}", "info")
-            except OSError as e:
-                self.status_message.emit(f"Failed to copy to profile {name}: {e}", "warning")
+        self.status_message.emit("Extracting isam-client...", "info")
+        if not FileManager.extract_zip(zf, game_path):
+            self.status_message.emit("isam-client extraction failed", "warning")
+            return
+        FileManager.safe_delete(zf)
+        self.status_message.emit("isam-client installed!", "success")
