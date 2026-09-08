@@ -62,8 +62,6 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         self._install_folder_pending = False
         self._pending_install_path = None
 
-        self._itch_auth_shown = False
-
         self._existing_app = existing_app
         self._ui_signaler = _UISignaler()
         self._ui_signaler.invoke.connect(lambda fn: fn())
@@ -679,6 +677,18 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         card_wrapper_layout.setContentsMargins(28, 20, 28, 0)
         card_wrapper_layout.addWidget(card)
         layout.addWidget(card_wrapper)
+
+        btn_row = QWidget()
+        btn_row_layout = QHBoxLayout(btn_row)
+        btn_row_layout.setContentsMargins(28, 12, 28, 0)
+        self._itch_login_btn = QPushButton("Login with itch.io")
+        self._itch_login_btn.setObjectName("successBtn")
+        self._itch_login_btn.setFixedHeight(36)
+        self._itch_login_btn.setMinimumWidth(200)
+        self._itch_login_btn.clicked.connect(self.start_itch_login)
+        btn_row_layout.addWidget(self._itch_login_btn)
+        btn_row_layout.addStretch()
+        layout.addWidget(btn_row)
 
         layout.addStretch()
         return page

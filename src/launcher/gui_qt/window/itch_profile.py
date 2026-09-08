@@ -1,19 +1,21 @@
 import os
 import sys
+import time
 import logging
 import webbrowser
-import subprocess
+import threading
+import urllib.parse
 from pathlib import Path
+from http.server import HTTPServer, BaseHTTPRequestHandler
 
-from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QPushButton, QMessageBox,
-)
-from PySide6.QtCore import Qt
+import requests as _req
+from PySide6.QtCore import Qt, Signal
 
 import gui_qt.theme as theme
 
 
-ITCH_FIXER_NAME = "Itch_Login_Fixer.exe"
+ITCH_CLIENT_ID = "1ba9b4bfa1ac7759e8420eed4ec863ba"
+ITCH_OAUTH_PORT = 7890
 
 ITCH_TOKEN_DIR = Path(os.environ.get("USERPROFILE", "")) / "AppData" / "LocalLow" / "Innersloth" / "Among Us"
 ITCH_TOKEN_FILE = ITCH_TOKEN_DIR / "itch"
@@ -33,91 +35,116 @@ PLATFORM_LABELS = {
     'xbox': 'Xbox', 'xboxlive': 'Xbox',
 }
 
+_LOADING_PAGE = b"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Isam AU | Authenticating</title>
+    <style>
+        body { background: #060608; color: #6366f1; display: flex; flex-direction: column;
+               justify-content: center; align-items: center; height: 100vh;
+               font-family: 'Segoe UI', sans-serif; margin: 0; }
+        .loader { border: 4px solid #1a1b1e; border-top: 4px solid #6366f1; border-radius: 50%;
+                  width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .text { font-weight: bold; letter-spacing: 1px; }
+    </style>
+</head>
+<body>
+    <div class="loader"></div>
+    <div class="text">CONNECTING TO ITCH.IO...</div>
+    <script>
+        const params = new URLSearchParams(window.location.hash.slice(1));
+        const token = params.get('access_token');
+        if (token) window.location = '/token?t=' + token;
+    </script>
+</body>
+</html>"""
+
+_SUCCESS_PAGE = b"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Isam AU | Success</title>
+    <style>
+        body { background: #060608; color: #4ade80; display: flex; flex-direction: column;
+               justify-content: center; align-items: center; height: 100vh;
+               font-family: 'Segoe UI', sans-serif; margin: 0; }
+        .icon { font-size: 60px; margin-bottom: 10px; }
+        .msg { font-size: 24px; font-weight: bold; }
+        .sub { color: #888; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="icon">&#10004;</div>
+    <div class="msg">AUTHORIZATION COMPLETE</div>
+    <div class="sub">You can close this tab and return to the launcher.</div>
+</body>
+</html>"""
+
+
+class _OAuthHandler(BaseHTTPRequestHandler):
+    """Handles the OAuth redirect from itch.io."""
+
+    def do_GET(self):
+        if self.path.startswith("/token"):
+            params = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            self.server.token = params.get("t", [None])[0]
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(_SUCCESS_PAGE)
+        else:
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(_LOADING_PAGE)
+
+    def log_message(self, format, *args):
+        pass
+
 
 class ItchProfileMixin:
-    # ------------------------------------------------------------------ itchfixer
-    def _find_itch_fixer(self):
-        """Find Itch_Login_Fixer.exe relative to the launcher."""
-        if getattr(sys, 'frozen', False):
-            base = Path(sys.executable).parent
-            fixer = base / "Fixer" / ITCH_FIXER_NAME
-            if fixer.exists():
-                return fixer
-            return base / ITCH_FIXER_NAME
-        return Path(__file__).parent.parent.parent.parent / "release" / "Fixer" / ITCH_FIXER_NAME
+    # ------------------------------------------------------------------ embedded OAuth login
+    def start_itch_login(self):
+        """Start the OAuth flow: launch HTTP server in a thread, open browser."""
+        self._set_status("Opening itch.io login...", "info")
 
-    def _launch_itch_fixer(self):
-        """Launch ItchFixer as a separate process."""
-        exe = self._find_itch_fixer()
-        if exe.exists():
+        def run_server():
             try:
-                subprocess.Popen([str(exe)], cwd=str(exe.parent))
+                server = HTTPServer(("127.0.0.1", ITCH_OAUTH_PORT), _OAuthHandler)
+                server.token = None
+                server.timeout = 1
+                deadline = time.time() + 300
+                while server.token is None and time.time() < deadline:
+                    server.handle_request()
+                if server.token:
+                    self._save_itch_token(server.token)
+                    self._invoke_main(lambda: self._set_status("Login successful!", "success"))
+                    self._invoke_main(lambda: self._load_itch_profile())
+                else:
+                    self._invoke_main(lambda: self._set_status("Login timed out", "warning"))
             except OSError as e:
-                logging.error(f"Failed to launch ItchFixer: {e}")
-        else:
-            logging.warning(f"ItchFixer not found: {exe}")
+                logging.error(f"OAuth server error: {e}")
+                self._invoke_main(lambda: self._set_status(f"Login failed: {e}", "danger"))
 
-    def _show_itch_auth_dialog(self):
-        """Show 2-step itch.io authentication popup."""
-        dialog = QDialog(self.window)
-        dialog.setWindowTitle("itch.io Authentication")
-        dialog.setFixedSize(480, 320)
-        dialog.setModal(True)
+        threading.Thread(target=run_server, daemon=True).start()
+        webbrowser.open(
+            f"https://itch.io/user/oauth?client_id={ITCH_CLIENT_ID}"
+            f"&scope=profile:me&redirect_uri=http://127.0.0.1:{ITCH_OAUTH_PORT}"
+            f"&response_type=token"
+        )
 
-        layout = QVBoxLayout(dialog)
-        layout.setContentsMargins(24, 20, 24, 20)
-        layout.setSpacing(12)
-
-        title = QLabel("itch.io Login Required")
-        title.setObjectName("sectionTitle")
-        layout.addWidget(title)
-        layout.addSpacing(4)
-        layout.addWidget(QFrame(frameShape=QFrame.Shape.HLine))
-        layout.addSpacing(8)
-
-        step1_label = QLabel("Step 1")
-        step1_label.setObjectName("profileName")
-        layout.addWidget(step1_label)
-
-        step1_desc = QLabel("Open itch.io and sign in or create an account.")
-        step1_desc.setObjectName("profileDetail")
-        step1_desc.setWordWrap(True)
-        layout.addWidget(step1_desc)
-
-        open_btn = QPushButton("Open itch.io")
-        open_btn.setObjectName("modalPrimary")
-        open_btn.setFixedHeight(36)
-        open_btn.clicked.connect(lambda: webbrowser.open("https://itch.io/login"))
-        layout.addWidget(open_btn)
-
-        layout.addSpacing(12)
-
-        step2_label = QLabel("Step 2")
-        step2_label.setObjectName("profileName")
-        layout.addWidget(step2_label)
-
-        step2_desc = QLabel("After logging in, click Authenticate to open ItchFixer and complete the login.")
-        step2_desc.setObjectName("profileDetail")
-        step2_desc.setWordWrap(True)
-        layout.addWidget(step2_desc)
-
-        auth_btn = QPushButton("Authenticate")
-        auth_btn.setObjectName("modalPrimary")
-        auth_btn.setFixedHeight(36)
-        layout.addWidget(auth_btn)
-
-        def do_authenticate():
-            dialog.accept()
-            self._launch_itch_fixer()
-            self.app.quit()
-
-        auth_btn.clicked.connect(do_authenticate)
-
-        dialog.exec()
+    def _save_itch_token(self, token: str):
+        """Save the itch.io access token to the file Among Us reads."""
+        try:
+            ITCH_TOKEN_DIR.mkdir(parents=True, exist_ok=True)
+            ITCH_TOKEN_FILE.write_text(token)
+            logging.info("Itch token saved successfully")
+        except OSError as e:
+            logging.error(f"Failed to save itch token: {e}")
 
     # ------------------------------------------------------------------ itch profile (read-only)
     def _read_itch_token(self):
-        """Read the itch.io token from ItchFixer's saved file. Read-only."""
+        """Read the itch.io token from the saved file. Read-only."""
         try:
             if ITCH_TOKEN_FILE.exists():
                 token = ITCH_TOKEN_FILE.read_text().strip()
@@ -129,8 +156,6 @@ class ItchProfileMixin:
 
     def _fetch_itch_profile(self):
         """Fetch itch.io account data using the saved token. All GET requests, no writes."""
-        import requests as _req
-
         token = self._read_itch_token()
         if not token:
             return None
@@ -202,9 +227,6 @@ class ItchProfileMixin:
             self.profile_page_name.setText("")
             self.profile_page_au.setText("")
             self.profile_page_platforms.setText("")
-            if not self._itch_auth_shown:
-                self._itch_auth_shown = True
-                self._show_itch_auth_dialog()
             return
 
         username = profile.get("username") or "Unknown"
