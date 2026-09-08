@@ -50,7 +50,13 @@ if __name__ == "__main__":
             if args.no_splash:
                 launcher._load_initial_data()
                 launcher._load_itch_profile()
-                launcher.window.show()
+                token = launcher._read_itch_token()
+                if token:
+                    launcher.window.show()
+                else:
+                    from gui_qt.login import LoginWindow
+                    login = LoginWindow()
+                    login.show()
                 qapp.exec()
                 launcher.shutdown()
                 break
@@ -63,7 +69,13 @@ if __name__ == "__main__":
                     splash = SplashScreen()
 
                     def on_splash_done():
-                        launcher.window.show()
+                        token = launcher._read_itch_token()
+                        if token:
+                            launcher.window.show()
+                        else:
+                            from gui_qt.login import LoginWindow
+                            login = LoginWindow()
+                            login.show()
 
                     splash.finished.connect(on_splash_done)
 
@@ -93,7 +105,13 @@ if __name__ == "__main__":
             splash = SplashScreen()
 
             def on_splash_done():
-                launcher.window.show()
+                token = launcher._read_itch_token()
+                if token:
+                    launcher.window.show()
+                else:
+                    from gui_qt.login import LoginWindow
+                    login = LoginWindow()
+                    login.show()
 
             splash.finished.connect(on_splash_done)
 
