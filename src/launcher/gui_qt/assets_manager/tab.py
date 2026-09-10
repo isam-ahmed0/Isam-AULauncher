@@ -98,7 +98,18 @@ class AssetsManagerTab(QWidget):
 
         self._pack_browser = PackBrowser(self._profile_mgr, self._game_path_getter)
         self._pack_browser.file_selected.connect(self._on_file_selected)
-        self._pages.addWidget(self._pack_browser)
+
+        from .preview import AssetPreview
+        self._preview = AssetPreview()
+
+        browser_page = QWidget()
+        browser_layout = QVBoxLayout(browser_page)
+        browser_layout.setContentsMargins(0, 0, 0, 0)
+        browser_layout.setSpacing(4)
+        browser_layout.addWidget(self._pack_browser, 1)
+        browser_layout.addWidget(QFrame(frameShape=QFrame.Shape.HLine))
+        browser_layout.addWidget(self._preview)
+        self._pages.addWidget(browser_page)
 
         asset_page = self._build_asset_browser()
         self._pages.addWidget(asset_page)
@@ -205,8 +216,7 @@ class AssetsManagerTab(QWidget):
         self._update_status()
 
     def _on_file_selected(self, path: Path):
-        if hasattr(self, '_preview'):
-            self._preview.preview_file(path)
+        self._preview.preview_file(path)
 
     def _cb_create_profile(self):
         from PySide6.QtWidgets import QInputDialog
