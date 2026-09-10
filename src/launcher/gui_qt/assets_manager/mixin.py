@@ -9,7 +9,7 @@ from .tab import AssetsManagerTab
 class AssetsManagerMixin:
     def _build_assets_page(self) -> AssetsManagerTab:
         gp = self.config.get_game_path()
-        profiles_base = Path(str(gp).rsplit("\\", 1)[0]) / "AUAS_Profiles" if gp else Path.home() / "AUAS_Profiles"
+        profiles_base = gp.parent / "AUAS_Profiles" if gp else Path.home() / "AUAS_Profiles"
         self.auas_profile_mgr = AUASProfileManager(profiles_base)
         self.assets_tab = AssetsManagerTab(
             self.auas_profile_mgr, self.config.get_game_path,
