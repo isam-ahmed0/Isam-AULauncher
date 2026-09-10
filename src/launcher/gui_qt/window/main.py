@@ -35,9 +35,10 @@ from .region_editor import RegionEditorMixin
 from .mod_manager import ModManagerMixin
 from .itch_profile import ItchProfileMixin
 from .updater import UpdaterMixin
+from gui_qt.assets_manager.mixin import AssetsManagerMixin
 
 
-class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProfileMixin, UpdaterMixin):
+class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProfileMixin, UpdaterMixin, AssetsManagerMixin):
     def __init__(self, existing_app=None):
         self.config = Config()
         self.network = NetworkManager()
@@ -206,16 +207,18 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         self.page_mods = self._build_mods_page()
         self.page_settings = SettingsPage(self.config, self.discord, self.profile_mgr)
         self.page_about = AboutPage()
+        self.page_assets = self._build_assets_page()
         self.pages.addWidget(self.page_game)
         self.pages.addWidget(self.page_tools)
         self.pages.addWidget(self.page_profile)
         self.pages.addWidget(self.page_mods)
         self.pages.addWidget(self.page_settings)
         self.pages.addWidget(self.page_about)
+        self.pages.addWidget(self.page_assets)
 
         self.nav_buttons = {}
         for label, idx in [("Game", 0), ("Tools", 1), ("Profile", 2), ("Mods", 3),
-                           ("Settings", 4), ("About", 5)]:
+                           ("Assets", 4), ("Settings", 5), ("About", 6)]:
             btn = QPushButton(label)
             btn.setCheckable(True)
             btn.setFixedHeight(40)
