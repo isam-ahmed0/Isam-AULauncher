@@ -33,7 +33,7 @@ TEXT_BRIGHT = "#ffffff"
 
 BG_SIDEBAR = "#08090c"
 
-CURRENT_THEME = "Violet"
+CURRENT_THEME = "Forest"
 
 
 # ---------------------------------------------------------------------------
@@ -518,13 +518,19 @@ def _apply_palette(p: dict):
     TEXT_BRIGHT = p["text_bright"]
 
 
+def get_palette_dict() -> dict:
+    """Return the current palette as a dict of hex color strings."""
+    from gui_qt.themes import THEMES
+    return dict(THEMES.get(CURRENT_THEME, {}))
+
+
 def set_theme(app, theme_name: str):
     """Switch the active theme and re-apply stylesheet."""
     global CURRENT_THEME
     from gui_qt.themes import THEMES
 
     if theme_name not in THEMES:
-        theme_name = "Violet"
+        theme_name = "Forest"
     CURRENT_THEME = theme_name
     palette = THEMES[theme_name]
     _apply_palette(palette)
@@ -535,7 +541,9 @@ def set_theme(app, theme_name: str):
 def apply_theme(app):
     """Apply the default theme on startup."""
     app.setStyle("Fusion")
+    from gui_qt.themes import load_custom_themes
+    load_custom_themes()
     from config import Config
     config = Config()
-    theme_name = config.settings.get("theme", "Violet")
+    theme_name = config.settings.get("theme", "Forest")
     set_theme(app, theme_name)

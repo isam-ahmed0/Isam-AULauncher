@@ -10,20 +10,22 @@ from PySide6.QtWidgets import (
 from config import APP_NAME, LAUNCHER_VERSION, MAKER, DISCORD_INVITE, YOUTUBE_CHANNEL, SOURCE_CODE_URL
 from file_manager import FileManager
 import gui_qt.theme as theme
-from gui_qt.themes import THEMES
+from gui_qt.themes import THEMES, is_custom_theme, delete_custom_theme
 
 
-_THEME_ORDER = ["Violet", "Coral", "Slate", "Ember", "Forest", "Plum", "Mono"]
+_THEME_ORDER = ["Forest", "Violet", "Coral", "Slate", "Ember", "Plum", "Mono"]
 
 
 class _ThemeCard(QFrame):
     """Clickable card representing a single theme preset."""
 
-    def __init__(self, name: str, palette: dict, is_selected: bool, parent=None):
+    def __init__(self, name: str, palette: dict, is_selected: bool,
+                 is_custom: bool = False, parent=None):
         super().__init__(parent)
         self._name = name
         self._palette = palette
         self._selected = is_selected
+        self._is_custom = is_custom
 
         self.setFixedSize(140, 78)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -78,10 +80,26 @@ class _ThemeCard(QFrame):
         p.setFont(f2)
         p.drawText(0, 46, w, 16, Qt2.AlignmentFlag.AlignHCenter, accent.name())
 
+        # Delete X for custom themes
+        if self._is_custom:
+            p.setPen(QColor(self._palette.get("text_muted", "#666")))
+            xf = QFont("Segoe UI", 11)
+            xf.setBold(True)
+            p.setFont(xf)
+            p.drawText(w - 20, 16, 16, 16, Qt2.AlignmentFlag.AlignCenter, "\u00d7")
+
         p.end()
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
+            # Check if click is on the delete X (top-right corner for custom themes)
+            if self._is_custom and event.position().x() > self.width() - 22 and event.position().y() < 20:
+                parent = self.parent()
+                while parent and not isinstance(parent, SettingsPage):
+                    parent = parent.parent()
+                if parent:
+                    parent._delete_theme(self._name)
+                return
             # Walk up to find SettingsPage widget
             parent = self.parent()
             while parent and not isinstance(parent, SettingsPage):
@@ -99,7 +117,7 @@ class SettingsPage(QWidget):
         self.config = config
         self.discord = discord
         self.profile_mgr = profile_mgr
-        self._selected_theme = config.settings.get("theme", "Violet")
+        self._selected_theme = config.settings.get("theme", "Forest")
 
         outer = QVBoxLayout(self)
         outer.setContentsMargins(0, 0, 0, 0)
@@ -154,15 +172,34 @@ class SettingsPage(QWidget):
 
         self._theme_cards = {}
 
-        grid = QGridLayout()
-        grid.setSpacing(10)
+        self._theme_grid = QGridLayout()
+        self._theme_grid.setSpacing(10)
+        grid = self._theme_grid
+        # Built-in themes
         for idx, name in enumerate(_THEME_ORDER):
             pal = THEMES[name]
-            card = _ThemeCard(name, pal, name == self._selected_theme)
+            card = _ThemeCard(name, pal, name == self._selected_theme, is_custom=False)
             row, col = divmod(idx, 3)
             grid.addWidget(card, row, col)
             self._theme_cards[name] = card
+        # Custom themes
+        custom_names = [n for n in THEMES if n not in _THEME_ORDER]
+        for idx, name in enumerate(custom_names):
+            pal = THEMES[name]
+            card = _ThemeCard(name, pal, name == self._selected_theme, is_custom=True)
+            total = len(_THEME_ORDER) + idx
+            row, col = divmod(total, 3)
+            grid.addWidget(card, row, col)
+            self._theme_cards[name] = card
         layout.addLayout(grid)
+        layout.addSpacing(4)
+
+        # Create Theme button
+        create_btn = QPushButton("+ Create Theme")
+        create_btn.setObjectName("toolBtn")
+        create_btn.setFixedHeight(38)
+        create_btn.clicked.connect(self._open_theme_maker)
+        layout.addWidget(create_btn)
         layout.addSpacing(8)
 
         layout.addWidget(QFrame(frameShape=QFrame.Shape.HLine))
@@ -251,10 +288,86 @@ class SettingsPage(QWidget):
         app = QApplication.instance()
         if app:
             theme.set_theme(app, name)
-            from gui_qt.widgets import HeroBanner
+            from gui_qt.widgets import HeroBanner, enable_hover_glow
             for w in app.topLevelWidgets():
                 for banner in w.findChildren(HeroBanner):
                     banner.update()
+            # Refresh sidebar nav button glow colors
+            main_win = None
+            for w in app.topLevelWidgets():
+                if hasattr(w, 'nav_buttons'):
+                    main_win = w
+                    break
+            if main_win:
+                for btn in main_win.nav_buttons.values():
+                    enable_hover_glow(btn)
+                # Restart playing pulse if game is running
+                if hasattr(main_win, 'game') and main_win.game.is_running:
+                    from gui_qt.widgets import start_playing_pulse
+                    start_playing_pulse(main_win.main_action_btn, color=theme.DANGER)
+
+    def _open_theme_maker(self):
+        from gui_qt.theme_maker import ThemeMakerDialog
+        base = theme.get_palette_dict()
+        dlg = ThemeMakerDialog(base_palette=base, parent=self)
+        dlg.theme_saved.connect(self._on_theme_saved)
+        dlg.exec()
+
+    def _on_theme_saved(self, name: str):
+        self.config.settings["theme"] = name
+        self.config.save_settings()
+        self._selected_theme = name
+        from PySide6.QtWidgets import QApplication
+        app = QApplication.instance()
+        if app:
+            theme.set_theme(app, name)
+        self._refresh_theme_grid()
+
+    def _delete_theme(self, name: str):
+        from PySide6.QtWidgets import QMessageBox
+        reply = QMessageBox.question(
+            self, "Delete Theme",
+            f'Delete custom theme "{name}"?',
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        )
+        if reply == QMessageBox.StandardButton.Yes:
+            delete_custom_theme(name)
+            if self._selected_theme == name:
+                self._selected_theme = "Forest"
+                self.config.settings["theme"] = "Forest"
+                self.config.save_settings()
+                from PySide6.QtWidgets import QApplication
+                app = QApplication.instance()
+                if app:
+                    theme.set_theme(app, "Forest")
+            self._refresh_theme_grid()
+
+    def _refresh_theme_grid(self):
+        """Rebuild just the theme cards grid."""
+        # Clear existing cards from the grid layout
+        grid = self._theme_grid
+        while grid.count():
+            item = grid.takeAt(0)
+            w = item.widget()
+            if w:
+                w.deleteLater()
+        self._theme_cards.clear()
+        # Re-add built-in themes
+        for idx, name in enumerate(_THEME_ORDER):
+            pal = THEMES[name]
+            card = _ThemeCard(name, pal, name == self._selected_theme, is_custom=False)
+            row, col = divmod(idx, 3)
+            grid.addWidget(card, row, col)
+            self._theme_cards[name] = card
+        # Re-add custom themes
+        custom_names = [n for n in THEMES if n not in _THEME_ORDER]
+        for idx, name in enumerate(custom_names):
+            pal = THEMES[name]
+            card = _ThemeCard(name, pal, name == self._selected_theme, is_custom=True)
+            total = len(_THEME_ORDER) + idx
+            row, col = divmod(total, 3)
+            grid.addWidget(card, row, col)
+            self._theme_cards[name] = card
 
 
 class AboutPage(QWidget):

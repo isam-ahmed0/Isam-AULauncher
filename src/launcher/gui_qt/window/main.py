@@ -788,7 +788,7 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
             self.main_action_btn.setObjectName("dangerBtn")
             self.main_action_btn.style().polish(self.main_action_btn)
             self.locate_btn.hide()
-            start_playing_pulse(self.main_action_btn)
+            start_playing_pulse(self.main_action_btn, color=theme.DANGER)
             return
 
         stop_playing_pulse(self.main_action_btn)

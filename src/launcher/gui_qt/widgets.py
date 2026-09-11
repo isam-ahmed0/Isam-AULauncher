@@ -22,12 +22,12 @@ def _hex_to_qcolor(hex_str: str, alpha: int = 255) -> QColor:
     return QColor(int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16), alpha)
 
 
-def enable_hover_glow(widget, color=None, duration=150):
-    """Add a premium glow hover animation using drop shadow."""
+def enable_hover_glow(widget, duration=150):
+    """Add a premium glow hover animation using drop shadow. Color read lazily from theme."""
     shadow = QGraphicsDropShadowEffect(widget)
     shadow.setBlurRadius(0)
     shadow.setOffset(0, 0)
-    shadow.setColor(QColor(color or theme.ACCENT))
+    shadow.setColor(QColor(theme.ACCENT))
     widget.setGraphicsEffect(shadow)
 
     anim = QPropertyAnimation(shadow, b"blurRadius", widget)
@@ -35,6 +35,7 @@ def enable_hover_glow(widget, color=None, duration=150):
     anim.setEasingCurve(QEasingCurve.Type.OutCubic)
 
     def on_enter(event):
+        shadow.setColor(QColor(theme.ACCENT))
         anim.stop()
         anim.setStartValue(shadow.blurRadius())
         anim.setEndValue(18)
@@ -51,11 +52,12 @@ def enable_hover_glow(widget, color=None, duration=150):
     widget._glow_anim_ref = anim
 
 
-def start_playing_pulse(button):
+def start_playing_pulse(button, color=None):
     """Start a breathing glow pulse on a button (infinite loop)."""
+    glow_color = QColor(color or theme.SUCCESS)
     shadow = QGraphicsDropShadowEffect(button)
     shadow.setOffset(0, 0)
-    shadow.setColor(QColor(theme.SUCCESS))
+    shadow.setColor(glow_color)
     button.setGraphicsEffect(shadow)
 
     anim = QPropertyAnimation(shadow, b"blurRadius", button)

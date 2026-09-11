@@ -208,7 +208,7 @@ class ProfileManager:
                     try:
                         shutil.move(str(f), str(self.profile_path("Default") / f.name))
                     except OSError:
-                    pass
+                        pass
             # Create junction
             self.switch_to("Default", game_path)
             return "Default"
