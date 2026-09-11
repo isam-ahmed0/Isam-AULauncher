@@ -35,10 +35,9 @@ from .region_editor import RegionEditorMixin
 from .mod_manager import ModManagerMixin
 from .itch_profile import ItchProfileMixin
 from .updater import UpdaterMixin
-from gui_qt.assets_manager.mixin import AssetsManagerMixin
 
 
-class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProfileMixin, UpdaterMixin, AssetsManagerMixin):
+class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProfileMixin, UpdaterMixin):
     def __init__(self, existing_app=None):
         self.config = Config()
         self.network = NetworkManager()
@@ -207,7 +206,11 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         self.page_mods = self._build_mods_page()
         self.page_settings = SettingsPage(self.config, self.discord, self.profile_mgr)
         self.page_about = AboutPage()
-        self.page_assets = self._build_assets_page()
+        self.page_assets = QWidget()
+        coming_soon = QLabel("Assets Manager coming soon in a future major version.")
+        coming_soon.setObjectName("mutedText")
+        coming_soon.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        QVBoxLayout(self.page_assets).addWidget(coming_soon)
         self.pages.addWidget(self.page_game)
         self.pages.addWidget(self.page_tools)
         self.pages.addWidget(self.page_profile)
@@ -244,6 +247,8 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         self.status_bar.addPermanentWidget(permanent_label)
 
         self.nav_buttons["Game"].setChecked(True)
+        self.nav_buttons["Assets"].setEnabled(False)
+        self.nav_buttons["Assets"].setToolTip("Coming soon in a future major version")
 
     # ------------------------------------------------------------------ pages
     def _build_game_page(self):
