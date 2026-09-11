@@ -285,7 +285,7 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         btn_layout.setContentsMargins(32, 16, 32, 0)
         self.main_action_btn = QPushButton("INSTALL GAME")
         self.main_action_btn.setObjectName("successBtn")
-        self.main_action_btn.setFixedHeight(46)
+        self.main_action_btn.setFixedHeight(38)
         self.main_action_btn.clicked.connect(self._cb_main_action)
         btn_layout.addWidget(self.main_action_btn)
         layout.addWidget(btn_row)

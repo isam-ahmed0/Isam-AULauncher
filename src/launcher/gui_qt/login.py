@@ -282,7 +282,7 @@ class LoginWindow(QMainWindow):
         # Login button
         self._login_btn = QPushButton("Sign in with itch.io")
         self._login_btn.setObjectName("successBtn")
-        self._login_btn.setFixedHeight(46)
+        self._login_btn.setFixedHeight(38)
         self._login_btn.setMinimumWidth(260)
         self._login_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self._login_btn.clicked.connect(self._start_login)

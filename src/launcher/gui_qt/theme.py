@@ -82,11 +82,11 @@ QPushButton#primaryBtn {{
     background-color: {p["accent"]};
     color: {p["text_bright"]};
     border: none;
-    border-radius: 10px;
-    padding: 12px 24px;
-    font-size: 15px;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 14px;
     font-weight: 700;
-    min-height: 22px;
+    min-height: 20px;
 }}
 
 QPushButton#primaryBtn:hover {{
@@ -103,11 +103,11 @@ QPushButton#successBtn {{
     background-color: {p["success"]};
     color: {p["text_bright"]};
     border: none;
-    border-radius: 10px;
-    padding: 12px 24px;
-    font-size: 15px;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 14px;
     font-weight: 700;
-    min-height: 22px;
+    min-height: 20px;
 }}
 
 QPushButton#successBtn:hover {{
@@ -124,11 +124,11 @@ QPushButton#dangerBtn {{
     background-color: {p["danger"]};
     color: {p["text_bright"]};
     border: none;
-    border-radius: 10px;
-    padding: 12px 24px;
-    font-size: 15px;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 14px;
     font-weight: 700;
-    min-height: 22px;
+    min-height: 20px;
 }}
 
 QPushButton#dangerBtn:hover {{
