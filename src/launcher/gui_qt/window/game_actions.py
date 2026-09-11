@@ -65,21 +65,29 @@ class GameActionsMixin:
     def _open_version_picker(self):
         from gui_qt.version_picker import VersionPickerDialog
         releases = getattr(self, 'available_versions', [])
-        if not releases:
-            # Try fetching directly
-            try:
-                releases = self.network.get_releases()
-                self.available_versions = releases
-            except Exception:
-                pass
+        error = getattr(self, '_releases_error', None)
         dlg = VersionPickerDialog(
             releases=releases,
             current_version=self.current_version,
             latest_version=self.latest_version,
+            error_message=error,
             parent=self.window,
         )
         dlg.version_selected.connect(self._download_version)
+        dlg.retry_requested.connect(self._retry_fetch_releases)
         dlg.exec()
+
+    def _retry_fetch_releases(self, callback):
+        """Re-fetch releases from GitHub and pass results to callback."""
+        def go():
+            try:
+                versions, err = self.network.get_releases()
+                self.available_versions = versions
+                self._releases_error = err
+                self._invoke_main(lambda: callback(versions, err))
+            except Exception as e:
+                self._invoke_main(lambda: callback([], str(e)))
+        self._run(go)
 
     def _download_version(self, version_tag: str):
         """Download a specific version selected from the version picker."""

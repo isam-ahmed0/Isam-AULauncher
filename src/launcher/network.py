@@ -174,11 +174,15 @@ class NetworkManager:
             logging.error(f"File write failed: {e}")
             return False
 
-    def get_releases(self) -> List[GameVersion]:
+    def get_releases(self):
+        """Fetch available game versions from GitHub API.
+        Returns (List[GameVersion], Optional[str]) — versions and error message."""
         url = f"https://api.github.com/repos/{GITHUB_REPO}/releases"
         try:
             r = requests.get(url, timeout=30,
                              headers={"User-Agent": f"IsamAULauncher/{LAUNCHER_VERSION}"})
+            if r.status_code == 403:
+                return [], "GitHub API rate limit exceeded. Try again later."
             r.raise_for_status()
             versions = []
             for rel in r.json():
@@ -189,10 +193,10 @@ class NetworkManager:
                             url=asset["browser_download_url"]
                         ))
             logging.info(f"Fetched {len(versions)} game releases")
-            return versions
-        except Exception as e:
+            return versions, None
+        except requests.RequestException as e:
             logging.error(f"Failed to fetch releases: {e}")
-            return []
+            return [], f"Network error: {e}"
 
 
 class DiscordRPC:

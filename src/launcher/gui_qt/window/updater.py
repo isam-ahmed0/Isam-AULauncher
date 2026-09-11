@@ -35,9 +35,10 @@ class UpdaterMixin:
                 self.latest_version = latest
             # Fetch available releases for version picker
             try:
-                self.available_versions = self.network.get_releases()
-            except Exception:
+                self.available_versions, self._releases_error = self.network.get_releases()
+            except Exception as e:
                 self.available_versions = []
+                self._releases_error = str(e)
             self._update_version_display()
             self._update_main_btn()
             if self.config.settings.get("discord_rpc"):

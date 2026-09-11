@@ -53,6 +53,7 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         self.current_version = "Not Installed"
         self.latest_version = "Checking..."
         self.available_versions = []
+        self._releases_error = None
         self.status_text = "Starting..."
         self.progress = 0.0
         self._busy = False
