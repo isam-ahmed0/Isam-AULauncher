@@ -130,7 +130,10 @@ class VersionPickerDialog(QDialog):
         outer.addWidget(header)
 
         # Version count
-        count_label = QLabel(f"{len(self._releases)} versions available")
+        if self._releases:
+            count_label = QLabel(f"{len(self._releases)} versions available")
+        else:
+            count_label = QLabel("No versions found. Check your internet connection.")
         count_label.setObjectName("mutedText")
         count_label.setContentsMargins(20, 0, 20, 8)
         outer.addWidget(count_label)
@@ -155,6 +158,12 @@ class VersionPickerDialog(QDialog):
             row.clicked.connect(self._on_row_clicked)
             list_layout.addWidget(row)
             self._rows.append(row)
+
+        if not self._releases:
+            empty_label = QLabel("Could not load versions.\nPlease check your internet connection and try again.")
+            empty_label.setObjectName("mutedText")
+            empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            list_layout.addWidget(empty_label)
 
         list_layout.addStretch()
         scroll.setWidget(list_widget)

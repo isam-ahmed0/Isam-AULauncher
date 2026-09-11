@@ -66,11 +66,12 @@ class GameActionsMixin:
         from gui_qt.version_picker import VersionPickerDialog
         releases = getattr(self, 'available_versions', [])
         if not releases:
-            QMessageBox.information(
-                self.window, "No Versions",
-                "Could not fetch game versions.\nPlease check your internet connection."
-            )
-            return
+            # Try fetching directly
+            try:
+                releases = self.network.get_releases()
+                self.available_versions = releases
+            except Exception:
+                pass
         dlg = VersionPickerDialog(
             releases=releases,
             current_version=self.current_version,
