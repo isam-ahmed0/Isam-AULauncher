@@ -1,9 +1,8 @@
 ;-------------------------------------------------------------------------------
 ; Isam AULauncher - UNIVERSAL ONLINE NSIS installer
-; Compile with: makensis.exe installer\IsamAU-Universal.nsi
+; Compile with: makensis.exe installer\IsamAU-Online.nsi
 ;
-; Always installs the latest version by reading LAUNCHER_VERSION from GitHub.
-; Never needs recompiling - one installer works for all releases.
+; Automatically downloads the LATEST release from GitHub Releases via URLDownloadToFile.
 ;-------------------------------------------------------------------------------
 
 !include "MUI2.nsh"
@@ -12,14 +11,19 @@
 !define APP_NAME      "Isam AULauncher"
 !define APP_SHORT     "Isam AULauncher"
 !define COMPANY       "Isam"
-!define VERSION_URL   "https://raw.githubusercontent.com/isam-ahmed0/Isam-AULauncher/refs/heads/main/LAUNCHER_VERSION"
-!define GITHUB_BASE   "https://github.com/isam-ahmed0/Isam-AULauncher/releases/download"
+!ifndef VERSION
+  !define VERSION     "Latest"
+!endif
+!define VERSION_DOT   "1.0.0.0"
 
 !ifndef ROOT
   !define ROOT "${__FILEDIR__}\.."
 !endif
 !define SRC_ICON      "${ROOT}\src\launcher\resources\icon.ico"
 !define SIDEBAR_BMP   "${ROOT}\installer\sidebar.bmp"
+
+; Universal Latest Release Download Endpoint
+!define DOWNLOAD_URL  "https://github.com/isam-ahmed0/Isam-AULauncher/releases/latest/download/IsamAU-All.zip"
 
 Name    "${APP_NAME}"
 OutFile "${ROOT}\dist\IsamAU-Setup.exe"
@@ -36,11 +40,13 @@ UninstallIcon "${SRC_ICON}"
 
 BrandingText "Isam Installer"
 
-; Placeholder version - overwritten at runtime
-VIProductVersion "0.0.0.0"
-VIAddVersionKey "ProductName"    "${APP_NAME}"
-VIAddVersionKey "CompanyName"     "${COMPANY}"
-VIAddVersionKey "LegalCopyright"  "Copyright (c) 2026 ${COMPANY}"
+VIProductVersion "${VERSION_DOT}"
+VIAddVersionKey "ProductName"     "${APP_NAME}"
+VIAddVersionKey "FileDescription" "${APP_NAME} Universal Installer"
+VIAddVersionKey "FileVersion"      "${VERSION_DOT}"
+VIAddVersionKey "ProductVersion"   "${VERSION_DOT}"
+VIAddVersionKey "CompanyName"      "${COMPANY}"
+VIAddVersionKey "LegalCopyright"   "Copyright (c) 2026 ${COMPANY}"
 
 ;------------------------------- Modern UI 2 -------------------------------
 !define MUI_ABORTWARNING
@@ -51,7 +57,7 @@ VIAddVersionKey "LegalCopyright"  "Copyright (c) 2026 ${COMPANY}"
 !define MUI_UNWELCOMEFINISHPAGE_BITMAP "${SIDEBAR_BMP}"
 
 !define MUI_WELCOMEPAGE_TITLE "Welcome"
-!define MUI_WELCOMEPAGE_TEXT "A clean, modern launcher for Among Us.$\r$\n$\r$\nThis installer will download the latest version from the internet."
+!define MUI_WELCOMEPAGE_TEXT "A clean, modern launcher for Among Us.$\r$\n$\r$\nThis universal installer will always fetch and install the latest available version from the internet."
 
 !define MUI_FINISHPAGE_TITLE "Done"
 !define MUI_FINISHPAGE_TEXT "Setup is complete."
@@ -69,72 +75,39 @@ VIAddVersionKey "LegalCopyright"  "Copyright (c) 2026 ${COMPANY}"
 
 !insertmacro MUI_LANGUAGE "English"
 
-;------------------------------- Runtime variables --------------------------
-Var INST_VERSION
-
 Function .onInit
   InitPluginsDir
   CreateDirectory "$PLUGINSDIR"
-
-  ; --- Resolve latest version from GitHub (plain text file, no API) ---
-  DetailPrint "Checking for latest version..."
-
-  ; Force TLS 1.2
-  System::Call 'wininet::InternetSetOption(0, 11, 0, 0) i'
-
-  ; Download version file (3 bytes, instant)
-  System::Call 'urlmon::URLDownloadToFile(0, t"${VERSION_URL}", t"$PLUGINSDIR\_version.txt", i0, i0) i .r0'
-
-  ${If} $0 != "0"
-    MessageBox MB_ICONSTOP "Could not check for updates. Please check your internet connection and try again."
-    Quit
-  ${EndIf}
-
-  ; Read version from file
-  FileOpen $1 "$PLUGINSDIR\_version.txt" r
-  ${If} $1 == ""
-    MessageBox MB_ICONSTOP "Could not determine latest version."
-    Quit
-  ${EndIf}
-  FileRead $1 $INST_VERSION
-  FileClose $1
-
-  ; Trim trailing \r\n
-  StrCpy $INST_VERSION $INST_VERSION -2
-
-  ${If} $INST_VERSION == ""
-    MessageBox MB_ICONSTOP "Could not determine latest version."
-    Quit
-  ${EndIf}
-
-  DetailPrint "Latest version: $INST_VERSION"
 FunctionEnd
 
 ;------------------------------- Components --------------------------------
 Section "Isam AULauncher (required)" SecMain
   SectionIn RO
 
-  ; --- Download zip via curl.exe (built into Windows 10+, silent, no buffer) ---
-  DetailPrint "Downloading $INST_VERSION..."
-  DetailPrint "This may take a few minutes..."
+  DetailPrint "Fetching the latest version from GitHub..."
+  DetailPrint "URL: ${DOWNLOAD_URL}"
 
-  nsExec::ExecToStack 'curl.exe -L -sS -o "$PLUGINSDIR\IsamAU-All.zip" "${GITHUB_BASE}/$INST_VERSION/IsamAU-All.zip"'
-  Pop $0
+  ; Force TLS 1.2 before download
+  System::Call 'wininet::InternetSetOption(0, 11, 0, 0) i'
+
+  ; URLDownloadToFile with flag 0x10 (BINDF_GETNEWESTVERSION) to prevent cache hits on dynamic redirects
+  System::Call 'urlmon::URLDownloadToFile(0, t"${DOWNLOAD_URL}", t"$PLUGINSDIR\IsamAU-All.zip", i 0x10, i0) i .r0'
+
   ${If} $0 != "0"
-    MessageBox MB_ICONSTOP "Download failed (error $0). Please check your internet connection and try again."
+    MessageBox MB_ICONSTOP "Download failed (error code $0). Please check your internet connection or verify the latest release exists on GitHub."
     Quit
   ${EndIf}
 
-  ; Verify download
+  ; Verify downloaded asset
   IfFileExists "$PLUGINSDIR\IsamAU-All.zip" 0 download_failed
     Goto download_ok
   download_failed:
-    MessageBox MB_ICONSTOP "Download failed. The file was not created."
+    MessageBox MB_ICONSTOP "Download failed. The installer archive was not created."
     Quit
   download_ok:
   DetailPrint "Download complete."
 
-  ; --- Extract via PowerShell (built-in, no .bat files) ---
+  ; --- Extract via PowerShell ---
   DetailPrint "Extracting files..."
   CreateDirectory "$PLUGINSDIR\extracted"
 
@@ -162,8 +135,7 @@ Section "Isam AULauncher (required)" SecMain
   CreateShortcut "$SMPROGRAMS\${APP_SHORT}\${APP_SHORT}.lnk" "$INSTDIR\IsamAULauncher.exe"
   CreateShortcut "$SMPROGRAMS\${APP_SHORT}\Uninstall ${APP_SHORT}.lnk" "$INSTDIR\Uninstall.exe"
 
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" "DisplayName"     "${APP_NAME} $INST_VERSION"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" "DisplayVersion"  "$INST_VERSION"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" "DisplayName"     "${APP_NAME}"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" "Publisher"       "${COMPANY}"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" "DisplayIcon"     "$INSTDIR\icon.ico"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" "UninstallString" '"$INSTDIR\Uninstall.exe"'
@@ -198,7 +170,7 @@ Section /o "Desktop shortcut" SecDesktop
 SectionEnd
 
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
-  !insertmacro MUI_DESCRIPTION_TEXT ${SecMain}    "Core launcher files (required). Downloaded from the internet."
+  !insertmacro MUI_DESCRIPTION_TEXT ${SecMain}    "Core launcher files (required). Fetches latest version dynamically."
   !insertmacro MUI_DESCRIPTION_TEXT ${SecFixer}   "Itch.io login fix tool."
   !insertmacro MUI_DESCRIPTION_TEXT ${SecTools}   "7-Zip and BepInEx mod files."
   !insertmacro MUI_DESCRIPTION_TEXT ${SecDesktop} "Create a shortcut on your Desktop."
