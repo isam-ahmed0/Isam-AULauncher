@@ -34,7 +34,7 @@ The game files are from Shadow Slime.
 
 The easiest way to use is download the IsamAU-Setup.exe from [Releases](https://github.com/isam-ahmed0/Isam-AULauncher/releases/latest).
 
-The default installer is [`IsamAU-Setup.exe`](https://github.com/isam-ahmed0/Isam-AULauncher/releases/latest/download/IsamAU-Setup.exe), but there is [`IsamAU-Offline.exe`](https://github.com/isam-ahmed0/Isam-AULauncher/releases/latest/download/IsamAU-Offline.exe) which is compiled. [`IsamAU-Universal.exe`](https://github.com/isam-ahmed0/Isam-AULauncher/releases/latest/download/IsamAU-Universal.exe) is best: you download the setup once and it works for any latest version. The [`IsamAU-All.zip`](https://github.com/isam-ahmed0/Isam-AULauncher/releases/latest/download/IsamAU-All.zip) is portable.
+The default installer is [`IsamAU-Setup.exe`](https://github.com/isam-ahmed0/Isam-AULauncher/releases/latest/download/IsamAU-Setup.exe), but there's also [`IsamAU-Setup-Offline.exe`](https://github.com/isam-ahmed0/Isam-AULauncher/releases/latest/download/IsamAU-Setup-Offline.exe) which is compiled. [`IsamAU-Universal.exe`](https://github.com/isam-ahmed0/Isam-AULauncher/releases/latest/download/IsamAU-Universal.exe) is best: you download the setup once and it works for any latest version. The [`IsamAU-All.zip`](https://github.com/isam-ahmed0/Isam-AULauncher/releases/latest/download/IsamAU-All.zip) is portable.
 
 The test and old repo was https://github.com/isam-ahmed0/AmongUs_Launcher
 
