@@ -1,6 +1,7 @@
 # Isam AULauncher
 
 ![image](https://ik.imagekit.io/Isam/Images/image.png)
+![image](https://ik.imagekit.io/Isam/Images/image2.png)
 
 This is the continuation of my Among Us launcher project.
 I changed everything, logic, language
