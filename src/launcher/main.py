@@ -115,20 +115,46 @@ if __name__ == "__main__":
 
             splash.finished.connect(on_splash_done)
 
+            _done = {"profile": False, "version": False}
+
+            def check_done():
+                if _done["profile"] and _done["version"]:
+                    splash.update_status("Ready")
+                    qapp.processEvents()
+                    splash.finish()
+
+            def profile_done():
+                _done["profile"] = True
+                check_done()
+
+            def version_done():
+                _done["version"] = True
+                check_done()
+
+            def profile_worker():
+                try:
+                    launcher._load_itch_profile_sync()
+                except Exception:
+                    pass
+                launcher._invoke_main(profile_done)
+
+            def version_worker():
+                try:
+                    launcher._load_initial_data_sync()
+                except Exception:
+                    pass
+                launcher._invoke_main(version_done)
+
+            splash.show()
+
             def boot():
                 splash.update_status("Loading profile...")
                 qapp.processEvents()
-                launcher._load_itch_profile_sync()
-
+                launcher._run(profile_worker)
                 splash.update_status("Checking updates...")
                 qapp.processEvents()
-                launcher._load_initial_data_sync()
+                launcher._run(version_worker)
 
-                splash.update_status("Ready")
-                qapp.processEvents()
-                splash.finish()
-
-            splash.show()
             QTimer.singleShot(50, boot)
 
             qapp.exec()
