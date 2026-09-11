@@ -13,11 +13,12 @@ from PySide6.QtWidgets import (
     QStatusBar, QComboBox, QScrollArea, QSystemTrayIcon, QMenu,
     QListWidget,
 )
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt, QTimer, QPropertyAnimation, QEasingCurve
 from PySide6.QtGui import QIcon, QAction
+from PySide6.QtWidgets import QGraphicsOpacityEffect
 
 from gui_qt.worker import _UISignaler, Worker
-from ..widgets import HeroBanner, _ICON_PATH, SIDEBAR_W, enable_hover_glow
+from ..widgets import HeroBanner, _ICON_PATH, SIDEBAR_W, enable_hover_glow, start_playing_pulse, stop_playing_pulse
 from ..dialogs import SettingsPage, AboutPage
 
 from config import (
@@ -720,10 +721,34 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         return lbl
 
     def _switch_page(self, index, label):
-        self.pages.setCurrentIndex(index)
-        self._active_page = label.lower()
-        for name, btn in self.nav_buttons.items():
-            btn.setChecked(name == label)
+        if self.pages.currentIndex() == index:
+            return
+
+        effect = QGraphicsOpacityEffect(self.pages)
+        self.pages.setGraphicsEffect(effect)
+
+        fade_out = QPropertyAnimation(effect, b"opacity", self.pages)
+        fade_out.setDuration(90)
+        fade_out.setStartValue(1.0)
+        fade_out.setEndValue(0.0)
+        fade_out.setEasingCurve(QEasingCurve.Type.InCubic)
+
+        def _swap():
+            self.pages.setCurrentIndex(index)
+            self._active_page = label.lower()
+            for name, btn in self.nav_buttons.items():
+                btn.setChecked(name == label)
+            fade_in = QPropertyAnimation(effect, b"opacity", self.pages)
+            fade_in.setDuration(120)
+            fade_in.setStartValue(0.0)
+            fade_in.setEndValue(1.0)
+            fade_in.setEasingCurve(QEasingCurve.Type.OutCubic)
+            fade_in.start(QPropertyAnimation.DeletionPolicy.DeleteWhenStopped)
+            self._page_anim_ref = fade_in
+
+        fade_out.finished.connect(_swap)
+        fade_out.start(QPropertyAnimation.DeletionPolicy.DeleteWhenStopped)
+        self._page_anim_ref = fade_out
 
     # ------------------------------------------------------------------ status
     def _set_status(self, text, color_name=None):
@@ -763,7 +788,10 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
             self.main_action_btn.setObjectName("dangerBtn")
             self.main_action_btn.style().polish(self.main_action_btn)
             self.locate_btn.hide()
+            start_playing_pulse(self.main_action_btn)
             return
+
+        stop_playing_pulse(self.main_action_btn)
 
         cur = self.current_version
         lat = self.latest_version

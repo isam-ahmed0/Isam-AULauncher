@@ -2,7 +2,7 @@ from pathlib import Path
 
 from PySide6.QtCore import Qt, QPropertyAnimation, QEasingCurve
 from PySide6.QtGui import QPixmap, QPainter, QColor, QLinearGradient, QFont, QFontMetrics
-from PySide6.QtWidgets import QLabel, QGraphicsOpacityEffect
+from PySide6.QtWidgets import QLabel, QGraphicsDropShadowEffect
 
 from config import LAUNCHER_VERSION
 import gui_qt.theme as theme
@@ -22,30 +22,59 @@ def _hex_to_qcolor(hex_str: str, alpha: int = 255) -> QColor:
     return QColor(int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16), alpha)
 
 
-def enable_hover_glow(widget, duration=150):
-    """Add a subtle opacity hover animation to a widget."""
-    effect = QGraphicsOpacityEffect(widget)
-    widget.setGraphicsEffect(effect)
-    anim = QPropertyAnimation(effect, b"opacity", widget)
+def enable_hover_glow(widget, color=None, duration=150):
+    """Add a premium glow hover animation using drop shadow."""
+    shadow = QGraphicsDropShadowEffect(widget)
+    shadow.setBlurRadius(0)
+    shadow.setOffset(0, 0)
+    shadow.setColor(QColor(color or theme.ACCENT))
+    widget.setGraphicsEffect(shadow)
+
+    anim = QPropertyAnimation(shadow, b"blurRadius", widget)
     anim.setDuration(duration)
-    anim.setEasingCurve(QEasingCurve.Type.InOutQuad)
+    anim.setEasingCurve(QEasingCurve.Type.OutCubic)
 
     def on_enter(event):
         anim.stop()
-        anim.setStartValue(effect.opacity())
-        anim.setEndValue(0.85)
+        anim.setStartValue(shadow.blurRadius())
+        anim.setEndValue(18)
         anim.start()
-        QLabel.enterEvent(widget, event)
 
     def on_leave(event):
         anim.stop()
-        anim.setStartValue(effect.opacity())
-        anim.setEndValue(1.0)
+        anim.setStartValue(shadow.blurRadius())
+        anim.setEndValue(0)
         anim.start()
-        QLabel.leaveEvent(widget, event)
 
     widget.enterEvent = on_enter
     widget.leaveEvent = on_leave
+    widget._glow_anim_ref = anim
+
+
+def start_playing_pulse(button):
+    """Start a breathing glow pulse on a button (infinite loop)."""
+    shadow = QGraphicsDropShadowEffect(button)
+    shadow.setOffset(0, 0)
+    shadow.setColor(QColor(theme.SUCCESS))
+    button.setGraphicsEffect(shadow)
+
+    anim = QPropertyAnimation(shadow, b"blurRadius", button)
+    anim.setDuration(1200)
+    anim.setStartValue(6)
+    anim.setKeyValueAt(0.5, 24)
+    anim.setEndValue(6)
+    anim.setEasingCurve(QEasingCurve.Type.InOutSine)
+    anim.setLoopCount(-1)
+    anim.start()
+    button._pulse_anim_ref = anim
+
+
+def stop_playing_pulse(button):
+    """Stop the breathing glow pulse and clear the effect."""
+    if hasattr(button, "_pulse_anim_ref"):
+        button._pulse_anim_ref.stop()
+        button.setGraphicsEffect(None)
+        del button._pulse_anim_ref
 
 
 class HeroBanner(QLabel):

@@ -98,6 +98,12 @@ QPushButton#primaryBtn:disabled {{
     color: {p["btn_disabled_text"]};
 }}
 
+QPushButton#primaryBtn:pressed {{
+    background-color: {p["accent_muted"]};
+    padding-top: 11px;
+    padding-bottom: 9px;
+}}
+
 /* ===== SUCCESS BUTTON ===== */
 QPushButton#successBtn {{
     background-color: {p["success"]};
@@ -117,6 +123,12 @@ QPushButton#successBtn:hover {{
 QPushButton#successBtn:disabled {{
     background-color: {p["btn_disabled_bg"]};
     color: {p["btn_disabled_text"]};
+}}
+
+QPushButton#successBtn:pressed {{
+    background-color: {p["success_hover"]};
+    padding-top: 11px;
+    padding-bottom: 9px;
 }}
 
 /* ===== DANGER BUTTON ===== */
@@ -140,6 +152,12 @@ QPushButton#dangerBtn:disabled {{
     color: {p["btn_disabled_text"]};
 }}
 
+QPushButton#dangerBtn:pressed {{
+    background-color: {p["danger_hover"]};
+    padding-top: 11px;
+    padding-bottom: 9px;
+}}
+
 /* ===== SECONDARY / TOOL BUTTONS ===== */
 QPushButton#toolBtn {{
     background-color: {p["bg_elevated"]};
@@ -153,6 +171,12 @@ QPushButton#toolBtn {{
 QPushButton#toolBtn:hover {{
     background-color: {p["bg_hover"]};
     border-color: {p["accent"]};
+}}
+
+QPushButton#toolBtn:pressed {{
+    background-color: {p["bg_active"]};
+    padding-top: 11px;
+    padding-bottom: 9px;
 }}
 
 /* ===== MODAL BUTTONS ===== */

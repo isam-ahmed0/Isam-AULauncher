@@ -55,8 +55,8 @@ class SplashScreen(QWidget):
         else:
             logging.warning(f"Splash image not found: {splash_path}")
 
-        # No fade-in — splash appears at full opacity instantly
-        self.setWindowOpacity(1.0)
+        # Fade-in handled in showEvent
+        self.setWindowOpacity(0.0)
 
     # ------------------------------------------------------------------ public
     def update_status(self, text: str):
@@ -127,3 +127,11 @@ class SplashScreen(QWidget):
     # ------------------------------------------------------------------ show
     def showEvent(self, event):
         super().showEvent(event)
+        self.setWindowOpacity(0.0)
+        fade_in = QPropertyAnimation(self, b"windowOpacity", self)
+        fade_in.setDuration(280)
+        fade_in.setStartValue(0.0)
+        fade_in.setEndValue(1.0)
+        fade_in.setEasingCurve(QEasingCurve.Type.OutCubic)
+        fade_in.start(QPropertyAnimation.DeletionPolicy.DeleteWhenStopped)
+        self._fade_in_ref = fade_in

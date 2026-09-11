@@ -13,7 +13,7 @@ import urllib.parse
 from pathlib import Path
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt, QTimer, QPropertyAnimation, QEasingCurve, QParallelAnimationGroup
 from PySide6.QtGui import (
     QPainter, QColor, QFont, QLinearGradient, QBrush, QIcon,
     QPixmap, QMovie,
@@ -21,6 +21,7 @@ from PySide6.QtGui import (
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QPushButton, QFrame, QApplication,
+    QGraphicsOpacityEffect,
 )
 
 from config import APP_NAME, BRAND_SHORT, LAUNCHER_VERSION, MAKER
@@ -101,7 +102,7 @@ class _OAuthHandler(BaseHTTPRequestHandler):
 
 
 class _RightSidebar(QWidget):
-    """Right sidebar panel that displays image, GIF, or slideshow."""
+    """Right sidebar panel that displays image, GIF, or slideshow with cross-fade."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -112,8 +113,28 @@ class _RightSidebar(QWidget):
         self._slide_index = 0
         self._slide_timer = QTimer(self)
         self._slide_timer.timeout.connect(self._next_slide)
+        self._slide_anim_ref = None
+
+        self._label_a = QLabel(self)
+        self._label_b = QLabel(self)
+        for lbl in (self._label_a, self._label_b):
+            lbl.setScaledContents(True)
+            lbl.raise_()
+        self._active_label = self._label_a
+        self._effect_a = QGraphicsOpacityEffect(self._label_a)
+        self._effect_b = QGraphicsOpacityEffect(self._label_b)
+        self._label_a.setGraphicsEffect(self._effect_a)
+        self._label_b.setGraphicsEffect(self._effect_b)
+        self._effect_a.setOpacity(1.0)
+        self._effect_b.setOpacity(0.0)
 
         self._load_content()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        w, h = self.width(), self.height()
+        self._label_a.setGeometry(0, 0, w, h)
+        self._label_b.setGeometry(0, 0, w, h)
 
     def _load_content(self):
         """Determine display mode and load content."""
@@ -137,6 +158,7 @@ class _RightSidebar(QWidget):
             self._mode = "slideshow"
             self._slides = slides
             self._slide_index = 0
+            self._active_label.setPixmap(self._load_pixmap(self._slides[0]))
             self._slide_timer.start(5000)
             return
 
@@ -144,15 +166,52 @@ class _RightSidebar(QWidget):
             static_path = _LOGIN_DIR / f"login_promo.{ext}"
             if static_path.exists():
                 self._mode = "static"
+                self._static_path = static_path
                 return
 
         self._mode = "gradient"
 
+    def _load_pixmap(self, path):
+        """Load and scale a pixmap to fill the sidebar."""
+        pixmap = QPixmap(str(path))
+        if pixmap.isNull():
+            return pixmap
+        w, h = self.width(), self.height()
+        return pixmap.scaled(w, h, Qt.AspectRatioMode.KeepAspectRatioByExpanding,
+                             Qt.TransformationMode.SmoothTransformation)
+
     def _next_slide(self):
-        """Advance to next slide."""
-        if self._slides:
-            self._slide_index = (self._slide_index + 1) % len(self._slides)
-            self.update()
+        """Advance to next slide with cross-fade."""
+        if not self._slides:
+            return
+        self._slide_index = (self._slide_index + 1) % len(self._slides)
+
+        incoming = self._label_b if self._active_label is self._label_a else self._label_a
+        outgoing = self._active_label
+        out_effect = self._effect_a if outgoing is self._label_a else self._effect_b
+        in_effect = self._effect_a if incoming is self._label_a else self._effect_b
+
+        incoming.setPixmap(self._load_pixmap(self._slides[self._slide_index]))
+        incoming.raise_()
+
+        group = QParallelAnimationGroup(self)
+        fade_out = QPropertyAnimation(out_effect, b"opacity", self)
+        fade_out.setDuration(600)
+        fade_out.setStartValue(1.0)
+        fade_out.setEndValue(0.0)
+        fade_out.setEasingCurve(QEasingCurve.Type.InOutQuad)
+
+        fade_in = QPropertyAnimation(in_effect, b"opacity", self)
+        fade_in.setDuration(600)
+        fade_in.setStartValue(0.0)
+        fade_in.setEndValue(1.0)
+        fade_in.setEasingCurve(QEasingCurve.Type.InOutQuad)
+
+        group.addAnimation(fade_out)
+        group.addAnimation(fade_in)
+        group.start(QParallelAnimationGroup.DeletionPolicy.DeleteWhenStopped)
+        self._slide_anim_ref = group
+        self._active_label = incoming
 
     def paintEvent(self, event):
         p = QPainter(self)
@@ -172,7 +231,11 @@ class _RightSidebar(QWidget):
                 return
 
         if self._mode == "slideshow" and self._slides:
-            pixmap = QPixmap(str(self._slides[self._slide_index]))
+            p.end()
+            return
+
+        if self._mode == "static" and hasattr(self, '_static_path'):
+            pixmap = QPixmap(str(self._static_path))
             if not pixmap.isNull():
                 scaled = pixmap.scaled(w, h, Qt.AspectRatioMode.KeepAspectRatioByExpanding,
                                        Qt.TransformationMode.SmoothTransformation)
@@ -181,20 +244,6 @@ class _RightSidebar(QWidget):
                 p.drawPixmap(x, y, scaled)
                 p.end()
                 return
-
-        if self._mode == "static":
-            for ext in ("png", "ico"):
-                static_path = _LOGIN_DIR / f"login_promo.{ext}"
-                if static_path.exists():
-                    pixmap = QPixmap(str(static_path))
-                    if not pixmap.isNull():
-                        scaled = pixmap.scaled(w, h, Qt.AspectRatioMode.KeepAspectRatioByExpanding,
-                                               Qt.TransformationMode.SmoothTransformation)
-                        x = (w - scaled.width()) // 2
-                        y = (h - scaled.height()) // 2
-                        p.drawPixmap(x, y, scaled)
-                        p.end()
-                        return
 
         # Gradient fallback
         accent = _hex_to_qcolor(theme.ACCENT)
