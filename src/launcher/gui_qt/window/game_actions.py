@@ -62,6 +62,30 @@ class GameActionsMixin:
     def _cb_uninstall(self):
         self._uninstall_game()
 
+    def _open_version_picker(self):
+        from gui_qt.version_picker import VersionPickerDialog
+        releases = getattr(self, 'available_versions', [])
+        if not releases:
+            QMessageBox.information(
+                self.window, "No Versions",
+                "No game versions available.\nCheck your internet connection and try again."
+            )
+            return
+        dlg = VersionPickerDialog(
+            releases=releases,
+            current_version=self.current_version,
+            latest_version=self.latest_version,
+            parent=self.window,
+        )
+        dlg.version_selected.connect(self._download_version)
+        dlg.exec()
+
+    def _download_version(self, version_tag: str):
+        """Download a specific version selected from the version picker."""
+        self.latest_version = version_tag
+        self._update_version_display()
+        self._download_latest()
+
     # ------------------------------------------------------------------ folder selected
     def _folder_selected(self, folder):
         path = Path(folder)

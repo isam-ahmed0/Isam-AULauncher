@@ -52,6 +52,7 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
 
         self.current_version = "Not Installed"
         self.latest_version = "Checking..."
+        self.available_versions = []
         self.status_text = "Starting..."
         self.progress = 0.0
         self._busy = False
@@ -312,7 +313,18 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         self.ver_installed.setObjectName("mutedText")
         left.addWidget(self.ver_installed)
         left.addSpacing(16)
-        left.addWidget(self._muted_label("LATEST"))
+        latest_header = QHBoxLayout()
+        latest_header.addWidget(self._muted_label("LATEST"))
+        latest_header.addStretch()
+        self.choose_version_btn = QPushButton("Choose Version")
+        self.choose_version_btn.setObjectName("toolBtn")
+        self.choose_version_btn.setFixedSize(110, 26)
+        font = self.choose_version_btn.font()
+        font.setPointSize(9)
+        self.choose_version_btn.setFont(font)
+        self.choose_version_btn.clicked.connect(self._open_version_picker)
+        latest_header.addWidget(self.choose_version_btn)
+        left.addLayout(latest_header)
         self.ver_latest = QLabel("Checking...")
         self.ver_latest.setObjectName("infoText")
         left.addWidget(self.ver_latest)
