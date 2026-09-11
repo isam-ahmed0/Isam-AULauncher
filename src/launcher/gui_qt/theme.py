@@ -508,10 +508,11 @@ def set_theme(app, theme_name: str):
         app.setStyleSheet(build_qss(palette))
 
 
-def apply_theme(app):
+def apply_theme(app, config=None):
     """Apply the default theme on startup."""
     app.setStyle("Fusion")
-    from config import Config
-    config = Config()
+    if config is None:
+        from config import Config
+        config = Config()
     theme_name = config.settings.get("theme", "Indigo")
     set_theme(app, theme_name)

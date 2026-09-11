@@ -40,14 +40,17 @@ if __name__ == "__main__":
 
     while True:
         try:
-            from gui_qt.window import LauncherApp
             from gui_qt.splash import SplashScreen
             from gui_qt.theme import apply_theme
+            from config import Config
 
-            apply_theme(qapp)
-            launcher = LauncherApp(qapp)
+            # Create config and apply theme BEFORE showing anything
+            _config = Config()
+            apply_theme(qapp, _config)
 
             if args.no_splash:
+                from gui_qt.window import LauncherApp
+                launcher = LauncherApp(qapp)
                 launcher._load_initial_data()
                 launcher._load_itch_profile()
                 token = launcher._read_itch_token()
@@ -63,7 +66,6 @@ if __name__ == "__main__":
 
             if args.splash_2:
                 from gui_qt.video_splash import VideoSplash
-                from gui_qt.splash import SplashScreen
 
                 def on_video_done():
                     splash = SplashScreen()
@@ -102,6 +104,7 @@ if __name__ == "__main__":
                 launcher.shutdown()
                 break
 
+            # DEFAULT: Show splash FIRST, build window behind it
             splash = SplashScreen()
 
             def on_splash_done():
@@ -116,17 +119,67 @@ if __name__ == "__main__":
             splash.finished.connect(on_splash_done)
 
             def boot():
+                # Build window behind splash (user sees splash.png already)
+                splash.update_status("Loading...")
+                qapp.processEvents()
+
+                from gui_qt.window import LauncherApp
+                launcher = LauncherApp(qapp)
+
                 splash.update_status("Loading profile...")
                 qapp.processEvents()
-                launcher._load_itch_profile_sync()
 
-                splash.update_status("Checking updates...")
-                qapp.processEvents()
-                launcher._load_initial_data_sync()
+                # Run network calls in background workers (non-blocking)
+                _workers_done = {"profile": False, "version": False}
 
-                splash.update_status("Ready")
-                qapp.processEvents()
-                splash.finish()
+                def on_all_done():
+                    _workers_done["profile"] = True
+                    _workers_done["version"] = True
+                    splash.update_status("Ready")
+                    qapp.processEvents()
+                    splash.finish()
+
+                def check_both_done():
+                    if _workers_done["profile"] and _workers_done["version"]:
+                        on_all_done()
+
+                def load_profile_done():
+                    _workers_done["profile"] = True
+                    check_both_done()
+
+                def load_version_done():
+                    _workers_done["version"] = True
+                    check_both_done()
+
+                # Profile fetch in background
+                def profile_worker():
+                    try:
+                        launcher._fetch_itch_profile()
+                    except Exception:
+                        pass
+                    launcher._invoke_main(load_profile_done)
+
+                # Version check in background
+                def version_worker():
+                    try:
+                        v = launcher.config.get_version()
+                        if v:
+                            launcher.current_version = v
+                        latest = launcher.network.fetch_text(
+                            "https://raw.githubusercontent.com/jogamerforgames2021/BootstrapperTEST/main/Version.txt"
+                        )
+                        if latest:
+                            launcher.latest_version = latest
+                        launcher._invoke_main(launcher._update_version_display)
+                        launcher._invoke_main(launcher._update_main_btn)
+                        if launcher.config.settings.get("discord_rpc"):
+                            launcher.discord.connect()
+                    except Exception:
+                        pass
+                    launcher._invoke_main(load_version_done)
+
+                launcher._run(profile_worker)
+                launcher._run(version_worker)
 
             splash.show()
             QTimer.singleShot(50, boot)
