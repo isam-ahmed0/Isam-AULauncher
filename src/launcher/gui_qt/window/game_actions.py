@@ -68,7 +68,7 @@ class GameActionsMixin:
         if not releases:
             QMessageBox.information(
                 self.window, "No Versions",
-                "No game versions available.\nCheck your internet connection and try again."
+                "Could not fetch game versions.\nPlease check your internet connection."
             )
             return
         dlg = VersionPickerDialog(
