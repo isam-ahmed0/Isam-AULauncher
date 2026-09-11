@@ -1,5 +1,13 @@
 # Isam AULauncher
 
+![image](https://ik.imagekit.io/Isam/Images/image.png)
+
+## Install
+
+The easiest way to use is download the IsamAU-Setup.exe from [Releases](https://github.com/isam-ahmed0/Isam-AULauncher/releases/latest).
+
+The default installer is [`IsamAU-Setup.exe`](https://github.com/isam-ahmed0/Isam-AULauncher/releases/latest/download/IsamAU-Setup.exe), but there's also [`IsamAU-Setup-Offline.exe`](https://github.com/isam-ahmed0/Isam-AULauncher/releases/latest/download/IsamAU-Setup-Offline.exe) which is compiled. [`IsamAU-Universal.exe`](https://github.com/isam-ahmed0/Isam-AULauncher/releases/latest/download/IsamAU-Universal.exe) is best: you download the setup once and it works for any latest version. The [`IsamAU-All.zip`](https://github.com/isam-ahmed0/Isam-AULauncher/releases/latest/download/IsamAU-All.zip) is portable.
+
 <table>
   <tr>
     <td width="50%">
@@ -30,12 +38,7 @@ I changed everything, logic, language—carries the **Isam AULauncher** identity
 ### Credits
 The game files are from Shadow Slime.
 
-## Install
-
-The easiest way to use is download the IsamAU-Setup.exe from [Releases](https://github.com/isam-ahmed0/Isam-AULauncher/releases/latest).
-
-The default installer is [`IsamAU-Setup.exe`](https://github.com/isam-ahmed0/Isam-AULauncher/releases/latest/download/IsamAU-Setup.exe), but there's also [`IsamAU-Setup-Offline.exe`](https://github.com/isam-ahmed0/Isam-AULauncher/releases/latest/download/IsamAU-Setup-Offline.exe) which is compiled. [`IsamAU-Universal.exe`](https://github.com/isam-ahmed0/Isam-AULauncher/releases/latest/download/IsamAU-Universal.exe) is best: you download the setup once and it works for any latest version. The [`IsamAU-All.zip`](https://github.com/isam-ahmed0/Isam-AULauncher/releases/latest/download/IsamAU-All.zip) is portable.
-
+### Notes
 The test and old repo was https://github.com/isam-ahmed0/AmongUs_Launcher
 
 I like contributions. If you want to contribute, just fork, edit what you like, and create a Pull Request.
