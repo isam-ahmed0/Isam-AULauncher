@@ -66,7 +66,7 @@ class SplashScreen(QWidget):
     def finish(self):
         """Fade out and emit finished signal."""
         fade_out = QPropertyAnimation(self, b"windowOpacity")
-        fade_out.setDuration(150)
+        fade_out.setDuration(350)
         fade_out.setStartValue(1.0)
         fade_out.setEndValue(0.0)
         fade_out.setEasingCurve(QEasingCurve.Type.InCubic)

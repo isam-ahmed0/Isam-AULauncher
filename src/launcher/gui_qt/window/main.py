@@ -200,26 +200,24 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         sidebar_layout.addSpacing(8)
 
         self.pages = QStackedWidget()
-        # Lazy pages: only Game page built now, others on first nav
-        self._page_built = {}
-        self._page_builders = {
-            0: self._build_game_page,
-            1: self._build_tools_page,
-            2: self._build_profile_page,
-            3: self._build_mods_page,
-            4: lambda: SettingsPage(self.config, self.discord, self.profile_mgr),
-            5: AboutPage,
-            6: self._build_assets_page_placeholder,
-        }
-        # Build game page immediately
         self.page_game = self._build_game_page()
+        self.page_tools = self._build_tools_page()
+        self.page_profile = self._build_profile_page()
+        self.page_mods = self._build_mods_page()
+        self.page_settings = SettingsPage(self.config, self.discord, self.profile_mgr)
+        self.page_about = AboutPage()
+        self.page_assets = QWidget()
+        coming_soon = QLabel("Assets Manager coming soon in a future major version.")
+        coming_soon.setObjectName("mutedText")
+        coming_soon.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        QVBoxLayout(self.page_assets).addWidget(coming_soon)
         self.pages.addWidget(self.page_game)
-        self._page_built[0] = True
-        # Add placeholder widgets for pages not yet built
-        for i in range(1, 7):
-            placeholder = QWidget()
-            self.pages.addWidget(placeholder)
-            self._page_built[i] = False
+        self.pages.addWidget(self.page_tools)
+        self.pages.addWidget(self.page_profile)
+        self.pages.addWidget(self.page_mods)
+        self.pages.addWidget(self.page_settings)
+        self.pages.addWidget(self.page_about)
+        self.pages.addWidget(self.page_assets)
 
         self.nav_buttons = {}
         for label, idx in [("Game", 0), ("Tools", 1), ("Profile", 2), ("Mods", 3),
@@ -251,14 +249,6 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         self.nav_buttons["Game"].setChecked(True)
         self.nav_buttons["Assets"].setEnabled(False)
         self.nav_buttons["Assets"].setToolTip("Coming soon in a future major version")
-
-    def _build_assets_page_placeholder(self):
-        page = QWidget()
-        coming_soon = QLabel("Assets Manager coming soon in a future major version.")
-        coming_soon.setObjectName("mutedText")
-        coming_soon.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        QVBoxLayout(page).addWidget(coming_soon)
-        return page
 
     # ------------------------------------------------------------------ pages
     def _build_game_page(self):
@@ -729,17 +719,6 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         return lbl
 
     def _switch_page(self, index, label):
-        if not self._page_built.get(index, True):
-            builder = self._page_builders.get(index)
-            if builder:
-                page = builder()
-                self.pages.removeWidget(self.pages.widget(index))
-                self.pages.insertWidget(index, page)
-                self._page_built[index] = True
-                if index == 2:
-                    self.page_profile = page
-                elif index == 3:
-                    self.page_mods = page
         self.pages.setCurrentIndex(index)
         self._active_page = label.lower()
         for name, btn in self.nav_buttons.items():
