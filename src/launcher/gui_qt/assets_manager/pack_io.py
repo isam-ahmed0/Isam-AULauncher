@@ -126,7 +126,10 @@ def import_pack(
                 if len(parts) == 2:
                     sub_dir = parts[0]
                     if sub_dir in ASSET_SUBFOLDERS:
-                        out_path = target / arcname
+                        out_path = (target / arcname).resolve()
+                        if not str(out_path).startswith(str(target.resolve())):
+                            log.warning(f"Zip slip attempt blocked: {arcname}")
+                            continue
                         out_path.parent.mkdir(parents=True, exist_ok=True)
                         with zf.open(arcname) as src, open(out_path, "wb") as dst:
                             shutil.copyfileobj(src, dst)

@@ -112,11 +112,12 @@ class ProfileManager:
                 plugins.rmdir()  # removes junction only
             elif plugins.exists():
                 # plugins is a real folder — move its contents into the target profile
-                for dll in plugins.glob("*.dll"):
-                    try:
-                        shutil.move(str(dll), str(target / dll.name))
-                    except OSError as e:
-                        log.error(f"Failed to migrate mod {dll}: {e}")
+                for f in plugins.iterdir():
+                    if f.is_file():
+                        try:
+                            shutil.move(str(f), str(target / f.name))
+                        except OSError as e:
+                            log.error(f"Failed to migrate mod {f}: {e}")
                 plugins.rmdir()
             else:
                 # Folder doesn't exist, ensure parent exists
@@ -201,11 +202,12 @@ class ProfileManager:
         # Create Default from existing plugins if present
         if plugins.exists() and not self.is_junction(plugins):
             self.create_profile("Default")
-            # Move existing .dll files to Default profile
-            for dll in plugins.glob("*.dll"):
-                try:
-                    shutil.move(str(dll), str(self.profile_path("Default") / dll.name))
-                except OSError:
+            # Move existing files to Default profile
+            for f in plugins.iterdir():
+                if f.is_file():
+                    try:
+                        shutil.move(str(f), str(self.profile_path("Default") / f.name))
+                    except OSError:
                     pass
             # Create junction
             self.switch_to("Default", game_path)

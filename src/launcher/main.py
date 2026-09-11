@@ -22,9 +22,10 @@ if __name__ == "__main__":
     args, _ = parser.parse_known_args()
 
     if args.gui_2:
-        from gui_dpg.window import LauncherApp
-        app = LauncherApp()
-        app.run()
+        QMessageBox.information(
+            None, APP_NAME,
+            "Dear PyGui is no longer supported.\nPlease use the default PySide6 interface.",
+        )
         sys.exit(0)
 
     qapp = QApplication(sys.argv)

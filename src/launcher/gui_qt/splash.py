@@ -2,7 +2,6 @@
 SplashScreen — transparent PNG splash screen for Isam AULauncher.
 Frameless window displaying a PNG image with loading status overlay.
 """
-import sys
 import logging
 from pathlib import Path
 from PySide6.QtCore import Qt, QTimer, QPropertyAnimation, QEasingCurve, Signal

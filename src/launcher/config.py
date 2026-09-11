@@ -4,8 +4,11 @@ import logging
 from pathlib import Path
 from typing import Optional, Dict
 
+_log_dir = Path(os.environ.get("APPDATA", "")) / "IsamAULauncher" / "logs"
+_log_dir.mkdir(parents=True, exist_ok=True)
+
 logging.basicConfig(
-    filename='launcher.log', level=logging.INFO,
+    filename=str(_log_dir / "launcher.log"), level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 

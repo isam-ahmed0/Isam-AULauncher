@@ -94,7 +94,8 @@ class NetworkManager:
                     return True
                 try:
                     headers = {"Range": f"bytes={seg_start}-{seg_end}"}
-                    with self.session.get(url, headers=headers, stream=True, timeout=REQUEST_TIMEOUT) as r:
+                    seg_session = requests.Session()
+                    with seg_session.get(url, headers=headers, stream=True, timeout=REQUEST_TIMEOUT) as r:
                         if r.status_code not in (200, 206):
                             return False
                         mode = "ab" if already_done > 0 else "wb"
@@ -122,6 +123,11 @@ class NetworkManager:
 
             if not all(results):
                 logging.error("Some segments failed — falling back to single-threaded")
+                for s in segments:
+                    try:
+                        s[3].unlink(missing_ok=True)
+                    except OSError:
+                        pass
                 return self._download_single_thread(url, output_path, total, progress_callback)
 
             self._concatenate_segments(segments, output_path)
@@ -198,7 +204,10 @@ class DiscordRPC:
             return False
         try:
             if self.connected and self.rpc:
-                self.rpc = None
+                try:
+                    self.rpc.close()
+                except Exception:
+                    pass
             self.rpc = Presence(DISCORD_CLIENT_ID)
             self.rpc.connect()
             self.connected = True
@@ -227,4 +236,9 @@ class DiscordRPC:
 
     def disconnect(self):
         self.connected = False
+        if self.rpc:
+            try:
+                self.rpc.close()
+            except Exception:
+                pass
         self.rpc = None
