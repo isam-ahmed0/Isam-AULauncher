@@ -177,7 +177,8 @@ class NetworkManager:
     def get_releases(self) -> List[GameVersion]:
         url = f"https://api.github.com/repos/{GITHUB_REPO}/releases"
         try:
-            r = self.session.get(url, timeout=REQUEST_TIMEOUT)
+            r = requests.get(url, timeout=30,
+                             headers={"User-Agent": f"IsamAULauncher/{LAUNCHER_VERSION}"})
             r.raise_for_status()
             versions = []
             for rel in r.json():
@@ -187,6 +188,7 @@ class NetworkManager:
                             version=rel.get("tag_name"),
                             url=asset["browser_download_url"]
                         ))
+            logging.info(f"Fetched {len(versions)} game releases")
             return versions
         except Exception as e:
             logging.error(f"Failed to fetch releases: {e}")
