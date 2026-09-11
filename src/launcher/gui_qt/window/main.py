@@ -218,7 +218,7 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
 
         self.nav_buttons = {}
         for label, idx in [("Game", 0), ("Tools", 1), ("Profile", 2), ("Mods", 3),
-                           ("Assets", 4), ("Settings", 5), ("About", 6)]:
+                           ("Settings", 4), ("About", 5), ("Assets", 6)]:
             btn = QPushButton(label)
             btn.setCheckable(True)
             btn.setFixedHeight(40)

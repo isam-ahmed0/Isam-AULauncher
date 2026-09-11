@@ -114,6 +114,10 @@ class AUASProfileManager:
             if self.is_junction(auas_data):
                 auas_data.rmdir()
             elif auas_data.exists():
+                for item in auas_data.iterdir():
+                    dest = target / item.name
+                    if not dest.exists():
+                        shutil.move(str(item), str(dest))
                 auas_data.rmdir()
             else:
                 auas_data.parent.mkdir(parents=True, exist_ok=True)
