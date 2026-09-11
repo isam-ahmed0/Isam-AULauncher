@@ -54,7 +54,7 @@ class Config:
         defaults = {
             "auto_update": True, "create_shortcuts": True,
             "discord_rpc": True, "ui_mode": "gui",
-            "active_profile": "Default", "theme": "Indigo",
+            "active_profile": "Default", "theme": "Violet",
         }
         try:
             if self.config_file.exists():

@@ -13,7 +13,7 @@ import gui_qt.theme as theme
 from gui_qt.themes import THEMES
 
 
-_THEME_ORDER = ["Indigo", "Amber", "Crimson", "Forest", "Light", "Mint"]
+_THEME_ORDER = ["Violet", "Coral", "Slate", "Ember", "Forest", "Plum", "Mono"]
 
 
 class _ThemeCard(QFrame):
@@ -99,7 +99,7 @@ class SettingsPage(QWidget):
         self.config = config
         self.discord = discord
         self.profile_mgr = profile_mgr
-        self._selected_theme = config.settings.get("theme", "Indigo")
+        self._selected_theme = config.settings.get("theme", "Violet")
 
         outer = QVBoxLayout(self)
         outer.setContentsMargins(0, 0, 0, 0)

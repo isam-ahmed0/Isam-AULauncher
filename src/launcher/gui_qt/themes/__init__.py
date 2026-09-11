@@ -1,16 +1,18 @@
 """Theme palettes for Isam AULauncher."""
-from .indigo import PALETTE as INDIGO
-from .amber import PALETTE as AMBER
-from .crimson import PALETTE as CRIMSON
+from .violet import PALETTE as VIOLET
+from .coral import PALETTE as CORAL
+from .slate import PALETTE as SLATE
+from .ember import PALETTE as EMBER
 from .forest import PALETTE as FOREST
-from .light import PALETTE as LIGHT
-from .mint import PALETTE as MINT
+from .plum import PALETTE as PLUM
+from .mono import PALETTE as MONO
 
 THEMES = {
-    "Indigo": INDIGO,
-    "Amber": AMBER,
-    "Crimson": CRIMSON,
+    "Violet": VIOLET,
+    "Coral": CORAL,
+    "Slate": SLATE,
+    "Ember": EMBER,
     "Forest": FOREST,
-    "Light": LIGHT,
-    "Mint": MINT,
+    "Plum": PLUM,
+    "Mono": MONO,
 }

@@ -6,34 +6,34 @@ All palette constants are module-level and update when set_theme() is called.
 # ---------------------------------------------------------------------------
 # Current palette (updated by set_theme)
 # ---------------------------------------------------------------------------
-BG_BASE = "#12141a"
-BG_SURFACE = "#181b22"
-BG_ELEVATED = "#20242e"
-BG_HOVER = "#282c38"
-BG_ACTIVE = "#303442"
+BG_BASE = "#0a0b0f"
+BG_SURFACE = "#111318"
+BG_ELEVATED = "#181b22"
+BG_HOVER = "#1f232c"
+BG_ACTIVE = "#272b36"
 
-BORDER_SUBTLE = "#282c38"
-BORDER_FOCUS = "#6366f1"
+BORDER_SUBTLE = "#22252d"
+BORDER_FOCUS = "#7c6cf6"
 
-ACCENT = "#6366f1"
-ACCENT_HOVER = "#818cf8"
-ACCENT_2 = "#34d399"
+ACCENT = "#7c6cf6"
+ACCENT_HOVER = "#9284f9"
+ACCENT_2 = "#2dd4bf"
 
-SUCCESS = "#34d399"
-SUCCESS_HOVER = "#10b981"
-INFO = "#818cf8"
-WARNING = "#f59e0b"
-DANGER = "#f87171"
-DANGER_HOVER = "#ef4444"
+SUCCESS = "#2dd4bf"
+SUCCESS_HOVER = "#14b8a6"
+INFO = "#60a5fa"
+WARNING = "#fbbf24"
+DANGER = "#fb7185"
+DANGER_HOVER = "#f43f5e"
 
-TEXT_PRIMARY = "#e5e7eb"
-TEXT_SECONDARY = "#9ca3af"
-TEXT_MUTED = "#6b7280"
+TEXT_PRIMARY = "#e8e9ed"
+TEXT_SECONDARY = "#a1a5b0"
+TEXT_MUTED = "#666b78"
 TEXT_BRIGHT = "#ffffff"
 
-BG_SIDEBAR = "#0e1016"
+BG_SIDEBAR = "#08090c"
 
-CURRENT_THEME = "Indigo"
+CURRENT_THEME = "Violet"
 
 
 # ---------------------------------------------------------------------------
@@ -500,7 +500,7 @@ def set_theme(app, theme_name: str):
     from gui_qt.themes import THEMES
 
     if theme_name not in THEMES:
-        theme_name = "Indigo"
+        theme_name = "Violet"
     CURRENT_THEME = theme_name
     palette = THEMES[theme_name]
     _apply_palette(palette)
@@ -513,5 +513,5 @@ def apply_theme(app):
     app.setStyle("Fusion")
     from config import Config
     config = Config()
-    theme_name = config.settings.get("theme", "Indigo")
+    theme_name = config.settings.get("theme", "Violet")
     set_theme(app, theme_name)
