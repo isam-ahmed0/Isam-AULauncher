@@ -1,7 +1,7 @@
 """Theme Maker — full visual editor for creating custom themes."""
 import random
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QColor, QFont, QRegularExpression
+from PySide6.QtGui import QColor, QFont
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QPushButton, QColorDialog, QFrame, QWidget, QScrollArea,
