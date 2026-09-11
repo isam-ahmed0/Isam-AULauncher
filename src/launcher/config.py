@@ -43,6 +43,8 @@ class Config:
         self.appdata_dir.mkdir(parents=True, exist_ok=True)
         self.profiles_dir = self.appdata_dir / "Profiles"
         self.profiles_dir.mkdir(parents=True, exist_ok=True)
+        self.cache_dir = self.appdata_dir / "cache"
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.version_file = self.appdata_dir / "current_version.txt"
         self.game_path_file = self.appdata_dir / "game_path.txt"
         self.config_file = self.appdata_dir / "config.json"

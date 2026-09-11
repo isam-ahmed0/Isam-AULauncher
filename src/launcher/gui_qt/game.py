@@ -110,18 +110,22 @@ class GameManager(QObject):
     def download_update(self, version: str, game_path: Path) -> bool:
         """Download and extract game update. Blocks until done."""
         url = f"https://github.com/{GITHUB_REPO}/releases/download/{version}/app.zip"
-        zf = Path("game.zip")
+        cache_path = self.config.cache_dir / f"{version}.app.zip"
 
-        self.status_message.emit(f"Downloading v{version}...", "info")
+        if cache_path.exists() and cache_path.stat().st_size > 0:
+            self.status_message.emit(f"Using cached v{version}", "info")
+            self.update_progress.emit(100)
+        else:
+            self.status_message.emit(f"Downloading v{version}...", "info")
 
-        def prog(cur, total, spd):
-            pct = cur / total * 100 if total else 0
-            self.update_progress.emit(pct)
-            self.status_message.emit(f"Downloading: {pct:.1f}% — {FileManager.format_size(spd)}/s", "info")
+            def prog(cur, total, spd):
+                pct = cur / total * 100 if total else 0
+                self.update_progress.emit(pct)
+                self.status_message.emit(f"Downloading: {pct:.1f}% — {FileManager.format_size(spd)}/s", "info")
 
-        if not self.network.download_file(url, zf, prog):
-            self.status_message.emit("Download failed!", "danger")
-            return False
+            if not self.network.download_file(url, cache_path, prog):
+                self.status_message.emit("Download failed!", "danger")
+                return False
 
         self.status_message.emit("Extracting...", "info")
         game_path.mkdir(parents=True, exist_ok=True)
@@ -131,11 +135,9 @@ class GameManager(QObject):
             self.update_progress.emit(pct)
             self.status_message.emit(f"Extracting: {pct:.0f}%", "info")
 
-        if not FileManager.extract_zip(zf, game_path, xp):
+        if not FileManager.extract_zip(cache_path, game_path, xp):
             self.status_message.emit("Extraction failed!", "danger")
             return False
-
-        FileManager.safe_delete(zf)
 
         exe = game_path / "Among Us.exe"
         if not exe.exists():
