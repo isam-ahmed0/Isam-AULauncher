@@ -46,7 +46,7 @@ QWidget {{
     background-color: {p["bg_base"]};
     color: {p["text_primary"]};
     font-family: "Segoe UI", "Inter", "Helvetica Neue", Arial;
-    font-size: 13px;
+    font-size: 14px;
 }}
 
 /* ===== SIDEBAR ===== */
@@ -63,7 +63,7 @@ QWidget {{
     border-radius: 8px;
     padding: 10px 16px;
     text-align: left;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 500;
 }}
 
@@ -83,10 +83,10 @@ QPushButton#primaryBtn {{
     color: {p["text_bright"]};
     border: none;
     border-radius: 10px;
-    padding: 14px 24px;
+    padding: 12px 24px;
     font-size: 15px;
     font-weight: 700;
-    min-height: 20px;
+    min-height: 22px;
 }}
 
 QPushButton#primaryBtn:hover {{
@@ -104,10 +104,10 @@ QPushButton#successBtn {{
     color: {p["text_bright"]};
     border: none;
     border-radius: 10px;
-    padding: 14px 24px;
+    padding: 12px 24px;
     font-size: 15px;
     font-weight: 700;
-    min-height: 20px;
+    min-height: 22px;
 }}
 
 QPushButton#successBtn:hover {{
@@ -125,10 +125,10 @@ QPushButton#dangerBtn {{
     color: {p["text_bright"]};
     border: none;
     border-radius: 10px;
-    padding: 14px 24px;
+    padding: 12px 24px;
     font-size: 15px;
     font-weight: 700;
-    min-height: 20px;
+    min-height: 22px;
 }}
 
 QPushButton#dangerBtn:hover {{
@@ -147,7 +147,7 @@ QPushButton#toolBtn {{
     border: 1px solid {p["border_subtle"]};
     border-radius: 8px;
     padding: 10px 16px;
-    font-size: 13px;
+    font-size: 14px;
 }}
 
 QPushButton#toolBtn:hover {{
@@ -222,24 +222,24 @@ QLabel {{
 }}
 
 QLabel#brandLabel {{
-    font-size: 20px;
+    font-size: 22px;
     font-weight: 700;
     color: {p["accent"]};
 }}
 
 QLabel#brandSubLabel {{
-    font-size: 11px;
+    font-size: 12px;
     color: {p["text_muted"]};
 }}
 
 QLabel#sectionTitle {{
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
     color: {p["text_muted"]};
 }}
 
 QLabel#heroTitle {{
-    font-size: 26px;
+    font-size: 24px;
     font-weight: 700;
     color: {p["text_bright"]};
 }}
@@ -254,7 +254,7 @@ QLabel#versionBadge {{
     border: 1px solid {p["accent"]};
     border-radius: 10px;
     padding: 3px 10px;
-    font-size: 11px;
+    font-size: 12px;
     color: {p["success"]};
 }}
 
@@ -270,7 +270,7 @@ QLabel#infoText {{
 
 QLabel#mutedText {{
     color: {p["text_muted"]};
-    font-size: 11px;
+    font-size: 12px;
 }}
 
 QLabel#statusDot {{
@@ -285,7 +285,7 @@ QLabel#statusText {{
 
 QLabel#footerText {{
     color: {p["text_muted"]};
-    font-size: 11px;
+    font-size: 12px;
 }}
 
 QLabel#warningText {{
@@ -299,7 +299,7 @@ QLabel#dangerText {{
 }}
 
 QLabel#bodyText {{
-    font-size: 13px;
+    font-size: 14px;
     color: {p["text_secondary"]};
 }}
 
@@ -347,7 +347,7 @@ QListWidget {{
     border-radius: 8px;
     padding: 4px;
     outline: none;
-    font-size: 13px;
+    font-size: 14px;
 }}
 
 QListWidget::item {{
@@ -411,7 +411,7 @@ QStatusBar {{
     background-color: {p["bg_sidebar"]};
     color: {p["text_muted"]};
     border-top: 1px solid {p["border_subtle"]};
-    font-size: 11px;
+    font-size: 12px;
 }}
 
 QStatusBar::item {{
@@ -432,7 +432,7 @@ QFrame#profileCard {{
 }}
 
 QLabel#profileTitle {{
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
     color: {p["text_muted"]};
 }}
@@ -444,7 +444,7 @@ QLabel#profileName {{
 }}
 
 QLabel#profileDetail {{
-    font-size: 13px;
+    font-size: 14px;
     color: {p["text_secondary"]};
 }}
 

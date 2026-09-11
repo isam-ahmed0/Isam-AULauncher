@@ -17,7 +17,7 @@ from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QIcon, QAction
 
 from gui_qt.worker import _UISignaler, Worker
-from ..widgets import HeroBanner, _ICON_PATH, SIDEBAR_W
+from ..widgets import HeroBanner, _ICON_PATH, SIDEBAR_W, enable_hover_glow
 from ..dialogs import SettingsPage, AboutPage
 
 from config import (
@@ -224,10 +224,11 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
                            ("Settings", 4), ("About", 5), ("Assets", 6)]:
             btn = QPushButton(label)
             btn.setCheckable(True)
-            btn.setFixedHeight(40)
+            btn.setFixedHeight(42)
             btn.clicked.connect(lambda checked, i=idx, l=label: self._switch_page(i, l))
             sidebar_layout.addWidget(btn)
             self.nav_buttons[label] = btn
+            enable_hover_glow(btn)
 
         sidebar_layout.addStretch()
 
@@ -265,7 +266,7 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
 
         profile_widget = QWidget()
         profile_layout = QHBoxLayout(profile_widget)
-        profile_layout.setContentsMargins(28, 12, 28, 0)
+        profile_layout.setContentsMargins(32, 12, 32, 0)
         profile_icon = QLabel("●")
         profile_icon.setObjectName("statusDot")
         profile_icon.setStyleSheet(f"color: {theme.TEXT_MUTED};")
@@ -281,20 +282,20 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
 
         btn_row = QWidget()
         btn_layout = QHBoxLayout(btn_row)
-        btn_layout.setContentsMargins(28, 16, 28, 0)
+        btn_layout.setContentsMargins(32, 16, 32, 0)
         self.main_action_btn = QPushButton("INSTALL GAME")
         self.main_action_btn.setObjectName("successBtn")
-        self.main_action_btn.setFixedHeight(44)
+        self.main_action_btn.setFixedHeight(46)
         self.main_action_btn.clicked.connect(self._cb_main_action)
         btn_layout.addWidget(self.main_action_btn)
         layout.addWidget(btn_row)
 
         loc_row = QWidget()
         loc_layout = QHBoxLayout(loc_row)
-        loc_layout.setContentsMargins(28, 8, 28, 0)
+        loc_layout.setContentsMargins(32, 8, 32, 0)
         self.locate_btn = QPushButton("LOCATE GAME")
         self.locate_btn.setObjectName("toolBtn")
-        self.locate_btn.setFixedHeight(36)
+        self.locate_btn.setFixedHeight(38)
         self.locate_btn.clicked.connect(self._cb_locate_game)
         self.locate_btn.hide()
         loc_layout.addWidget(self.locate_btn)
@@ -302,21 +303,21 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
 
         info_widget = QWidget()
         info_layout = QHBoxLayout(info_widget)
-        info_layout.setContentsMargins(28, 16, 28, 0)
+        info_layout.setContentsMargins(32, 16, 32, 0)
 
         left = QVBoxLayout()
         left.addWidget(self._muted_label("INSTALLED"))
         self.ver_installed = QLabel("Not Installed")
         self.ver_installed.setObjectName("mutedText")
         left.addWidget(self.ver_installed)
-        left.addSpacing(12)
+        left.addSpacing(16)
         left.addWidget(self._muted_label("LATEST"))
         self.ver_latest = QLabel("Checking...")
         self.ver_latest.setObjectName("infoText")
         left.addWidget(self.ver_latest)
         info_layout.addLayout(left)
 
-        info_layout.addSpacing(16)
+        info_layout.addSpacing(20)
 
         right = QVBoxLayout()
         right.addWidget(self._muted_label("STATUS"))
@@ -336,7 +337,7 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         self.progress_bar.setValue(0)
         self.progress_bar.setFormat("0%")
         self.progress_bar.setTextVisible(True)
-        self.progress_bar.setFixedHeight(18)
+        self.progress_bar.setFixedHeight(16)
         right.addWidget(self.progress_bar)
 
         self.game_ready_text = QLabel("Ready")
@@ -358,7 +359,7 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
 
         content = QWidget()
         layout = QVBoxLayout(content)
-        layout.setContentsMargins(28, 20, 28, 20)
+        layout.setContentsMargins(32, 20, 32, 20)
         layout.setSpacing(16)
 
         title = QLabel("TOOLS")
@@ -366,7 +367,7 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         layout.addWidget(title)
 
         row1 = QHBoxLayout()
-        row1.setSpacing(8)
+        row1.setSpacing(10)
         for label, cb in [
             ("Open Folder", self._cb_open_folder),
             ("Change Location", self._cb_change_location),
@@ -374,13 +375,13 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         ]:
             btn = QPushButton(label)
             btn.setObjectName("toolBtn")
-            btn.setFixedHeight(36)
+            btn.setFixedHeight(38)
             btn.clicked.connect(cb)
             row1.addWidget(btn)
         layout.addLayout(row1)
 
         row2 = QHBoxLayout()
-        row2.setSpacing(8)
+        row2.setSpacing(10)
         for label, cb, obj_name in [
             ("Create Shortcut", self._cb_create_shortcut, "toolBtn"),
             ("Reinstall Game", self._cb_reinstall, "toolBtn"),
@@ -388,7 +389,7 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         ]:
             btn = QPushButton(label)
             btn.setObjectName(obj_name)
-            btn.setFixedHeight(36)
+            btn.setFixedHeight(38)
             btn.clicked.connect(cb)
             row2.addWidget(btn)
         layout.addLayout(row2)
@@ -408,29 +409,29 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         layout.addWidget(self._region_list)
 
         region_btn_row = QHBoxLayout()
-        region_btn_row.setSpacing(8)
+        region_btn_row.setSpacing(10)
 
         add_region_btn = QPushButton("Add Region")
         add_region_btn.setObjectName("toolBtn")
-        add_region_btn.setFixedHeight(36)
+        add_region_btn.setFixedHeight(38)
         add_region_btn.clicked.connect(self._cb_add_region)
         region_btn_row.addWidget(add_region_btn)
 
         remove_region_btn = QPushButton("Remove")
         remove_region_btn.setObjectName("dangerBtn")
-        remove_region_btn.setFixedHeight(36)
+        remove_region_btn.setFixedHeight(38)
         remove_region_btn.clicked.connect(self._cb_remove_region)
         region_btn_row.addWidget(remove_region_btn)
 
         reset_region_btn = QPushButton("Reset to Official")
         reset_region_btn.setObjectName("toolBtn")
-        reset_region_btn.setFixedHeight(36)
+        reset_region_btn.setFixedHeight(38)
         reset_region_btn.clicked.connect(self._cb_reset_regions)
         region_btn_row.addWidget(reset_region_btn)
 
         apply_region_btn = QPushButton("Apply")
         apply_region_btn.setObjectName("successBtn")
-        apply_region_btn.setFixedHeight(36)
+        apply_region_btn.setFixedHeight(38)
         apply_region_btn.clicked.connect(self._cb_apply_region)
         region_btn_row.addWidget(apply_region_btn)
         region_btn_row.addStretch()
@@ -458,17 +459,17 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         layout.addWidget(self._zip_path_label)
 
         zip_btn_row = QHBoxLayout()
-        zip_btn_row.setSpacing(8)
+        zip_btn_row.setSpacing(10)
 
         select_zip_btn = QPushButton("Select Zip")
         select_zip_btn.setObjectName("toolBtn")
-        select_zip_btn.setFixedHeight(36)
+        select_zip_btn.setFixedHeight(38)
         select_zip_btn.clicked.connect(self._cb_select_zip)
         zip_btn_row.addWidget(select_zip_btn)
 
         extract_zip_btn = QPushButton("Extract to Game Folder")
         extract_zip_btn.setObjectName("successBtn")
-        extract_zip_btn.setFixedHeight(36)
+        extract_zip_btn.setFixedHeight(38)
         extract_zip_btn.clicked.connect(self._cb_extract_zip)
         zip_btn_row.addWidget(extract_zip_btn)
         zip_btn_row.addStretch()
@@ -483,7 +484,7 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         self._zip_progress = QProgressBar()
         self._zip_progress.setRange(0, 100)
         self._zip_progress.setValue(0)
-        self._zip_progress.setFixedHeight(18)
+        self._zip_progress.setFixedHeight(16)
         self._zip_progress.hide()
         layout.addWidget(self._zip_progress)
 
@@ -506,7 +507,7 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
 
         content = QWidget()
         layout = QVBoxLayout(content)
-        layout.setContentsMargins(28, 20, 28, 20)
+        layout.setContentsMargins(32, 20, 32, 20)
         layout.setSpacing(16)
 
         title = QLabel("MODS")
@@ -519,38 +520,38 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         layout.addWidget(desc)
         layout.addSpacing(8)
 
-        layout.addSpacing(4)
+        layout.addSpacing(8)
         layout.addWidget(QFrame(frameShape=QFrame.Shape.HLine))
-        layout.addSpacing(4)
+        layout.addSpacing(8)
 
         prof_title = QLabel("MOD PROFILES")
         prof_title.setObjectName("sectionTitle")
         layout.addWidget(prof_title)
 
         prof_sel_row = QHBoxLayout()
-        prof_sel_row.setSpacing(8)
+        prof_sel_row.setSpacing(10)
 
         self._profile_combo = QComboBox()
-        self._profile_combo.setFixedHeight(36)
+        self._profile_combo.setFixedHeight(38)
         self._profile_combo.setMinimumWidth(200)
         self._profile_combo.currentTextChanged.connect(self._on_profile_selected)
         prof_sel_row.addWidget(self._profile_combo)
 
         create_btn = QPushButton("Create")
         create_btn.setObjectName("toolBtn")
-        create_btn.setFixedHeight(36)
+        create_btn.setFixedHeight(38)
         create_btn.clicked.connect(self._cb_create_profile)
         prof_sel_row.addWidget(create_btn)
 
         rename_btn = QPushButton("Rename")
         rename_btn.setObjectName("toolBtn")
-        rename_btn.setFixedHeight(36)
+        rename_btn.setFixedHeight(38)
         rename_btn.clicked.connect(self._cb_rename_profile)
         prof_sel_row.addWidget(rename_btn)
 
         delete_btn = QPushButton("Delete")
         delete_btn.setObjectName("dangerBtn")
-        delete_btn.setFixedHeight(36)
+        delete_btn.setFixedHeight(38)
         delete_btn.clicked.connect(self._cb_delete_profile)
         prof_sel_row.addWidget(delete_btn)
 
@@ -566,16 +567,16 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
 
         self._profile_switch_btn = QPushButton("Switch to This Profile")
         self._profile_switch_btn.setObjectName("primaryBtn")
-        self._profile_switch_btn.setFixedHeight(36)
+        self._profile_switch_btn.setFixedHeight(38)
         self._profile_switch_btn.clicked.connect(self._cb_switch_profile)
         switch_row.addWidget(self._profile_switch_btn)
 
         switch_row.addStretch()
         layout.addLayout(switch_row)
 
-        layout.addSpacing(4)
+        layout.addSpacing(8)
         layout.addWidget(QFrame(frameShape=QFrame.Shape.HLine))
-        layout.addSpacing(4)
+        layout.addSpacing(8)
 
         mods_title = QLabel("MODS IN PROFILE")
         mods_title.setObjectName("sectionTitle")
@@ -587,35 +588,35 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         layout.addWidget(self._mods_list)
 
         mods_btn_row = QHBoxLayout()
-        mods_btn_row.setSpacing(8)
+        mods_btn_row.setSpacing(10)
 
         refresh_mods_btn = QPushButton("Refresh")
         refresh_mods_btn.setObjectName("toolBtn")
-        refresh_mods_btn.setFixedHeight(36)
+        refresh_mods_btn.setFixedHeight(38)
         refresh_mods_btn.clicked.connect(self._cb_refresh_mods)
         mods_btn_row.addWidget(refresh_mods_btn)
 
         add_mods_btn = QPushButton("Add Mod Files")
         add_mods_btn.setObjectName("successBtn")
-        add_mods_btn.setFixedHeight(36)
+        add_mods_btn.setFixedHeight(38)
         add_mods_btn.clicked.connect(self._cb_add_mods)
         mods_btn_row.addWidget(add_mods_btn)
 
         move_mods_btn = QPushButton("Move to...")
         move_mods_btn.setObjectName("toolBtn")
-        move_mods_btn.setFixedHeight(36)
+        move_mods_btn.setFixedHeight(38)
         move_mods_btn.clicked.connect(self._cb_move_mods)
         mods_btn_row.addWidget(move_mods_btn)
 
         remove_mods_btn = QPushButton("Remove Selected")
         remove_mods_btn.setObjectName("dangerBtn")
-        remove_mods_btn.setFixedHeight(36)
+        remove_mods_btn.setFixedHeight(38)
         remove_mods_btn.clicked.connect(self._cb_remove_mods)
         mods_btn_row.addWidget(remove_mods_btn)
 
         info_mods_btn = QPushButton("Info")
         info_mods_btn.setObjectName("toolBtn")
-        info_mods_btn.setFixedHeight(36)
+        info_mods_btn.setFixedHeight(38)
         info_mods_btn.clicked.connect(self._cb_mod_info)
         mods_btn_row.addWidget(info_mods_btn)
 
@@ -658,7 +659,7 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         card = QFrame()
         card.setObjectName("profileCard")
         card_layout = QVBoxLayout(card)
-        card_layout.setContentsMargins(28, 24, 28, 24)
+        card_layout.setContentsMargins(32, 24, 32, 24)
         card_layout.setSpacing(12)
 
         self.profile_page_name = QLabel("Loading...")
@@ -687,16 +688,16 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
 
         card_wrapper = QWidget()
         card_wrapper_layout = QVBoxLayout(card_wrapper)
-        card_wrapper_layout.setContentsMargins(28, 20, 28, 0)
+        card_wrapper_layout.setContentsMargins(32, 20, 32, 0)
         card_wrapper_layout.addWidget(card)
         layout.addWidget(card_wrapper)
 
         btn_row = QWidget()
         btn_row_layout = QHBoxLayout(btn_row)
-        btn_row_layout.setContentsMargins(28, 12, 28, 0)
+        btn_row_layout.setContentsMargins(32, 12, 32, 0)
         self._itch_login_btn = QPushButton("Login with itch.io")
         self._itch_login_btn.setObjectName("successBtn")
-        self._itch_login_btn.setFixedHeight(36)
+        self._itch_login_btn.setFixedHeight(38)
         self._itch_login_btn.setMinimumWidth(200)
         self._itch_login_btn.clicked.connect(self.start_itch_login)
         btn_row_layout.addWidget(self._itch_login_btn)

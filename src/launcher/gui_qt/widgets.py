@@ -1,8 +1,8 @@
 from pathlib import Path
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QPropertyAnimation, QEasingCurve
 from PySide6.QtGui import QPixmap, QPainter, QColor, QLinearGradient, QFont, QFontMetrics
-from PySide6.QtWidgets import QLabel
+from PySide6.QtWidgets import QLabel, QGraphicsOpacityEffect
 
 from config import LAUNCHER_VERSION
 import gui_qt.theme as theme
@@ -20,6 +20,32 @@ _FONT_FAMILY = "Segoe UI, Inter, Helvetica Neue, Arial"
 def _hex_to_qcolor(hex_str: str, alpha: int = 255) -> QColor:
     h = hex_str.lstrip("#")
     return QColor(int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16), alpha)
+
+
+def enable_hover_glow(widget, duration=150):
+    """Add a subtle opacity hover animation to a widget."""
+    effect = QGraphicsOpacityEffect(widget)
+    widget.setGraphicsEffect(effect)
+    anim = QPropertyAnimation(effect, b"opacity", widget)
+    anim.setDuration(duration)
+    anim.setEasingCurve(QEasingCurve.Type.InOutQuad)
+
+    def on_enter(event):
+        anim.stop()
+        anim.setStartValue(effect.opacity())
+        anim.setEndValue(0.85)
+        anim.start()
+        QLabel.enterEvent(widget, event)
+
+    def on_leave(event):
+        anim.stop()
+        anim.setStartValue(effect.opacity())
+        anim.setEndValue(1.0)
+        anim.start()
+        QLabel.leaveEvent(widget, event)
+
+    widget.enterEvent = on_enter
+    widget.leaveEvent = on_leave
 
 
 class HeroBanner(QLabel):
@@ -96,7 +122,7 @@ class HeroBanner(QLabel):
 
         # Version badge
         badge_text = f"v{LAUNCHER_VERSION}"
-        badge_font = QFont("Segoe UI", 10)
+        badge_font = QFont("Segoe UI", 11)
         badge_font.setFamilies(["Segoe UI", "Inter", "Helvetica Neue", "Arial"])
         painter.setFont(badge_font)
         fm = painter.fontMetrics()

@@ -257,8 +257,8 @@ class LoginWindow(QMainWindow):
         # Left content
         left = QWidget()
         left_layout = QVBoxLayout(left)
-        left_layout.setContentsMargins(40, 40, 40, 0)
-        left_layout.setSpacing(12)
+        left_layout.setContentsMargins(40, 40, 40, 20)
+        left_layout.setSpacing(14)
 
         # Brand header
         brand = QLabel(BRAND_SHORT)
@@ -269,7 +269,7 @@ class LoginWindow(QMainWindow):
         app_name.setObjectName("brandSubLabel")
         left_layout.addWidget(app_name)
 
-        left_layout.addSpacing(30)
+        left_layout.addSpacing(28)
         left_layout.addWidget(QFrame(frameShape=QFrame.Shape.HLine))
         left_layout.addSpacing(20)
 
@@ -282,7 +282,7 @@ class LoginWindow(QMainWindow):
         # Login button
         self._login_btn = QPushButton("Sign in with itch.io")
         self._login_btn.setObjectName("successBtn")
-        self._login_btn.setFixedHeight(44)
+        self._login_btn.setFixedHeight(46)
         self._login_btn.setMinimumWidth(260)
         self._login_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self._login_btn.clicked.connect(self._start_login)

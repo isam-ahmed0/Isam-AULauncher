@@ -25,7 +25,7 @@ class _ThemeCard(QFrame):
         self._palette = palette
         self._selected = is_selected
 
-        self.setFixedSize(130, 72)
+        self.setFixedSize(140, 78)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self._update_style()
 
@@ -67,16 +67,16 @@ class _ThemeCard(QFrame):
 
         # Theme name
         p.setPen(QColor(self._palette["text_bright"]))
-        f = QFont("Segoe UI", 11)
+        f = QFont("Segoe UI", 12)
         f.setBold(True)
         p.setFont(f)
-        p.drawText(0, 22, w, 20, Qt2.AlignmentFlag.AlignHCenter, self._name)
+        p.drawText(0, 24, w, 20, Qt2.AlignmentFlag.AlignHCenter, self._name)
 
         # Accent color label
         p.setPen(QColor(self._palette["text_muted"]))
-        f2 = QFont("Segoe UI", 9)
+        f2 = QFont("Segoe UI", 10)
         p.setFont(f2)
-        p.drawText(0, 42, w, 16, Qt2.AlignmentFlag.AlignHCenter, accent.name())
+        p.drawText(0, 46, w, 16, Qt2.AlignmentFlag.AlignHCenter, accent.name())
 
         p.end()
 
@@ -111,13 +111,13 @@ class SettingsPage(QWidget):
 
         container = QWidget()
         layout = QVBoxLayout(container)
-        layout.setContentsMargins(28, 20, 28, 20)
+        layout.setContentsMargins(32, 20, 32, 20)
         layout.setSpacing(12)
 
         title = QLabel("Settings")
         title.setObjectName("sectionTitle")
         layout.addWidget(title)
-        layout.addSpacing(4)
+        layout.addSpacing(8)
         layout.addWidget(QFrame(frameShape=QFrame.Shape.HLine))
         layout.addSpacing(12)
 
@@ -155,7 +155,7 @@ class SettingsPage(QWidget):
         self._theme_cards = {}
 
         grid = QGridLayout()
-        grid.setSpacing(8)
+        grid.setSpacing(10)
         for idx, name in enumerate(_THEME_ORDER):
             pal = THEMES[name]
             card = _ThemeCard(name, pal, name == self._selected_theme)
@@ -273,13 +273,13 @@ class AboutPage(QWidget):
 
         container = QWidget()
         layout = QVBoxLayout(container)
-        layout.setContentsMargins(28, 20, 28, 20)
+        layout.setContentsMargins(32, 20, 32, 20)
         layout.setSpacing(12)
 
         title = QLabel("About")
         title.setObjectName("sectionTitle")
         layout.addWidget(title)
-        layout.addSpacing(4)
+        layout.addSpacing(8)
         layout.addWidget(QFrame(frameShape=QFrame.Shape.HLine))
         layout.addSpacing(12)
 
@@ -302,28 +302,29 @@ class AboutPage(QWidget):
 
         # Links row
         links_row = QHBoxLayout()
+        links_row.setSpacing(10)
         if DISCORD_INVITE:
             discord_btn = QPushButton("Discord")
             discord_btn.setObjectName("toolBtn")
-            discord_btn.setFixedHeight(36)
+            discord_btn.setFixedHeight(38)
             discord_btn.clicked.connect(lambda: webbrowser.open(DISCORD_INVITE))
             links_row.addWidget(discord_btn)
         else:
             discord_btn = QPushButton("Discord (Coming soon)")
             discord_btn.setObjectName("toolBtn")
-            discord_btn.setFixedHeight(36)
+            discord_btn.setFixedHeight(38)
             discord_btn.clicked.connect(self._cb_coming_soon)
             links_row.addWidget(discord_btn)
 
         yt_btn = QPushButton("YouTube")
         yt_btn.setObjectName("toolBtn")
-        yt_btn.setFixedHeight(36)
+        yt_btn.setFixedHeight(38)
         yt_btn.clicked.connect(lambda: webbrowser.open(YOUTUBE_CHANNEL))
         links_row.addWidget(yt_btn)
 
         src_btn = QPushButton("Source Code")
         src_btn.setObjectName("toolBtn")
-        src_btn.setFixedHeight(36)
+        src_btn.setFixedHeight(38)
         src_btn.clicked.connect(lambda: webbrowser.open(SOURCE_CODE_URL))
         links_row.addWidget(src_btn)
         layout.addLayout(links_row)
