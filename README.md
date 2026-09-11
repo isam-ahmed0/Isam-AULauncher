@@ -1,8 +1,15 @@
 # Isam AULauncher
 
-![image](https://ik.imagekit.io/Isam/Images/image.png)
-![image](https://ik.imagekit.io/Isam/Images/image2.png)
-
+<table>
+  <tr>
+    <td width="50%">
+      <img src="https://ik.imagekit.io/Isam/Images/image.png" alt="Isam AULauncher Interface" width="100%" />
+    </td>
+    <td width="50%">
+      <img src="https://ik.imagekit.io/Isam/Images/image2.png" alt="Isam AULauncher Secondary View" width="100%" />
+    </td>
+  </tr>
+</table>
 This is the continuation of my Among Us launcher project.
 I changed everything, logic, language
 carries the **Isam AULauncher** identity with a fresh, sleek interface.
