@@ -1,4 +1,3 @@
 PySide6>=6.5
 requests
 pypresence
-dnfile>=0.16.4

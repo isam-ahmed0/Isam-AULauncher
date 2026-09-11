@@ -5,17 +5,6 @@ from typing import Optional, List
 
 
 @dataclass
-class AssetEntry:
-    name: str
-    asset_type: str
-    source: str
-    dll_source: str = ""
-    has_replacement: bool = False
-    width: Optional[int] = None
-    height: Optional[int] = None
-
-
-@dataclass
 class PackMetadata:
     name: str = ""
     author: str = ""
