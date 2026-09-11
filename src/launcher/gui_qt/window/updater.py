@@ -37,6 +37,7 @@ class UpdaterMixin:
             self._update_main_btn()
             if self.config.settings.get("discord_rpc"):
                 self.discord.connect()
+            self._check_launcher_update()
         except Exception as e:
             logging.warning(f"Initial data load failed: {e}")
 
