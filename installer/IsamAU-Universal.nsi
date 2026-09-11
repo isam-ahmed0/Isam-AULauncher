@@ -26,7 +26,7 @@
 !define DOWNLOAD_URL  "https://github.com/isam-ahmed0/Isam-AULauncher/releases/latest/download/IsamAU-All.zip"
 
 Name    "${APP_NAME}"
-OutFile "${ROOT}\dist\IsamAU-Setup.exe"
+OutFile "${ROOT}\dist\IsamAU-Universal.exe"
 
 InstallDir "$LOCALAPPDATA\Programs\${APP_NAME}"
 InstallDirRegKey HKCU "Software\${APP_NAME}" "Install_Location"

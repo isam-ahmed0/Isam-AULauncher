@@ -7,7 +7,7 @@ REM
 REM Prerequisites:
 REM   1. NSIS (Unicode) installed from https://nsis.sourceforge.io/Download
 REM
-REM Produces: dist\IsamAU-Setup.exe
+REM Produces: dist\IsamAU-Universal.exe
 setlocal
 cd /d "%~dp0.."
 set "ROOT=%CD%"
@@ -36,7 +36,7 @@ if errorlevel 1 (
 
 echo.
 echo ============================================================
-echo  Done! Universal installer: dist\IsamAU-Setup.exe
+echo  Done! Universal installer: dist\IsamAU-Universal.exe
 echo  (Always downloads latest version - never needs recompile)
 echo ============================================================
 pause
