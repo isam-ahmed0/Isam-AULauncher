@@ -1,22 +1,19 @@
 # Isam AULauncher
 
-## ⚠️After downloading game please use locate game into the folder you installed if it still shows install game.
-A clean, modern launcher for Among Us — maintained by **Isam**.
-
-![image](https://github.com/isam-ahmed0/Isam-AULauncher/blob/main/Screenshot%202026-08-30%20150105.png?raw=true)
+![image](https://ik.imagekit.io/Isam/Images/image.png)
 
 This is the continuation of my Among Us launcher project.
 I changed everything, logic, language
 carries the **Isam AULauncher** identity with a fresh, sleek interface.
 
 ### Cedits
-The itch login and game files are from Shadow Slime.
+The game files are from Shadow Slime.
 
 ## Install
 
-The easiest way to use is download the IsamAULauncher-Setup.exe from [Releases](https://github.com/isam-ahmed0/Isam-AULauncher/releases/latest).
+The easiest way to use is download the IsamAU-Setup.exe from [Releases](https://github.com/isam-ahmed0/Isam-AULauncher/releases/latest).
 
-Theres also a lite version called **Isam-AU-LITE.zip** which is 8x lite and low feautures **but discontinued**
+The default installer is IsamAU-Setup.exe but theres IsamAU-Offline.exe which is compiled. IsamAU-Universal.exe is best, you download the setup once and it works for any latest version. The IsamAU-All.zip is portable.
 
 The test and old repo was https://github.com/isam-ahmed0/AmongUs_Launcher
 
