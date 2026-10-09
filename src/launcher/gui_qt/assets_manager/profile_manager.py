@@ -6,6 +6,7 @@ import shutil
 from pathlib import Path
 from typing import Optional, List
 
+from platform_utils import IS_WINDOWS
 from .models import PackProfile, PackMetadata
 
 log = logging.getLogger(__name__)
@@ -112,12 +113,21 @@ class AUASProfileManager:
             return False
         try:
             if self.is_junction(auas_data):
-                auas_data.rmdir()
+                self._remove_link(auas_data)
             elif auas_data.exists():
                 for item in auas_data.iterdir():
-                    dest = target / item.name
-                    if not dest.exists():
-                        shutil.move(str(item), str(dest))
+                    if item.is_dir():
+                        dest_dir = target / item.name
+                        dest_dir.mkdir(parents=True, exist_ok=True)
+                        for f in item.iterdir():
+                            fdest = dest_dir / f.name
+                            if not fdest.exists():
+                                shutil.move(str(f), str(fdest))
+                        item.rmdir()
+                    else:
+                        dest = target / item.name
+                        if not dest.exists():
+                            shutil.move(str(item), str(dest))
                 auas_data.rmdir()
             else:
                 auas_data.parent.mkdir(parents=True, exist_ok=True)
@@ -125,14 +135,17 @@ class AUASProfileManager:
             log.error(f"Failed to remove old AUAS_Data: {e}")
             return False
         try:
-            result = subprocess.run(
-                ["cmd", "/c", "mklink", "/J", str(auas_data), str(target)],
-                capture_output=True, text=True,
-                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
-            )
-            if result.returncode != 0:
-                log.error(f"mklink failed: {result.stderr}")
-                return False
+            if IS_WINDOWS:
+                result = subprocess.run(
+                    ["cmd", "/c", "mklink", "/J", str(auas_data), str(target)],
+                    capture_output=True, text=True,
+                    creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+                )
+                if result.returncode != 0:
+                    log.error(f"mklink failed: {result.stderr}")
+                    return False
+            else:
+                os.symlink(str(target), str(auas_data), target_is_directory=True)
             return True
         except OSError as e:
             log.error(f"Failed to create AUAS junction: {e}")
@@ -154,23 +167,31 @@ class AUASProfileManager:
         auas_data = game_path / "AUAS_Data"
         try:
             if self.is_junction(auas_data):
-                auas_data.rmdir()
+                self._remove_link(auas_data)
                 return True
         except OSError as e:
             log.error(f"Failed to remove AUAS junction: {e}")
         return False
 
     def is_junction(self, path: Path) -> bool:
+        """True for a Windows junction or a POSIX symlink."""
         try:
-            return path.is_junction()
-        except OSError:
+            return path.is_symlink() or path.is_junction()
+        except (OSError, AttributeError):
             return False
+
+    def _remove_link(self, path: Path) -> None:
+        """Remove a junction/symlink without touching the target's contents."""
+        if path.is_symlink():
+            path.unlink()
+        else:
+            path.rmdir()
 
     def get_junction_target(self, junction_path: Path) -> Optional[Path]:
         try:
-            if self.is_junction(junction_path):
-                return Path(os.readlink(str(junction_path)))
-        except Exception:
+            if junction_path.is_symlink():
+                return junction_path.resolve()
+        except OSError:
             pass
         try:
             if self.is_junction(junction_path):

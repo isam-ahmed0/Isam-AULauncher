@@ -18,6 +18,11 @@ from gui_qt.zipextract import list_contents, extract_to
 class GameActionsMixin:
     # ------------------------------------------------------------------ callbacks
     def _cb_main_action(self):
+        from platform_utils import IS_LINUX
+        if IS_LINUX:
+            from gui_qt.dialogs import show_linux_docs
+            show_linux_docs(self.window)
+            return
         txt = self.main_action_btn.text()
         if "INSTALL" in txt or "UPDATE" in txt:
             self._download_latest()
@@ -33,7 +38,8 @@ class GameActionsMixin:
     def _cb_open_folder(self):
         gp = self.config.get_game_path()
         if gp and gp.exists():
-            os.startfile(str(gp))
+            from platform_utils import open_local_path
+            open_local_path(gp)
         else:
             QMessageBox.warning(self.window, "Error", "Game not installed!")
 
@@ -203,6 +209,11 @@ class GameActionsMixin:
             self._update_main_btn()
 
     def _create_shortcut(self):
+        from platform_utils import IS_LINUX
+        if IS_LINUX:
+            from gui_qt.dialogs import show_linux_docs
+            show_linux_docs(self.window)
+            return
         gp = self.config.get_game_path()
         if not gp:
             QMessageBox.warning(self.window, "Error", "Game not installed!")
@@ -297,6 +308,11 @@ class GameActionsMixin:
         self._set_status("Ready")
 
     def _reinstall_game(self):
+        from platform_utils import IS_LINUX
+        if IS_LINUX:
+            from gui_qt.dialogs import show_linux_docs
+            show_linux_docs(self.window)
+            return
         reply = QMessageBox.question(
             self.window, "Confirm", "Delete and reinstall the game?",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
@@ -312,6 +328,11 @@ class GameActionsMixin:
             self._download_latest()
 
     def _uninstall_game(self):
+        from platform_utils import IS_LINUX
+        if IS_LINUX:
+            from gui_qt.dialogs import show_linux_docs
+            show_linux_docs(self.window)
+            return
         reply = QMessageBox.question(
             self.window, "Confirm",
             "Remove all game files and launcher data?",

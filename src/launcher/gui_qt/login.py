@@ -5,13 +5,8 @@ Right sidebar supports image, GIF, and slideshow.
 """
 import os
 import sys
-import time
 import logging
-import webbrowser
-import threading
-import urllib.parse
 from pathlib import Path
-from http.server import HTTPServer, BaseHTTPRequestHandler
 
 from PySide6.QtCore import Qt, QTimer, QPropertyAnimation, QEasingCurve, QParallelAnimationGroup
 from PySide6.QtGui import (
@@ -27,78 +22,10 @@ from PySide6.QtWidgets import (
 from config import APP_NAME, BRAND_SHORT, LAUNCHER_VERSION, MAKER
 import gui_qt.theme as theme
 from gui_qt.widgets import _ICON_PATH, _hex_to_qcolor
-
-# Reuse existing OAuth infrastructure from itch_profile.py
-from gui_qt.window.itch_profile import (
-    ITCH_CLIENT_ID, ITCH_OAUTH_PORT,
-    ITCH_TOKEN_DIR, ITCH_TOKEN_FILE,
-)
+from gui_qt.fixer_launcher import launch_itch_fixer, LAUNCHED, NO_WINE
+from platform_utils import IS_WINDOWS, itch_token_dir
 
 _LOGIN_DIR = Path(__file__).parent.parent / "resources" / "login"
-
-_LOADING_PAGE = b"""<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Isam AU | Authenticating</title>
-    <style>
-        body { background: #060608; color: #6366f1; display: flex; flex-direction: column;
-               justify-content: center; align-items: center; height: 100vh;
-               font-family: 'Segoe UI', sans-serif; margin: 0; }
-        .loader { border: 4px solid #1a1b1e; border-top: 4px solid #6366f1; border-radius: 50%;
-                  width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .text { font-weight: bold; letter-spacing: 1px; }
-    </style>
-</head>
-<body>
-    <div class="loader"></div>
-    <div class="text">CONNECTING TO ITCH.IO...</div>
-    <script>
-        const params = new URLSearchParams(window.location.hash.slice(1));
-        const token = params.get('access_token');
-        if (token) window.location = '/token?t=' + token;
-    </script>
-</body>
-</html>"""
-
-_SUCCESS_PAGE = b"""<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Isam AU | Success</title>
-    <style>
-        body { background: #060608; color: #4ade80; display: flex; flex-direction: column;
-               justify-content: center; align-items: center; height: 100vh;
-               font-family: 'Segoe UI', sans-serif; margin: 0; }
-        .icon { font-size: 60px; margin-bottom: 10px; }
-        .msg { font-size: 24px; font-weight: bold; }
-        .sub { color: #888; margin-top: 10px; }
-    </style>
-</head>
-<body>
-    <div class="icon">&#10004;</div>
-    <div class="msg">AUTHORIZATION COMPLETE</div>
-    <div class="sub">You can close this tab and return to the launcher.</div>
-</body>
-</html>"""
-
-
-class _OAuthHandler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        if self.path.startswith("/token"):
-            params = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
-            self.server.token = params.get("t", [None])[0]
-            self.send_response(200)
-            self.end_headers()
-            self.wfile.write(_SUCCESS_PAGE)
-        else:
-            self.send_response(200)
-            self.end_headers()
-            self.wfile.write(_LOADING_PAGE)
-
-    def log_message(self, format, *args):
-        pass
 
 
 class _RightSidebar(QWidget):
@@ -392,45 +319,61 @@ class LoginWindow(QMainWindow):
 
         layout.addWidget(body_widget)
 
-    # ------------------------------------------------------------------ OAuth
+    # ------------------------------------------------------------------ sign-in via fixer
     def _start_login(self):
         if self._logging_in:
             return
         self._logging_in = True
         self._login_btn.setEnabled(False)
-        self._set_status("Opening itch.io login...")
 
-        def run_server():
+        result = launch_itch_fixer()
+        if result == LAUNCHED:
+            self._set_status("Itch Login Fixer opened — finish signing in there.")
+            self._poll_for_token()
+        elif result == NO_WINE:
+            from gui_qt.dialogs import show_wine_missing
+            show_wine_missing(self)
+            self._set_status("Wine is required — see the documentation.")
+            self._reset_btn()
+        elif IS_WINDOWS:
+            from PySide6.QtWidgets import QMessageBox
+            QMessageBox.warning(
+                self, "Not Found",
+                "Itch_Login_Fixer.exe was not found.\nPlease reinstall the launcher.",
+            )
+            self._reset_btn()
+        else:
+            from gui_qt.dialogs import show_linux_docs
+            show_linux_docs(self)
+            self._reset_btn()
+
+    def _poll_for_token(self):
+        """Wait for the fixer to write the token, then restart into the launcher."""
+        token_file = itch_token_dir() / "itch"
+        attempts = {"n": 0}
+
+        def check():
             try:
-                server = HTTPServer(("127.0.0.1", ITCH_OAUTH_PORT), _OAuthHandler)
-                server.token = None
-                server.timeout = 1
-                deadline = time.time() + 300
-                while server.token is None and time.time() < deadline:
-                    server.handle_request()
-                if server.token:
-                    self._save_token(server.token)
-                    QTimer.singleShot(0, lambda: self._set_status("Login successful!"))
-                    QTimer.singleShot(1000, self._restart_app)
-                else:
-                    QTimer.singleShot(0, lambda: self._set_status("Login timed out. Try again."))
-                    QTimer.singleShot(0, self._reset_btn)
-            except OSError as e:
-                logging.error(f"OAuth server error: {e}")
-                QTimer.singleShot(0, lambda: self._set_status(f"Login failed: {e}"))
-                QTimer.singleShot(0, self._reset_btn)
+                if token_file.exists() and token_file.read_text().strip():
+                    self._set_status("Login successful! Restarting...")
+                    QTimer.singleShot(800, self._restart_app)
+                    return
+            except OSError:
+                pass
+            attempts["n"] += 1
+            if attempts["n"] < 150:
+                QTimer.singleShot(2000, check)
+            else:
+                self._set_status("Login timed out. Try again.")
+                self._reset_btn()
 
-        threading.Thread(target=run_server, daemon=True).start()
-        webbrowser.open(
-            f"https://itch.io/user/oauth?client_id={ITCH_CLIENT_ID}"
-            f"&scope=profile:me&redirect_uri=http://127.0.0.1:{ITCH_OAUTH_PORT}"
-            f"&response_type=token"
-        )
+        QTimer.singleShot(2000, check)
 
     def _save_token(self, token: str):
         try:
-            ITCH_TOKEN_DIR.mkdir(parents=True, exist_ok=True)
-            ITCH_TOKEN_FILE.write_text(token)
+            token_file = itch_token_dir() / "itch"
+            token_file.parent.mkdir(parents=True, exist_ok=True)
+            token_file.write_text(token)
             logging.info("Itch token saved successfully")
         except OSError as e:
             logging.error(f"Failed to save itch token: {e}")

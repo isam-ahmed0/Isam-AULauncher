@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 *.egg-info/
 src/Isam_AULauncher.egg-info/
+.venv/
 
 # Build outputs
 dist/

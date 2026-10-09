@@ -710,7 +710,7 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         self._itch_login_btn.setObjectName("successBtn")
         self._itch_login_btn.setFixedHeight(38)
         self._itch_login_btn.setMinimumWidth(200)
-        self._itch_login_btn.clicked.connect(self.start_itch_login)
+        self._itch_login_btn.clicked.connect(self.open_itch_fixer)
         btn_row_layout.addWidget(self._itch_login_btn)
         btn_row_layout.addStretch()
         layout.addWidget(btn_row)

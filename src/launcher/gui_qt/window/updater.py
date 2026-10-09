@@ -5,7 +5,7 @@ from pathlib import Path
 
 from PySide6.QtWidgets import QMessageBox
 
-from config import LAUNCHER_VERSION, LAUNCHER_UPDATE_URL, VERSION_URL
+from config import LAUNCHER_VERSION, LAUNCHER_UPDATE_URL, VERSION_URL, SOURCE_CODE_URL
 
 
 class UpdaterMixin:
@@ -60,6 +60,20 @@ class UpdaterMixin:
             logging.debug(f"Launcher update check failed: {e}")
 
     def _prompt_launcher_update(self, new_version):
+        from platform_utils import IS_LINUX
+        if IS_LINUX:
+            from PySide6.QtCore import QUrl
+            from PySide6.QtGui import QDesktopServices
+            reply = QMessageBox.information(
+                self.window, "Update Available",
+                f"A new version (v{new_version}) is available.\n\n"
+                f"Current: v{LAUNCHER_VERSION}\n\n"
+                f"Open the downloads page?",
+                QMessageBox.StandardButton.Open | QMessageBox.StandardButton.Cancel,
+            )
+            if reply == QMessageBox.StandardButton.Open:
+                QDesktopServices.openUrl(QUrl(f"{SOURCE_CODE_URL}/releases/latest"))
+            return
         reply = QMessageBox.information(
             self.window, "Update Available",
             f"A new version (v{new_version}) is available.\n\n"

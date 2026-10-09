@@ -1,10 +1,25 @@
 import os
+import sys
 import json
 import logging
 from pathlib import Path
 from typing import Optional, Dict
 
-_log_dir = Path(os.environ.get("APPDATA", "")) / "IsamAULauncher" / "logs"
+
+def config_data_dir() -> Path:
+    """Per-user app data dir, platform-aware."""
+    if sys.platform.startswith("win"):
+        base = Path(os.environ.get("APPDATA") or Path.home() / ".isamau")
+    elif sys.platform == "darwin":
+        base = Path.home() / "Library" / "Application Support"
+    else:
+        base = Path(os.environ.get("XDG_DATA_HOME") or Path.home() / ".local" / "share")
+    d = base / "IsamAULauncher"
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+_log_dir = config_data_dir() / "logs"
 _log_dir.mkdir(parents=True, exist_ok=True)
 
 logging.basicConfig(
@@ -24,6 +39,12 @@ VERSION_URL = "https://raw.githubusercontent.com/jogamerforgames2021/Bootstrappe
 MESSAGE_URL = "https://raw.githubusercontent.com/jogamerforgames2021/AmongUsLauncherNew/refs/heads/main/message.txt"
 PATCHES_URL = "https://raw.githubusercontent.com/jogamerforgames2021/AmongUsLauncherNew/refs/heads/main/Patches.xml"
 SOURCE_CODE_URL = "https://github.com/isam-ahmed0/Isam-AULauncher"
+DOCS_BASE_URL = f"{SOURCE_CODE_URL}/blob/main/DOC"
+LINUX_DOC_URL = f"{DOCS_BASE_URL}/LINUX.md"
+WINE_DOC_URL = f"{DOCS_BASE_URL}/WINE.md"
+DOCS_RAW_BASE = "https://raw.githubusercontent.com/isam-ahmed0/Isam-AULauncher/main/DOC"
+LINUX_DOC_RAW_URL = f"{DOCS_RAW_BASE}/LINUX.md"
+WINE_DOC_RAW_URL = f"{DOCS_RAW_BASE}/WINE.md"
 GITHUB_REPO = "jogamerforgames2021/AmongUsLauncherNew"
 ISAM_CLIENT_URL = "https://raw.githubusercontent.com/isam-ahmed0/Isam-AULauncher/main/isam-client.zip"
 DISCORD_CLIENT_ID = "1543527340963930193"
@@ -41,9 +62,7 @@ DEFAULT_GAME_DIR = "C:/Isam-AULauncher/Among-Us"
 
 class Config:
     def __init__(self):
-        appdata = os.environ.get("APPDATA") or str(Path.home() / ".isamau")
-        self.appdata_dir = Path(appdata) / "IsamAULauncher"
-        self.appdata_dir.mkdir(parents=True, exist_ok=True)
+        self.appdata_dir = config_data_dir()
         self.profiles_dir = self.appdata_dir / "Profiles"
         self.profiles_dir.mkdir(parents=True, exist_ok=True)
         self.cache_dir = self.appdata_dir / "cache"

@@ -1,8 +1,7 @@
 """Theme palettes for Isam AULauncher."""
 import json
-import os
 import logging
-from pathlib import Path
+from config import config_data_dir
 from .violet import PALETTE as VIOLET
 from .coral import PALETTE as CORAL
 from .slate import PALETTE as SLATE
@@ -23,7 +22,7 @@ BUILTIN = {
 
 THEMES = dict(BUILTIN)
 
-CUSTOM_THEMES_DIR = Path(os.environ.get("APPDATA", "")) / "IsamAULauncher" / "themes"
+CUSTOM_THEMES_DIR = config_data_dir() / "themes"
 
 
 def load_custom_themes():

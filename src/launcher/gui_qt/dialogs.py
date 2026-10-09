@@ -1,4 +1,6 @@
+import sys
 import webbrowser
+from pathlib import Path
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFontMetrics, QColor, QPainter, QLinearGradient, QBrush, QFont
@@ -7,7 +9,10 @@ from PySide6.QtWidgets import (
     QPushButton, QMessageBox, QGridLayout, QWidget, QScrollArea,
 )
 
-from config import APP_NAME, LAUNCHER_VERSION, MAKER, DISCORD_INVITE, YOUTUBE_CHANNEL, SOURCE_CODE_URL
+from config import (
+    APP_NAME, LAUNCHER_VERSION, MAKER, DISCORD_INVITE, YOUTUBE_CHANNEL,
+    SOURCE_CODE_URL, LINUX_DOC_URL, WINE_DOC_URL,
+)
 from file_manager import FileManager
 import gui_qt.theme as theme
 from gui_qt.themes import THEMES, is_custom_theme, delete_custom_theme
@@ -447,3 +452,91 @@ class AboutPage(QWidget):
 
     def _cb_coming_soon(self):
         QMessageBox.information(self, "Discord", "Discord server coming soon!")
+
+
+def _find_bundled_doc(name):
+    if getattr(sys, "frozen", False):
+        base = Path(sys.executable).parent
+        candidates = [base / "DOC" / name, base / "_internal" / "DOC" / name]
+    else:
+        root = Path(__file__).resolve().parents[3]
+        candidates = [root / "DOC" / name]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return None
+
+
+def _show_docs_dialog(parent, title, intro, buttons, preview_names=()):
+    from PySide6.QtWidgets import (
+        QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QTextBrowser,
+    )
+
+    dlg = QDialog(parent)
+    dlg.setWindowTitle(title)
+    dlg.setMinimumSize(560, 460)
+
+    layout = QVBoxLayout(dlg)
+    label = QLabel(intro)
+    label.setWordWrap(True)
+    layout.addWidget(label)
+
+    browser = QTextBrowser()
+    browser.setOpenExternalLinks(True)
+    text = ""
+    for name in preview_names:
+        path = _find_bundled_doc(name)
+        if path:
+            try:
+                text += path.read_text(encoding="utf-8") + "\n\n"
+            except OSError:
+                pass
+    if text:
+        browser.setMarkdown(text)
+    else:
+        browser.setHtml(
+            "<p style='color:#888888'>Documentation could not be loaded locally. "
+            "Use the buttons below to open it online.</p>"
+        )
+    layout.addWidget(browser, 1)
+
+    row = QHBoxLayout()
+    for label_text, url in buttons:
+        btn = QPushButton(label_text)
+        btn.setObjectName("toolBtn")
+        btn.setFixedHeight(36)
+        btn.clicked.connect(lambda checked=False, u=url: webbrowser.open(u))
+        row.addWidget(btn)
+    row.addStretch()
+    close_btn = QPushButton("Close")
+    close_btn.setObjectName("successBtn")
+    close_btn.setFixedHeight(36)
+    close_btn.clicked.connect(dlg.accept)
+    row.addWidget(close_btn)
+    layout.addLayout(row)
+
+    dlg.exec()
+
+
+def show_linux_docs(parent=None):
+    _show_docs_dialog(
+        parent,
+        "Linux Setup",
+        "This action needs Among Us running through Wine/Lutris on Linux.\n"
+        "See the documentation below. The launcher never changes your Wine or "
+        "Lutris configuration.",
+        [("Open LINUX.md", LINUX_DOC_URL), ("Open WINE.md", WINE_DOC_URL)],
+        preview_names=("LINUX.md", "WINE.md"),
+    )
+
+
+def show_wine_missing(parent=None):
+    _show_docs_dialog(
+        parent,
+        "Wine Not Found",
+        "To sign in with itch.io on Linux, Wine is required.\n"
+        "Please install Wine, then try again. The launcher will not install or "
+        "modify Wine for you.",
+        [("Open LINUX.md", LINUX_DOC_URL), ("Open WINE.md", WINE_DOC_URL)],
+        preview_names=("WINE.md", "LINUX.md"),
+    )

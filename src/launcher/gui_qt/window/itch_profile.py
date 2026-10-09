@@ -1,22 +1,11 @@
-import os
-import sys
-import time
 import logging
-import webbrowser
-import threading
-import urllib.parse
 from pathlib import Path
-from http.server import HTTPServer, BaseHTTPRequestHandler
 
 import requests as _req
-from PySide6.QtCore import Qt, Signal
 
+from platform_utils import IS_WINDOWS, itch_token_dir
+from gui_qt.fixer_launcher import launch_itch_fixer, LAUNCHED, NO_WINE
 
-ITCH_CLIENT_ID = "1ba9b4bfa1ac7759e8420eed4ec863ba"
-ITCH_OAUTH_PORT = 7890
-
-ITCH_TOKEN_DIR = Path(os.environ.get("USERPROFILE", "")) / "AppData" / "LocalLow" / "Innersloth" / "Among Us"
-ITCH_TOKEN_FILE = ITCH_TOKEN_DIR / "itch"
 
 ITCHIO_API = "https://itch.io/api/1/key/me"
 EOS_AUTH_URL = "https://accounts.innersloth.com/eos-auth"
@@ -33,109 +22,46 @@ PLATFORM_LABELS = {
     'xbox': 'Xbox', 'xboxlive': 'Xbox',
 }
 
-_LOADING_PAGE = b"""<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Isam AU | Authenticating</title>
-    <style>
-        body { background: #060608; color: #6366f1; display: flex; flex-direction: column;
-               justify-content: center; align-items: center; height: 100vh;
-               font-family: 'Segoe UI', sans-serif; margin: 0; }
-        .loader { border: 4px solid #1a1b1e; border-top: 4px solid #6366f1; border-radius: 50%;
-                  width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .text { font-weight: bold; letter-spacing: 1px; }
-    </style>
-</head>
-<body>
-    <div class="loader"></div>
-    <div class="text">CONNECTING TO ITCH.IO...</div>
-    <script>
-        const params = new URLSearchParams(window.location.hash.slice(1));
-        const token = params.get('access_token');
-        if (token) window.location = '/token?t=' + token;
-    </script>
-</body>
-</html>"""
-
-_SUCCESS_PAGE = b"""<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Isam AU | Success</title>
-    <style>
-        body { background: #060608; color: #4ade80; display: flex; flex-direction: column;
-               justify-content: center; align-items: center; height: 100vh;
-               font-family: 'Segoe UI', sans-serif; margin: 0; }
-        .icon { font-size: 60px; margin-bottom: 10px; }
-        .msg { font-size: 24px; font-weight: bold; }
-        .sub { color: #888; margin-top: 10px; }
-    </style>
-</head>
-<body>
-    <div class="icon">&#10004;</div>
-    <div class="msg">AUTHORIZATION COMPLETE</div>
-    <div class="sub">You can close this tab and return to the launcher.</div>
-</body>
-</html>"""
-
-
-class _OAuthHandler(BaseHTTPRequestHandler):
-    """Handles the OAuth redirect from itch.io."""
-
-    def do_GET(self):
-        if self.path.startswith("/token"):
-            params = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
-            self.server.token = params.get("t", [None])[0]
-            self.send_response(200)
-            self.end_headers()
-            self.wfile.write(_SUCCESS_PAGE)
-        else:
-            self.send_response(200)
-            self.end_headers()
-            self.wfile.write(_LOADING_PAGE)
-
-    def log_message(self, format, *args):
-        pass
-
 
 class ItchProfileMixin:
-    # ------------------------------------------------------------------ embedded OAuth login
-    def start_itch_login(self):
-        """Start the OAuth flow: launch HTTP server in a thread, open browser."""
-        self._set_status("Opening itch.io login...", "info")
+    # ------------------------------------------------------------------ token location
+    def _itch_token_file(self) -> Path:
+        """Path to the itch token file Among Us reads (Wine prefix on Linux)."""
+        return itch_token_dir() / "itch"
 
-        def run_server():
-            try:
-                server = HTTPServer(("127.0.0.1", ITCH_OAUTH_PORT), _OAuthHandler)
-                server.token = None
-                server.timeout = 1
-                deadline = time.time() + 300
-                while server.token is None and time.time() < deadline:
-                    server.handle_request()
-                if server.token:
-                    self._save_itch_token(server.token)
-                    self._invoke_main(lambda: self._set_status("Login successful!", "success"))
-                    self._invoke_main(lambda: self._load_itch_profile())
-                else:
-                    self._invoke_main(lambda: self._set_status("Login timed out", "warning"))
-            except OSError as e:
-                logging.error(f"OAuth server error: {e}")
-                self._invoke_main(lambda: self._set_status(f"Login failed: {e}", "danger"))
+    # ------------------------------------------------------------------ sign-in via the fixer
+    def open_itch_fixer(self):
+        """Open the standalone Itch Login Fixer instead of handling OAuth in-process.
 
-        threading.Thread(target=run_server, daemon=True).start()
-        webbrowser.open(
-            f"https://itch.io/user/oauth?client_id={ITCH_CLIENT_ID}"
-            f"&scope=profile:me&redirect_uri=http://127.0.0.1:{ITCH_OAUTH_PORT}"
-            f"&response_type=token"
-        )
+        Windows: runs Itch_Login_Fixer.exe.
+        Linux: runs the Windows fixer through the global Wine prefix.
+        No Wine: shows an "install Wine" documentation popup.
+        """
+        result = launch_itch_fixer()
+        parent = getattr(self, "window", None)
+
+        if result == LAUNCHED:
+            self._set_status("Itch Login Fixer opened — finish signing in there.", "info")
+        elif result == NO_WINE:
+            from gui_qt.dialogs import show_wine_missing
+            show_wine_missing(parent)
+            self._set_status("Wine is required — see the documentation.", "warning")
+        elif IS_WINDOWS:
+            from PySide6.QtWidgets import QMessageBox
+            QMessageBox.warning(
+                parent, "Not Found",
+                "Itch_Login_Fixer.exe was not found.\nPlease reinstall the launcher.",
+            )
+        else:
+            from gui_qt.dialogs import show_linux_docs
+            show_linux_docs(parent)
 
     def _save_itch_token(self, token: str):
         """Save the itch.io access token to the file Among Us reads."""
         try:
-            ITCH_TOKEN_DIR.mkdir(parents=True, exist_ok=True)
-            ITCH_TOKEN_FILE.write_text(token)
+            tf = self._itch_token_file()
+            tf.parent.mkdir(parents=True, exist_ok=True)
+            tf.write_text(token)
             logging.info("Itch token saved successfully")
         except OSError as e:
             logging.error(f"Failed to save itch token: {e}")
@@ -144,8 +70,9 @@ class ItchProfileMixin:
     def _read_itch_token(self):
         """Read the itch.io token from the saved file. Read-only."""
         try:
-            if ITCH_TOKEN_FILE.exists():
-                token = ITCH_TOKEN_FILE.read_text().strip()
+            tf = self._itch_token_file()
+            if tf.exists():
+                token = tf.read_text().strip()
                 if token:
                     return token
         except (OSError, IOError) as e:

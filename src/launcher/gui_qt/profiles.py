@@ -1,9 +1,12 @@
 """ProfileManager — isolated mod profiles using directory junctions."""
 import logging
+import os
 import subprocess
 import shutil
 from pathlib import Path
 from typing import Optional, List
+
+from platform_utils import IS_WINDOWS
 
 log = logging.getLogger(__name__)
 
@@ -66,14 +69,26 @@ class ProfileManager:
             return False
 
     def is_junction(self, path: Path) -> bool:
-        """Check if path is a directory junction."""
+        """True for a Windows junction or a POSIX symlink."""
         try:
-            return path.is_junction()
-        except OSError:
+            return path.is_symlink() or path.is_junction()
+        except (OSError, AttributeError):
             return False
 
+    def _remove_link(self, path: Path) -> None:
+        """Remove a junction/symlink without touching the target's contents."""
+        if path.is_symlink():
+            path.unlink()
+        else:
+            path.rmdir()
+
     def get_junction_target(self, junction_path: Path) -> Optional[Path]:
-        """Read where a junction points to."""
+        """Read where a junction (or symlink) points."""
+        try:
+            if junction_path.is_symlink():
+                return junction_path.resolve()
+        except OSError:
+            pass
         try:
             if self.is_junction(junction_path):
                 # On Windows, readlink works for junctions
@@ -109,7 +124,7 @@ class ProfileManager:
         # Remove existing junction or empty folder
         try:
             if self.is_junction(plugins):
-                plugins.rmdir()  # removes junction only
+                self._remove_link(plugins)  # removes junction/symlink only
             elif plugins.exists():
                 # plugins is a real folder — move its contents into the target profile
                 for f in plugins.iterdir():
@@ -126,16 +141,19 @@ class ProfileManager:
             log.error(f"Failed to remove old plugins: {e}")
             return False
 
-        # Create junction
+        # Create junction (Windows) or symlink (POSIX)
         try:
-            result = subprocess.run(
-                ["cmd", "/c", "mklink", "/J", str(plugins), str(target)],
-                capture_output=True, text=True,
-                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
-            )
-            if result.returncode != 0:
-                log.error(f"mklink failed: {result.stderr}")
-                return False
+            if IS_WINDOWS:
+                result = subprocess.run(
+                    ["cmd", "/c", "mklink", "/J", str(plugins), str(target)],
+                    capture_output=True, text=True,
+                    creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+                )
+                if result.returncode != 0:
+                    log.error(f"mklink failed: {result.stderr}")
+                    return False
+            else:
+                os.symlink(str(target), str(plugins), target_is_directory=True)
             return True
         except OSError as e:
             log.error(f"Failed to create junction: {e}")
@@ -146,7 +164,7 @@ class ProfileManager:
         plugins = game_path / "BepInEx" / "plugins"
         try:
             if self.is_junction(plugins):
-                plugins.rmdir()
+                self._remove_link(plugins)
                 return True
         except OSError as e:
             log.error(f"Failed to remove junction: {e}")
