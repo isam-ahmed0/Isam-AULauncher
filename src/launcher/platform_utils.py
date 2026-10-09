@@ -138,33 +138,48 @@ def wine_env(prefix=None):
 # ---------------------------------------------------------------------------
 # Lutris integration
 # ---------------------------------------------------------------------------
-def find_lutris():
+_UNSET = object()
+_lutris_cmd_cache = _UNSET
+
+
+def find_lutris(refresh=False):
     """Return the command prefix used to invoke Lutris, or None.
 
     Prefers a native ``lutris`` binary, then the Flatpak ``net.lutris.Lutris``
     app. Returns a list (e.g. ``["lutris"]`` or
     ``["flatpak", "run", "net.lutris.Lutris"]``) so callers can append args.
+    The result is cached for the session (pass ``refresh=True`` to re-probe).
     """
-    if not IS_LINUX:
-        return None
-    native = shutil.which("lutris")
-    if native:
-        # Verify it actually runs: the launcher script can break when a venv
-        # (or the frozen bundle) leaks its Python into the child's PATH.
-        if _lutris_usable([native]):
-            return [native]
-    flatpak = shutil.which("flatpak")
-    if flatpak:
-        try:
-            out = subprocess.run(
-                [flatpak, "list", "--columns=application"],
-                capture_output=True, text=True, timeout=5, env=external_env(),
-            )
-            if "net.lutris.Lutris" in out.stdout:
-                return [flatpak, "run", "net.lutris.Lutris"]
-        except Exception:
-            pass
-    return None
+    global _lutris_cmd_cache
+    if _lutris_cmd_cache is not _UNSET and not refresh:
+        return _lutris_cmd_cache
+
+    result = None
+    if IS_LINUX:
+        native = shutil.which("lutris")
+        if native:
+            # Verify it actually runs: the launcher script can break when a
+            # venv (or the frozen bundle) leaks its Python into the child PATH.
+            if _lutris_usable([native]):
+                result = [native]
+        if result is None:
+            flatpak = shutil.which("flatpak")
+            if flatpak:
+                try:
+                    out = subprocess.run(
+                        [flatpak, "list", "--columns=application"],
+                        capture_output=True, text=True, timeout=5,
+                        env=external_env(),
+                    )
+                    if "net.lutris.Lutris" in out.stdout:
+                        fp = [flatpak, "run", "net.lutris.Lutris"]
+                        if _lutris_usable(fp):
+                            result = fp
+                except Exception:
+                    pass
+
+    _lutris_cmd_cache = result
+    return result
 
 
 def _lutris_usable(cmd):
@@ -196,6 +211,48 @@ def lutris_list_games(lutris_cmd=None):
         return data if isinstance(data, list) else []
     except Exception:
         return []
+
+
+def lutris_find_entry(game_path, cached_id=None, lutris_cmd=None):
+    """Find the Lutris game entry for an install, or None.
+
+    Matches by cached numeric id first, then by the game's install directory
+    (``directory`` in ``lutris -l --json``). Returns the raw Lutris dict with
+    keys such as ``id``, ``name``, ``slug``, ``runner`` and ``directory``.
+    """
+    gp_res = None
+    try:
+        gp_res = Path(game_path).resolve()
+    except Exception:
+        pass
+    try:
+        cached_id = int(cached_id) if cached_id is not None else None
+    except (TypeError, ValueError):
+        cached_id = None
+
+    for g in lutris_list_games(lutris_cmd):
+        if cached_id is not None and g.get("id") == cached_id:
+            return g
+        d = g.get("directory")
+        if d and gp_res is not None:
+            try:
+                if Path(d).resolve() == gp_res:
+                    return g
+            except Exception:
+                pass
+    return None
+
+
+def format_lutris_entry(entry):
+    """Human-readable name/identifier for a Lutris entry (or a fallback)."""
+    if not entry:
+        return "Not in Lutris"
+    parts = [entry.get("name") or "Unnamed"]
+    if entry.get("id") is not None:
+        parts.append(f"id {entry['id']}")
+    if entry.get("slug"):
+        parts.append(f"slug {entry['slug']}")
+    return " — ".join(parts)
 
 
 def lutris_run(game_id, lutris_cmd=None):

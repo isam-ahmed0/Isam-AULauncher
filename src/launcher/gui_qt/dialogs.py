@@ -194,8 +194,11 @@ class SettingsPage(QWidget):
             row.addStretch()
             layout.addLayout(row)
 
-            lm_desc = QLabel("How the launcher starts the game (Lutris recommended)")
+            lm_desc = QLabel(
+                "\"Ask every time\" shows a Lutris/Wine popup at launch so you "
+                "can pick your GPU")
             lm_desc.setObjectName("mutedText")
+            lm_desc.setWordWrap(True)
             lm_desc.setContentsMargins(148, 0, 0, 0)
             layout.addWidget(lm_desc)
             layout.addSpacing(10)
@@ -296,6 +299,13 @@ class SettingsPage(QWidget):
             ("Mods Installed:", str(mod_count), "gameInfoLabel"),
             ("Disk Usage:", disk_usage or "N/A", "gameInfoLabel"),
         ]
+
+        from platform_utils import IS_LINUX, format_lutris_entry
+        if IS_LINUX:
+            lutris_val = "Not added"
+            if gp:
+                lutris_val = format_lutris_entry(self.config.get_lutris_entry(gp))
+            fields.append(("Lutris:", lutris_val, "gameInfoLabel"))
 
         for row, (label, value, obj_name) in enumerate(fields):
             row_layout = QHBoxLayout()

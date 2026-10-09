@@ -80,7 +80,7 @@ class Config:
             "discord_rpc": True, "ui_mode": "gui",
             "active_profile": "Default", "theme": "Forest",
             "launch_method": "ask", "warn_plain_wine": True,
-            "wine_prefix": "", "lutris_game_ids": {},
+            "wine_prefix": "", "lutris_game_ids": {}, "lutris_entries": {},
         }
         try:
             if self.config_file.exists():
@@ -147,8 +147,32 @@ class Config:
 
     def get_lutris_id(self, game_path):
         """Cached Lutris numeric game id for a given install path."""
+        entry = self.get_lutris_entry(game_path)
+        if entry and entry.get("id") is not None:
+            return entry.get("id")
         ids = self.settings.get("lutris_game_ids", {}) or {}
         return ids.get(str(game_path))
+
+    def get_lutris_entry(self, game_path):
+        """Cached Lutris entry (id/name/slug/...) for a given install path."""
+        entries = self.settings.get("lutris_entries", {}) or {}
+        entry = entries.get(str(game_path))
+        return entry if isinstance(entry, dict) else None
+
+    def set_lutris_entry(self, game_path, entry):
+        """Cache a Lutris entry dict for a given install path (or clear it)."""
+        entries = dict(self.settings.get("lutris_entries", {}) or {})
+        if entry:
+            entries[str(game_path)] = {
+                k: entry.get(k) for k in ("id", "name", "slug", "runner", "directory")
+            }
+        else:
+            entries.pop(str(game_path), None)
+        self.settings["lutris_entries"] = entries
+        self.save_settings()
+
+    def clear_lutris_entry(self, game_path):
+        self.set_lutris_entry(game_path, None)
 
     def set_lutris_id(self, game_path, game_id):
         ids = dict(self.settings.get("lutris_game_ids", {}) or {})

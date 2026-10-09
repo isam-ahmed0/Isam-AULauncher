@@ -43,9 +43,10 @@ link never deletes the profile's contents.
 Installation runs inside the launcher (download + unzip). Launching uses
 whichever method you choose in **Settings → Linux → Launch method**:
 
-- **Ask every time** (default) — if the install is already in your Lutris
-  library it launches through Lutris. Otherwise a popup offers
-  `Add to Lutris` / `Launch with Wine` / `Cancel`.
+- **Ask every time** (default) — a popup lets you pick **Launch with Lutris**
+  or **Launch with Wine** on each launch. Choose Lutris to control which GPU the
+  game uses (Lutris → Configure → System options); Wine runs directly with your
+  global prefix and may use a different GPU.
 - **Always use Lutris** — launches through Lutris, adding the install first if
   needed.
 - **Always use Wine** — runs the game directly with `wine`.
@@ -61,6 +62,15 @@ shows a warning first (disable it in Settings).
 
 Multiple installs are supported: each Lutris entry gets a unique name, and you
 switch between them with **Change Location** / **Locate Game**.
+
+### Tools → Add to Lutris / Check Lutris
+
+For an install that has files but no Lutris entry yet, use **Add to Lutris** in
+the Tools page: it checks your library first and, if the game is missing, opens
+Lutris so you can add it. **Check Lutris** verifies the current install and shows
+the matching entry's name, numeric id and slug (or offers to add it). The main
+page also shows a `Lutris:` status line, and **Settings → Game Info** lists the
+same entry.
 
 ## Desktop shortcut
 

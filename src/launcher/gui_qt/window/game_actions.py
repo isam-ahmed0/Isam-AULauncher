@@ -63,6 +63,12 @@ class GameActionsMixin:
     def _cb_uninstall(self):
         self._uninstall_game()
 
+    def _cb_add_to_lutris(self):
+        self._add_to_lutris_action()
+
+    def _cb_check_lutris(self):
+        self._check_lutris_action()
+
     def _open_version_picker(self):
         from gui_qt.version_picker import VersionPickerDialog
         releases = getattr(self, 'available_versions', [])
@@ -205,47 +211,85 @@ class GameActionsMixin:
             self._update_main_btn()
 
     # --------------------------------------------------------------- linux launch
-    @staticmethod
-    def _match_lutris_entry(games, gp, cached_id=None):
-        """Find a Lutris entry for this install (by id or game directory)."""
-        gp_res = None
-        try:
-            gp_res = Path(gp).resolve()
-        except Exception:
-            pass
-        for g in games:
-            if cached_id is not None and g.get("id") == cached_id:
-                return g
-            d = g.get("directory")
-            if d and gp_res is not None:
-                try:
-                    if Path(d).resolve() == gp_res:
-                        return g
-                except Exception:
-                    pass
-        return None
+    def _cache_lutris_entry(self, gp, entry):
+        """Store the matched Lutris entry (or clear it) and refresh the UI."""
+        if entry:
+            self.config.set_lutris_entry(gp, entry)
+            if entry.get("id") is not None:
+                self.config.set_lutris_id(gp, entry.get("id"))
+        else:
+            self.config.clear_lutris_entry(gp)
+        if hasattr(self, "_update_lutris_info"):
+            self._update_lutris_info()
 
     def _launch_linux_game(self):
-        from platform_utils import find_lutris, lutris_list_games
+        from platform_utils import find_lutris, lutris_find_entry
         gp = self.config.get_game_path()
         method = self.config.settings.get("launch_method", "ask")
-        lutris_cmd = find_lutris()
 
-        entry = None
+        try:
+            lutris_cmd = find_lutris()
+            entry = None
+            if lutris_cmd:
+                entry = lutris_find_entry(gp, self.config.get_lutris_id(gp), lutris_cmd)
+                self._cache_lutris_entry(gp, entry)
+
+            if method == "wine":
+                return self._launch_with_wine_warning()
+
+            if method == "lutris":
+                if not lutris_cmd:
+                    return self._launch_with_wine_warning()
+                if entry and entry.get("id") is not None:
+                    return self.game.launch_lutris(entry.get("id"))
+                return self._add_to_lutris(gp)
+
+            # method == "ask": let the user pick the launcher / GPU each time.
+            return self._prompt_launch_choice(gp, entry, lutris_cmd)
+        except Exception as e:
+            logging.exception("Linux launch flow failed")
+            QMessageBox.warning(self.window, "Launch failed", str(e))
+            return False
+
+    def _prompt_launch_choice(self, gp, entry, lutris_cmd):
+        """Popup letting the user launch via Lutris (GPU configurable) or Wine."""
+        box = QMessageBox(self.window)
+        box.setIcon(QMessageBox.Icon.Question)
+        box.setWindowTitle("Launch Among Us")
+        box.setText("How do you want to launch Among Us?")
+
+        lutris_btn = add_btn = wine_btn = None
         if lutris_cmd:
-            games = lutris_list_games(lutris_cmd)
-            entry = self._match_lutris_entry(games, gp, self.config.get_lutris_id(gp))
-            gid = entry.get("id") if entry else None
-            if gid is not None and self.config.get_lutris_id(gp) != gid:
-                self.config.set_lutris_id(gp, gid)
+            if entry and entry.get("id") is not None:
+                lutris_btn = box.addButton(
+                    "Launch with Lutris", QMessageBox.ButtonRole.AcceptRole)
+            else:
+                add_btn = box.addButton(
+                    "Add to Lutris & Launch", QMessageBox.ButtonRole.AcceptRole)
+            wine_btn = box.addButton(
+                "Launch with Wine", QMessageBox.ButtonRole.ActionRole)
+            box.setInformativeText(
+                "Lutris is recommended — it lets you choose your GPU and other "
+                "options (Lutris → Configure → System options).\n\n"
+                "Wine runs the game directly with your global prefix and can "
+                "use a different GPU.")
+        else:
+            wine_btn = box.addButton(
+                "Launch with Wine", QMessageBox.ButtonRole.AcceptRole)
+            box.setInformativeText(
+                "Lutris was not found, so the game will run with Wine.")
+        box.addButton("Cancel", QMessageBox.ButtonRole.RejectRole)
+        box.setDefaultButton(lutris_btn or add_btn or wine_btn)
+        box.exec()
 
-        if method == "wine" or not lutris_cmd:
-            return self._launch_with_wine_warning()
-
-        if entry and entry.get("id") is not None:
+        clicked = box.clickedButton()
+        if lutris_btn is not None and clicked is lutris_btn:
             return self.game.launch_lutris(entry.get("id"))
-
-        return self._prompt_add_to_lutris(gp)
+        if add_btn is not None and clicked is add_btn:
+            return self._add_to_lutris(gp)
+        if wine_btn is not None and clicked is wine_btn:
+            return self._launch_with_wine_warning()
+        return False
 
     def _launch_with_wine_warning(self):
         from platform_utils import find_wine
@@ -261,8 +305,9 @@ class GameActionsMixin:
             box.setWindowTitle("Launch with Wine")
             box.setText("Running Among Us directly with Wine is not recommended.")
             box.setInformativeText(
-                "Wine may cause crashes or broken mods. Lutris is recommended "
-                "for better compatibility.\n\nLaunch anyway?")
+                "Wine may cause crashes or broken mods, and may use a different "
+                "GPU than you expect. Lutris is recommended — it lets you choose "
+                "your GPU in its settings.\n\nLaunch anyway?")
             box.setStandardButtons(
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
             box.setDefaultButton(QMessageBox.StandardButton.No)
@@ -271,24 +316,84 @@ class GameActionsMixin:
         gp = self.config.get_game_path()
         return self.game.launch_wine(gp, gp / "Among Us.exe")
 
-    def _prompt_add_to_lutris(self, gp):
-        box = QMessageBox(self.window)
-        box.setIcon(QMessageBox.Icon.Question)
-        box.setWindowTitle("Add to Lutris")
-        box.setText("This install isn't in your Lutris library.")
-        box.setInformativeText(
-            "Add it to Lutris for better compatibility, or launch it directly "
-            "with Wine.")
-        add_btn = box.addButton("Add to Lutris", QMessageBox.ButtonRole.AcceptRole)
-        wine_btn = box.addButton("Launch with Wine", QMessageBox.ButtonRole.ActionRole)
-        box.addButton("Cancel", QMessageBox.ButtonRole.RejectRole)
-        box.exec()
-        clicked = box.clickedButton()
-        if clicked is add_btn:
-            return self._add_to_lutris(gp)
-        if clicked is wine_btn:
-            return self._launch_with_wine_warning()
-        return False
+    def _add_to_lutris_action(self):
+        """Tools action: add an already-installed game to Lutris (Linux)."""
+        from platform_utils import IS_LINUX
+        if not IS_LINUX:
+            return
+        gp = self.config.get_game_path()
+        if not gp or not (gp / "Among Us.exe").exists():
+            QMessageBox.warning(self.window, "Error", "Game not installed!")
+            return
+        from platform_utils import find_lutris, lutris_find_entry, format_lutris_entry
+        lutris_cmd = find_lutris(refresh=True)
+        if not lutris_cmd:
+            QMessageBox.warning(
+                self.window, "Lutris not found",
+                "Lutris was not found on this system.\nInstall Lutris to add "
+                "the game to your library.")
+            return
+
+        entry = lutris_find_entry(gp, self.config.get_lutris_id(gp), lutris_cmd)
+        self._cache_lutris_entry(gp, entry)
+        if entry:
+            box = QMessageBox(self.window)
+            box.setIcon(QMessageBox.Icon.Information)
+            box.setWindowTitle("Already in Lutris")
+            box.setText("This install is already in your Lutris library:")
+            box.setInformativeText(format_lutris_entry(entry))
+            launch_btn = box.addButton("Launch", QMessageBox.ButtonRole.AcceptRole)
+            box.addButton("Close", QMessageBox.ButtonRole.RejectRole)
+            box.exec()
+            if box.clickedButton() is launch_btn and entry.get("id") is not None:
+                self.game.launch_lutris(entry.get("id"))
+                self._update_main_btn()
+            return
+
+        self._add_to_lutris(gp)
+
+    def _check_lutris_action(self):
+        """Tools action: verify whether this install has a Lutris entry (Linux)."""
+        from platform_utils import IS_LINUX
+        if not IS_LINUX:
+            return
+        gp = self.config.get_game_path()
+        if not gp:
+            QMessageBox.warning(self.window, "Error", "Game not installed!")
+            return
+        from platform_utils import find_lutris, lutris_find_entry, format_lutris_entry
+        lutris_cmd = find_lutris(refresh=True)
+        if not lutris_cmd:
+            QMessageBox.warning(
+                self.window, "Lutris not found",
+                "Lutris was not found on this system.")
+            return
+
+        entry = lutris_find_entry(gp, self.config.get_lutris_id(gp), lutris_cmd)
+        self._cache_lutris_entry(gp, entry)
+        if entry:
+            box = QMessageBox(self.window)
+            box.setIcon(QMessageBox.Icon.Information)
+            box.setWindowTitle("Lutris Status")
+            box.setText("This install is in your Lutris library.")
+            box.setInformativeText(format_lutris_entry(entry))
+            launch_btn = box.addButton("Launch", QMessageBox.ButtonRole.AcceptRole)
+            box.addButton("Close", QMessageBox.ButtonRole.RejectRole)
+            box.exec()
+            if box.clickedButton() is launch_btn and entry.get("id") is not None:
+                self.game.launch_lutris(entry.get("id"))
+                self._update_main_btn()
+        else:
+            box = QMessageBox(self.window)
+            box.setIcon(QMessageBox.Icon.Warning)
+            box.setWindowTitle("Lutris Status")
+            box.setText("This install is not in your Lutris library.")
+            box.setInformativeText("Add it to Lutris for better compatibility.")
+            add_btn = box.addButton("Add to Lutris", QMessageBox.ButtonRole.AcceptRole)
+            box.addButton("Close", QMessageBox.ButtonRole.RejectRole)
+            box.exec()
+            if box.clickedButton() is add_btn:
+                self._add_to_lutris(gp)
 
     def _add_to_lutris(self, gp):
         import json as _json
@@ -299,6 +404,7 @@ class GameActionsMixin:
         lutris_cmd = find_lutris()
         if not lutris_cmd:
             return self._launch_with_wine_warning()
+        self.config.clear_lutris_entry(gp)
 
         ver = self.config.get_version() or ""
         suffix = f" {ver}" if ver and ver not in ("Unknown", "Not Installed") else ""
@@ -345,7 +451,7 @@ class GameActionsMixin:
                 if (g.get("name") or "").strip() == name.strip():
                     gid = g.get("id")
                     if gid is not None:
-                        self.config.set_lutris_id(gp, gid)
+                        self._invoke_main(lambda gg=g: self._cache_lutris_entry(gp, gg))
                         self._invoke_main(lambda i=gid: self.game.launch_lutris(i))
                     return
         self._invoke_main(lambda: self._set_status(
@@ -382,19 +488,17 @@ class GameActionsMixin:
 
     def _create_linux_shortcut(self, gp):
         from platform_utils import (
-            create_desktop_shortcut, find_lutris, lutris_list_games,
+            create_desktop_shortcut, find_lutris, lutris_find_entry,
         )
         exe = gp / "Among Us.exe"
-        lutris_id = self.config.get_lutris_id(gp)
+        lutris_id = None
         if find_lutris():
-            entry = self._match_lutris_entry(lutris_list_games(), gp, lutris_id)
+            entry = lutris_find_entry(gp, self.config.get_lutris_id(gp))
             if entry and entry.get("id") is not None:
+                self._cache_lutris_entry(gp, entry)
                 lutris_id = entry.get("id")
-                self.config.set_lutris_id(gp, lutris_id)
             else:
-                lutris_id = None
-        else:
-            lutris_id = None
+                self._cache_lutris_entry(gp, None)
         icon = None
         for cand in ("icon.png", "logo.png", "icon.ico"):
             if (gp / cand).exists():

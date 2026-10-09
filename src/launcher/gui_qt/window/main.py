@@ -355,6 +355,10 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         self.game_ready_text.setObjectName("mutedText")
         right.addWidget(self.game_ready_text)
 
+        self.lutris_text = QLabel("")
+        self.lutris_text.setObjectName("mutedText")
+        right.addWidget(self.lutris_text)
+
         info_layout.addLayout(right)
         layout.addWidget(info_widget)
 
@@ -404,6 +408,21 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
             btn.clicked.connect(cb)
             row2.addWidget(btn)
         layout.addLayout(row2)
+
+        from platform_utils import IS_LINUX
+        if IS_LINUX:
+            row_linux = QHBoxLayout()
+            row_linux.setSpacing(10)
+            for label, cb in [
+                ("Add to Lutris", self._cb_add_to_lutris),
+                ("Check Lutris", self._cb_check_lutris),
+            ]:
+                btn = QPushButton(label)
+                btn.setObjectName("toolBtn")
+                btn.setFixedHeight(38)
+                btn.clicked.connect(cb)
+                row_linux.addWidget(btn)
+            layout.addLayout(row_linux)
 
         sep1 = QFrame()
         sep1.setFrameShape(QFrame.Shape.HLine)
@@ -792,7 +811,28 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         self.ver_installed.style().polish(self.ver_installed)
         self.ver_latest.setText(self.latest_version)
 
+    def _update_lutris_info(self):
+        """Show whether the current install has a Lutris entry (Linux only)."""
+        if not hasattr(self, "lutris_text"):
+            return
+        from platform_utils import IS_LINUX
+        if not IS_LINUX:
+            self.lutris_text.hide()
+            return
+        self.lutris_text.show()
+        gp = self.config.get_game_path()
+        if not gp or not (gp / "Among Us.exe").exists():
+            self.lutris_text.setText("")
+            return
+        entry = self.config.get_lutris_entry(gp)
+        if entry:
+            from platform_utils import format_lutris_entry
+            self.lutris_text.setText(f"Lutris: {format_lutris_entry(entry)}")
+        else:
+            self.lutris_text.setText("Lutris: not added")
+
     def _update_main_btn(self):
+        self._update_lutris_info()
         if self.game.is_running:
             self.main_action_btn.setText("PLAYING")
             self.main_action_btn.setObjectName("dangerBtn")
