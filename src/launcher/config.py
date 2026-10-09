@@ -5,6 +5,8 @@ import logging
 from pathlib import Path
 from typing import Optional, Dict
 
+from platform_utils import default_game_dir
+
 
 def config_data_dir() -> Path:
     """Per-user app data dir, platform-aware."""
@@ -57,7 +59,7 @@ LAUNCHER_SETUP_URL = f"https://github.com/isam-ahmed0/Isam-AULauncher/releases/d
 
 GAME_CRITICAL_FILES = ["Among Us.exe"]
 GAME_CRITICAL_DIRS = ["BepInEx", "dotnet"]
-DEFAULT_GAME_DIR = "C:/Isam-AULauncher/Among-Us"
+DEFAULT_GAME_DIR = str(default_game_dir())
 
 
 class Config:
@@ -77,6 +79,8 @@ class Config:
             "auto_update": True, "create_shortcuts": True,
             "discord_rpc": True, "ui_mode": "gui",
             "active_profile": "Default", "theme": "Forest",
+            "launch_method": "ask", "warn_plain_wine": True,
+            "wine_prefix": "", "lutris_game_ids": {},
         }
         try:
             if self.config_file.exists():
@@ -132,4 +136,25 @@ class Config:
 
     def set_active_profile(self, name: str):
         self.settings["active_profile"] = name
+        self.save_settings()
+
+    # ------------------------------------------------------------------ linux
+    def get_wine_prefix(self) -> Path:
+        """Wine prefix the game/fixer should use (setting overrides global)."""
+        from platform_utils import wine_prefix
+        val = (self.settings.get("wine_prefix") or "").strip()
+        return Path(val) if val else wine_prefix()
+
+    def get_lutris_id(self, game_path):
+        """Cached Lutris numeric game id for a given install path."""
+        ids = self.settings.get("lutris_game_ids", {}) or {}
+        return ids.get(str(game_path))
+
+    def set_lutris_id(self, game_path, game_id):
+        ids = dict(self.settings.get("lutris_game_ids", {}) or {})
+        if game_id is None:
+            ids.pop(str(game_path), None)
+        else:
+            ids[str(game_path)] = int(game_id)
+        self.settings["lutris_game_ids"] = ids
         self.save_settings()

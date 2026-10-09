@@ -6,7 +6,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QFontMetrics, QColor, QPainter, QLinearGradient, QBrush, QFont
 from PySide6.QtWidgets import (
     QVBoxLayout, QHBoxLayout, QLabel, QFrame, QCheckBox,
-    QPushButton, QMessageBox, QGridLayout, QWidget, QScrollArea,
+    QPushButton, QMessageBox, QGridLayout, QWidget, QScrollArea, QComboBox,
 )
 
 from config import (
@@ -165,6 +165,53 @@ class SettingsPage(QWidget):
         desc2.setContentsMargins(26, 0, 0, 0)
         layout.addWidget(desc2)
         layout.addSpacing(12)
+
+        from platform_utils import IS_LINUX
+        if IS_LINUX:
+            layout.addWidget(QFrame(frameShape=QFrame.Shape.HLine))
+            layout.addSpacing(8)
+            linux_title = QLabel("Linux")
+            linux_title.setObjectName("sectionTitle")
+            layout.addWidget(linux_title)
+            layout.addSpacing(6)
+
+            row = QHBoxLayout()
+            row.setContentsMargins(8, 0, 8, 0)
+            lm_lbl = QLabel("Launch method")
+            lm_lbl.setObjectName("mutedText")
+            lm_lbl.setFixedWidth(140)
+            row.addWidget(lm_lbl)
+            combo = QComboBox()
+            combo.addItem("Ask every time", "ask")
+            combo.addItem("Always use Lutris", "lutris")
+            combo.addItem("Always use Wine", "wine")
+            idx = combo.findData(settings.get("launch_method", "ask"))
+            if idx >= 0:
+                combo.setCurrentIndex(idx)
+            combo.currentIndexChanged.connect(
+                lambda: self._save_setting("launch_method", combo.currentData()))
+            row.addWidget(combo)
+            row.addStretch()
+            layout.addLayout(row)
+
+            lm_desc = QLabel("How the launcher starts the game (Lutris recommended)")
+            lm_desc.setObjectName("mutedText")
+            lm_desc.setContentsMargins(148, 0, 0, 0)
+            layout.addWidget(lm_desc)
+            layout.addSpacing(10)
+
+            cb_warn = QCheckBox("Warn before launching with plain Wine")
+            cb_warn.setChecked(settings.get("warn_plain_wine", True))
+            cb_warn.stateChanged.connect(
+                lambda: self._save_setting("warn_plain_wine", cb_warn.isChecked()))
+            layout.addWidget(cb_warn)
+            layout.addSpacing(10)
+
+            pf_lbl = QLabel(f"Wine prefix: {self.config.get_wine_prefix()}")
+            pf_lbl.setObjectName("mutedText")
+            pf_lbl.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            layout.addWidget(pf_lbl)
+            layout.addSpacing(12)
 
         layout.addWidget(QFrame(frameShape=QFrame.Shape.HLine))
         layout.addSpacing(8)

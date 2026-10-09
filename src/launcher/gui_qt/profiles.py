@@ -153,7 +153,7 @@ class ProfileManager:
                     log.error(f"mklink failed: {result.stderr}")
                     return False
             else:
-                os.symlink(str(target), str(plugins), target_is_directory=True)
+                os.symlink(str(target.resolve()), str(plugins), target_is_directory=True)
             return True
         except OSError as e:
             log.error(f"Failed to create junction: {e}")

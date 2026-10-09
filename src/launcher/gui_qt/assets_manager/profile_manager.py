@@ -145,7 +145,7 @@ class AUASProfileManager:
                     log.error(f"mklink failed: {result.stderr}")
                     return False
             else:
-                os.symlink(str(target), str(auas_data), target_is_directory=True)
+                os.symlink(str(target.resolve()), str(auas_data), target_is_directory=True)
             return True
         except OSError as e:
             log.error(f"Failed to create AUAS junction: {e}")

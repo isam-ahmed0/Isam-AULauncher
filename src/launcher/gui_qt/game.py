@@ -3,6 +3,7 @@ GameManager — game launch, stop, update, and process tracking.
 All game lifecycle logic lives here; window.py just calls these methods.
 """
 import sys
+import time
 import logging
 import subprocess
 from pathlib import Path
@@ -70,6 +71,43 @@ class GameManager(QObject):
         except OSError as e:
             self.status_message.emit(f"Failed to launch: {e}", "danger")
             return False
+
+    def launch_wine(self, gp: Path, exe: Path) -> bool:
+        """Launch the Windows game with native Wine (Linux). Returns True on success."""
+        from platform_utils import find_wine, wine_env
+        wine = find_wine()
+        if not wine:
+            self.status_message.emit("Wine not found", "danger")
+            return False
+        prefix = self.config.get_wine_prefix()
+        try:
+            self._process = subprocess.Popen(
+                [wine, exe.name], cwd=str(gp), env=wine_env(prefix)
+            )
+            self.status_message.emit("Game launched (Wine)!", "success")
+            self.game_started.emit()
+            return True
+        except OSError as e:
+            self.status_message.emit(f"Failed to launch: {e}", "danger")
+            return False
+
+    def launch_lutris(self, game_id) -> bool:
+        """Launch the game through Lutris by numeric id. Returns True on success."""
+        from platform_utils import lutris_run
+        proc = lutris_run(game_id)
+        if proc is None:
+            self.status_message.emit("Lutris not found", "danger")
+            return False
+        self._process = proc
+        time.sleep(0.6)
+        code = proc.poll()
+        if code is not None and code != 0:
+            self._process = None
+            self.status_message.emit("Lutris failed to start the game", "danger")
+            return False
+        self.status_message.emit("Game launched (Lutris)!", "success")
+        self.game_started.emit()
+        return True
 
     def stop(self):
         """Kill the game process."""
@@ -187,7 +225,7 @@ class GameManager(QObject):
 
     def _install_isam_client(self, game_path: Path):
         """Download and extract isam-client.zip into the game folder."""
-        zf = Path("isam-client.zip")
+        zf = self.config.cache_dir / "isam-client.zip"
         self.status_message.emit("Downloading isam-client.zip...", "info")
 
         def prog(cur, total, spd):

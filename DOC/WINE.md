@@ -37,15 +37,19 @@ uses:
 
 ## Running Among Us
 
-Install and launch Among Us through **Lutris** (or your preferred Wine tool)
-using your own settings. As long as the game runs in the same prefix the
-launcher reads the token from, itch.io sign-in carries over.
+The launcher can add the game to **Lutris** for you (recommended) using the same
+prefix, or launch it directly with `wine`. Both use the prefix above, so itch.io
+sign-in carries over. See [LINUX.md](LINUX.md) for the launch options.
+
+If you prefer to set up the game yourself, install and launch it through Lutris
+(or your preferred Wine tool) with your own settings — as long as the game runs
+in the same prefix the launcher reads the token from, sign-in carries over.
 
 ## Troubleshooting
 
 - **`wine --version` fails** — Wine is not installed or not on your `PATH`.
-- **Wrong prefix** — set `WINEPREFIX` before starting the launcher, or make sure
-  your Lutris game uses `~/.wine`.
+- **Wrong prefix** — set `WINEPREFIX` before starting the launcher, choose it in
+  **Settings → Linux**, or make sure your Lutris game uses `~/.wine`.
 - **Nothing happens on sign-in** — check the terminal output for the `wine`
   process; make sure the fixer executable exists next to the launcher in the
   `Fixer/` folder.

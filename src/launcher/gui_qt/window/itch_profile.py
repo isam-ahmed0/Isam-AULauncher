@@ -27,7 +27,10 @@ class ItchProfileMixin:
     # ------------------------------------------------------------------ token location
     def _itch_token_file(self) -> Path:
         """Path to the itch token file Among Us reads (Wine prefix on Linux)."""
-        return itch_token_dir() / "itch"
+        prefix = None
+        if not IS_WINDOWS and getattr(self, "config", None):
+            prefix = self.config.get_wine_prefix()
+        return itch_token_dir(prefix) / "itch"
 
     # ------------------------------------------------------------------ sign-in via the fixer
     def open_itch_fixer(self):
@@ -37,7 +40,9 @@ class ItchProfileMixin:
         Linux: runs the Windows fixer through the global Wine prefix.
         No Wine: shows an "install Wine" documentation popup.
         """
-        result = launch_itch_fixer()
+        result = launch_itch_fixer(
+            self.config.get_wine_prefix() if getattr(self, "config", None) and not IS_WINDOWS else None
+        )
         parent = getattr(self, "window", None)
 
         if result == LAUNCHED:

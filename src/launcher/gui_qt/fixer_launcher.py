@@ -9,7 +9,7 @@ import sys
 import subprocess
 from pathlib import Path
 
-from platform_utils import IS_WINDOWS, find_wine
+from platform_utils import IS_WINDOWS, find_wine, wine_env
 
 LAUNCHED = "launched"
 NO_WINE = "no_wine"
@@ -35,8 +35,12 @@ def find_itch_fixer():
     return None
 
 
-def launch_itch_fixer() -> str:
-    """Return LAUNCHED, NO_WINE or MISSING. Never blocks on the child."""
+def launch_itch_fixer(prefix=None) -> str:
+    """Return LAUNCHED, NO_WINE or MISSING. Never blocks on the child.
+
+    ``prefix`` pins the Wine prefix the fixer writes its token into; when
+    omitted the global prefix (``$WINEPREFIX`` or ``~/.wine``) is used.
+    """
     fixer = find_itch_fixer()
 
     if IS_WINDOWS:
@@ -54,5 +58,5 @@ def launch_itch_fixer() -> str:
     wine = find_wine()
     if not wine:
         return NO_WINE
-    subprocess.Popen([wine, str(fixer)])
+    subprocess.Popen([wine, str(fixer)], env=wine_env(prefix))
     return LAUNCHED

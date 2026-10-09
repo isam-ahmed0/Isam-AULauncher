@@ -20,15 +20,19 @@ If Wine is not found, the launcher shows a popup and links you to
 ## How it works
 
 1. You run Isam AULauncher natively on Linux.
-2. When you click **Sign in with itch.io**, the launcher starts the Windows
+2. Click **INSTALL** to download and extract Among Us into a folder (default
+   `~/Games/Isam-AULauncher/Among-Us`). Installation itself is pure file I/O and
+   needs no special setup.
+3. When you click **Sign in with itch.io**, the launcher starts the Windows
    `Itch_Login_Fixer.exe` using your global `wine`. The fixer opens the itch.io
    login page and writes the token into your Wine prefix.
-3. The launcher reads that token from
+4. The launcher reads that token from
    `<prefix>/drive_c/users/<user>/AppData/LocalLow/Innersloth/Among Us/itch`.
-4. Among Us (installed and launched through Lutris) reads the same file, so you
-   are signed in.
+5. When you click **LAUNCH**, the launcher starts the game through Lutris (see
+   below). Among Us reads the same token file, so you are signed in.
 
-The global Wine prefix is `$WINEPREFIX` if set, otherwise `~/.wine`.
+The Wine prefix is `$WINEPREFIX` if set, otherwise `~/.wine`. You can override it
+in **Settings → Linux → Wine prefix**.
 
 Mod and asset profiles are switched with **symlinks** on Linux (Windows uses
 directory junctions), so switching does not duplicate files. Removing a profile
@@ -36,16 +40,33 @@ link never deletes the profile's contents.
 
 ## Installing and launching the game
 
-Game installation and launching are handled by **Lutris**, not by this launcher,
-so that your existing Wine settings stay untouched. Use the launcher for:
+Installation runs inside the launcher (download + unzip). Launching uses
+whichever method you choose in **Settings → Linux → Launch method**:
 
-- itch.io sign-in (through the fixer),
-- mod profiles and BepInEx mod management,
-- region editing,
-- extracting mod zips into a folder you choose.
+- **Ask every time** (default) — if the install is already in your Lutris
+  library it launches through Lutris. Otherwise a popup offers
+  `Add to Lutris` / `Launch with Wine` / `Cancel`.
+- **Always use Lutris** — launches through Lutris, adding the install first if
+  needed.
+- **Always use Wine** — runs the game directly with `wine`.
 
-Buttons that would install or launch the game on Linux show a short setup popup
-with links back to this document and [WINE.md](WINE.md).
+When you choose **Add to Lutris**, the launcher writes a small installer YAML to
+its own cache and opens it with `lutris -i`. Lutris shows its normal install
+confirmation — press **Install** and the game is added to your library using the
+prefix above. The launcher then detects the new entry and launches it. Your
+Lutris configuration is never edited directly.
+
+Running directly with **Wine** is allowed but not recommended; the launcher
+shows a warning first (disable it in Settings).
+
+Multiple installs are supported: each Lutris entry gets a unique name, and you
+switch between them with **Change Location** / **Locate Game**.
+
+## Desktop shortcut
+
+**Create Shortcut** writes a freedesktop `.desktop` launcher to
+`~/.local/share/applications/isam-au.desktop` (and your Desktop folder if it
+exists). It launches through Lutris when an entry exists, otherwise with Wine.
 
 ## Troubleshooting
 
@@ -55,3 +76,5 @@ with links back to this document and [WINE.md](WINE.md).
   launcher waits for the token file to appear and then restarts automatically.
 - **Token is not detected** — confirm your game runs in the same Wine prefix the
   launcher used (`$WINEPREFIX` or `~/.wine`).
+- **"Lutris entry not detected"** — finish the Lutris install window, then click
+  LAUNCH again.
