@@ -81,6 +81,7 @@ class Config:
             "active_profile": "Default", "theme": "Forest",
             "launch_method": "ask", "warn_plain_wine": True,
             "wine_prefix": "", "lutris_game_ids": {}, "lutris_entries": {},
+            "lutris_cmd_override": None,
         }
         try:
             if self.config_file.exists():
@@ -174,6 +175,17 @@ class Config:
     def clear_lutris_entry(self, game_path):
         self.set_lutris_entry(game_path, None)
 
+    def get_lutris_cmd_override(self):
+        """User-forced Lutris command (list of args) or None."""
+        return _coerce_cmd(self.settings.get("lutris_cmd_override"))
+
+    def set_lutris_cmd_override(self, cmd):
+        self.settings["lutris_cmd_override"] = list(cmd) if cmd else None
+        self.save_settings()
+
+    def clear_lutris_cmd_override(self):
+        self.set_lutris_cmd_override(None)
+
     def set_lutris_id(self, game_path, game_id):
         ids = dict(self.settings.get("lutris_game_ids", {}) or {})
         if game_id is None:
@@ -182,3 +194,51 @@ class Config:
             ids[str(game_path)] = int(game_id)
         self.settings["lutris_game_ids"] = ids
         self.save_settings()
+
+
+def _coerce_cmd(value):
+    """Normalize a stored override into a non-empty list of arg strings."""
+    if isinstance(value, (list, tuple)):
+        parts = [str(v) for v in value if str(v).strip()]
+        return parts or None
+    if isinstance(value, str) and value.strip():
+        return [value.strip()]
+    return None
+
+
+def get_lutris_cmd_override():
+    """Read the forced Lutris command straight from config.json.
+
+    Used by ``platform_utils`` so it can honour the override without needing a
+    :class:`Config` instance (avoids import cycles).
+    """
+    try:
+        p = config_data_dir() / "config.json"
+        if p.exists():
+            with open(p, "r") as f:
+                return _coerce_cmd(json.load(f).get("lutris_cmd_override"))
+    except Exception as e:
+        logging.error(f"Failed to read Lutris override: {e}")
+    return None
+
+
+def set_lutris_cmd_override(cmd):
+    """Persist the forced Lutris command directly to config.json."""
+    import tempfile
+    import shutil as _shutil
+    p = config_data_dir() / "config.json"
+    try:
+        data = {}
+        if p.exists():
+            try:
+                with open(p, "r") as f:
+                    data = json.load(f)
+            except Exception:
+                data = {}
+        data["lutris_cmd_override"] = list(cmd) if cmd else None
+        fd, tmp = tempfile.mkstemp(dir=p.parent, suffix=".json")
+        with os.fdopen(fd, "w") as f:
+            json.dump(data, f, indent=4)
+        _shutil.move(tmp, p)
+    except Exception as e:
+        logging.error(f"Failed to save Lutris override: {e}")

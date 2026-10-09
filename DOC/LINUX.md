@@ -51,26 +51,42 @@ whichever method you choose in **Settings → Linux → Launch method**:
   needed.
 - **Always use Wine** — runs the game directly with `wine`.
 
-When you choose **Add to Lutris**, the launcher writes a small installer YAML to
-its own cache and opens it with `lutris -i`. Lutris shows its normal install
-confirmation — press **Install** and the game is added to your library using the
-prefix above. The launcher then detects the new entry and launches it. Your
-Lutris configuration is never edited directly.
+When you choose **Add to Lutris**, the launcher registers the existing install
+directly in your Lutris library. It does **not** run an installer or download
+anything: Lutris's own API is used to add exactly one library entry (a row in
+`pga.db` and a config in `games/`) using the prefix above. Your Lutris settings
+and other games are left untouched. Close Lutris before adding so it cannot
+overwrite the new entry on exit; the launcher then launches the game through
+Lutris.
 
 Running directly with **Wine** is allowed but not recommended; the launcher
 shows a warning first (disable it in Settings).
 
-Multiple installs are supported: each Lutris entry gets a unique name, and you
-switch between them with **Change Location** / **Locate Game**.
+Multiple installs are supported: each install you add gets its **own** Lutris
+entry (`Among Us (Isam AU) …`, suffixed if the name is taken), and you switch
+between them with **Change Location** / **Locate Game**. The launcher only ever
+reuses entries it created — an unrelated Lutris entry that happens to point at
+the same executable is left alone.
 
-### Tools → Add to Lutris / Check Lutris
+### Tools → Add to Lutris / Check Lutris / Fix Lutris
 
 For an install that has files but no Lutris entry yet, use **Add to Lutris** in
-the Tools page: it checks your library first and, if the game is missing, opens
-Lutris so you can add it. **Check Lutris** verifies the current install and shows
-the matching entry's name, numeric id and slug (or offers to add it). The main
-page also shows a `Lutris:` status line, and **Settings → Game Info** lists the
-same entry.
+the Tools page: it checks your library first and, if the game is missing,
+registers it directly (no installer). **Check Lutris** verifies the current
+install and shows the matching entry's name, numeric id and slug (or offers to
+add it). The main page also shows a `Lutris:` status line, and
+**Settings → Game Info** lists the same entry.
+
+**Fix Lutris** force-detects Lutris in one click. Use it if the launcher says
+Lutris wasn't found even though you have it. It scans every common install
+(native package, **Flatpak** `net.lutris.Lutris`, **Snap**, **Nix**, AppImage),
+verifies the command, and remembers it. If nothing is found automatically it
+lets you **Browse** for the executable, **Retry**, or **Auto-detect** again. You
+can also set the path manually in **Settings → Linux → Lutris path**.
+
+Lutris detection works across distributions and honours the forced path above.
+If `lutris -l --json` isn't supported by your Lutris version, the launcher reads
+your `~/.local/share/lutris/pga.db` **read-only** to find the entry instead.
 
 ## Desktop shortcut
 
@@ -88,3 +104,6 @@ exists). It launches through Lutris when an entry exists, otherwise with Wine.
   launcher used (`$WINEPREFIX` or `~/.wine`).
 - **"Lutris entry not detected"** — finish the Lutris install window, then click
   LAUNCH again.
+- **"Lutris was not found"** — use **Tools → Fix Lutris**. It detects native,
+  Flatpak, Snap and Nix installs; if it still fails, Browse for the executable.
+  Logs are at `~/.local/share/IsamAULauncher/logs/launcher.log`.

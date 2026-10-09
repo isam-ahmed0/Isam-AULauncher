@@ -41,6 +41,11 @@ from .updater import UpdaterMixin
 class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProfileMixin, UpdaterMixin):
     def __init__(self, existing_app=None):
         self.config = Config()
+        try:
+            from platform_utils import set_lutris_override
+            set_lutris_override(self.config.get_lutris_cmd_override(), persist=False)
+        except Exception:
+            logging.exception("Failed to load Lutris override")
         self.network = NetworkManager()
         self.discord = DiscordRPC()
         self.game = GameManager(self.config, self.network)
@@ -416,6 +421,7 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
             for label, cb in [
                 ("Add to Lutris", self._cb_add_to_lutris),
                 ("Check Lutris", self._cb_check_lutris),
+                ("Fix Lutris", self._cb_fix_lutris),
             ]:
                 btn = QPushButton(label)
                 btn.setObjectName("toolBtn")
@@ -825,7 +831,7 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
             self.lutris_text.setText("")
             return
         entry = self.config.get_lutris_entry(gp)
-        if entry:
+        if entry and entry.get("id") is not None:
             from platform_utils import format_lutris_entry
             self.lutris_text.setText(f"Lutris: {format_lutris_entry(entry)}")
         else:

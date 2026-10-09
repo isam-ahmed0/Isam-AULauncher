@@ -7,6 +7,7 @@ from PySide6.QtGui import QFontMetrics, QColor, QPainter, QLinearGradient, QBrus
 from PySide6.QtWidgets import (
     QVBoxLayout, QHBoxLayout, QLabel, QFrame, QCheckBox,
     QPushButton, QMessageBox, QGridLayout, QWidget, QScrollArea, QComboBox,
+    QFileDialog,
 )
 
 from config import (
@@ -214,6 +215,31 @@ class SettingsPage(QWidget):
             pf_lbl.setObjectName("mutedText")
             pf_lbl.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
             layout.addWidget(pf_lbl)
+            layout.addSpacing(8)
+
+            lp_row = QHBoxLayout()
+            lp_row.setContentsMargins(8, 0, 8, 0)
+            lp_lbl = QLabel("Lutris path")
+            lp_lbl.setObjectName("mutedText")
+            lp_lbl.setFixedWidth(140)
+            lp_row.addWidget(lp_lbl)
+            from platform_utils import find_lutris
+            detected = self.config.get_lutris_cmd_override() or find_lutris()
+            self._lutris_path_label = QLabel(
+                " ".join(detected) if detected else "Not found (auto)")
+            self._lutris_path_label.setObjectName("mutedText")
+            self._lutris_path_label.setTextInteractionFlags(
+                Qt.TextInteractionFlag.TextSelectableByMouse)
+            lp_row.addWidget(self._lutris_path_label, 1)
+            lp_auto = QPushButton("Auto-detect")
+            lp_auto.setObjectName("smallBtn")
+            lp_auto.clicked.connect(self._reset_lutris_path)
+            lp_row.addWidget(lp_auto)
+            lp_browse = QPushButton("Browse\u2026")
+            lp_browse.setObjectName("smallBtn")
+            lp_browse.clicked.connect(self._browse_lutris_path)
+            lp_row.addWidget(lp_browse)
+            layout.addLayout(lp_row)
             layout.addSpacing(12)
 
         layout.addWidget(QFrame(frameShape=QFrame.Shape.HLine))
@@ -338,6 +364,31 @@ class SettingsPage(QWidget):
                 self.discord.connect()
             elif not value and self.discord.connected:
                 self.discord.disconnect()
+
+    def _refresh_lutris_path_label(self):
+        lbl = getattr(self, "_lutris_path_label", None)
+        if lbl is None:
+            return
+        from platform_utils import find_lutris
+        detected = self.config.get_lutris_cmd_override() or find_lutris(refresh=True)
+        lbl.setText(" ".join(detected) if detected else "Not found (auto)")
+
+    def _browse_lutris_path(self):
+        start = "/usr/bin" if Path("/usr/bin").is_dir() else str(Path.home())
+        path, _ = QFileDialog.getOpenFileName(
+            self, "Select the Lutris executable", start, "Executables (*)")
+        if not path:
+            return
+        from platform_utils import set_lutris_override
+        set_lutris_override([path])
+        self.config.set_lutris_cmd_override([path])
+        self._refresh_lutris_path_label()
+
+    def _reset_lutris_path(self):
+        from platform_utils import clear_lutris_override
+        clear_lutris_override()
+        self.config.clear_lutris_cmd_override()
+        self._refresh_lutris_path_label()
 
     def _select_theme(self, name: str):
         self._selected_theme = name
