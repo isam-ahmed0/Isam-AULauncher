@@ -237,6 +237,7 @@ class DiscordRPC:
                     warnings.simplefilter("ignore", RuntimeWarning)
                     rpc.update(state=state, details=details,
                                large_image="isam_au", large_text=large_text,
+                               large_url=DISCORD_DOWNLOAD_URL,
                                buttons=[
                                    {"label": "Download CrewLauncher", "url": DISCORD_DOWNLOAD_URL},
                                    {"label": "Website", "url": DISCORD_WEBSITE_URL},
