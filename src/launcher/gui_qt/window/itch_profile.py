@@ -35,13 +35,19 @@ class ItchProfileMixin:
 
     # ------------------------------------------------------------------ sign-in (native)
     def open_itch_fixer(self):
-        """Native itch.io login — no Wine or external fixer needed.
+        """Native itch.io login — Wine required on Linux (forceable).
 
         Starts the local OAuth callback server, opens itch.io in the browser,
         and on success saves the token to the same prefix the game uses.
         """
         if getattr(self, "_itch_auth_session", None) is not None:
             return
+
+        from gui_qt.dialogs import wine_login_gate
+        if not wine_login_gate(getattr(self, "window", None)):
+            self._set_status("Wine is required to sign in — see the documentation.", "warning")
+            return
+
         session = ItchOAuthSession()
         session.token.connect(self._on_itch_token)
         session.failed.connect(self._on_itch_auth_failed)

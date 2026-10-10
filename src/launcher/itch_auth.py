@@ -1,13 +1,14 @@
 """Native itch.io login for Isam AULauncher.
 
-Runs a local callback server on 127.0.0.1:7890 and opens itch.io's implicit
-grant page in the system browser. The access token is returned in the URL
-*fragment* (``#access_token=...``), so the redirect page uses a tiny script to
-forward it to ``/token?t=...`` which the local server picks up.
+This is the Itch Login Fixer's logic embedded in the launcher: the same OAuth
+client, the same local callback server on 127.0.0.1:7890, the same redirect
+pages and the same token file (the fixer wrote to ``%USERPROFILE%`` under Wine,
+which maps to ``itch_token_dir`` here). See ``src/fixer/Itch_Login_Fixer.py``.
 
-Works on Windows, Linux and macOS -- no Wine or external fixer needed. The port
-must stay 7890 because that is the redirect URI registered for the OAuth
-client below.
+The access token is returned in the URL *fragment* (``#access_token=...``), so
+the redirect page uses a small script to forward it to ``/token?t=...`` which
+the local server picks up. Works on Windows, Linux and macOS. The port must
+stay 7890 because that is the redirect URI registered for the OAuth client.
 """
 import logging
 import threading
@@ -19,72 +20,65 @@ from PySide6.QtCore import QObject, Signal
 
 from platform_utils import itch_token_dir
 
-ITCH_CLIENT_ID = "1ba9b4bfa1ac7759e8420eed4ec863ba"
-ITCH_OAUTH_PORT = 7890
-ITCH_REDIRECT = f"http://127.0.0.1:{ITCH_OAUTH_PORT}"
-ITCH_AUTH_URL = "https://itch.io/user/oauth"
+CLIENT_ID = "1ba9b4bfa1ac7759e8420eed4ec863ba"
+PORT = 7890
+ITCH_REDIRECT = f"http://127.0.0.1:{PORT}"
 ITCH_SCOPE = "profile:me"
 ITCH_TIMEOUT = 300.0
 
-_LOADING_PAGE = b"""<!DOCTYPE html>
+LOADING_PAGE = b"""<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<title>Isam AULauncher | Authenticating</title>
-<style>
-  body { background: #0f0f12; color: #7b61ff; display: flex;
-         flex-direction: column; justify-content: center; align-items: center;
-         height: 100vh; margin: 0; font-family: 'Segoe UI', Arial, sans-serif; }
-  .spinner { border: 4px solid #26262e; border-top: 4px solid #7b61ff;
-             border-radius: 50%; width: 46px; height: 46px;
-             animation: spin 1s linear infinite; margin-bottom: 18px; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-</style>
+    <meta charset="UTF-8">
+    <title>ShadowSlime | Authenticating</title>
+    <style>
+        body { background: #060608; color: #7b61ff; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; font-family: 'Segoe UI', sans-serif; margin: 0; }
+        .loader { border: 4px solid #1a1b1e; border-top: 4px solid #7b61ff; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .text { font-weight: bold; letter-spacing: 1px; }
+    </style>
 </head>
 <body>
-  <div class="spinner"></div>
-  <div class="msg">AUTHENTICATING WITH ITCH.IO...</div>
-  <script>
-    (function () {
-      var token = new URLSearchParams(window.location.hash.slice(1)).get('access_token');
-      if (token) { window.location = '/token?t=' + encodeURIComponent(token); }
-    })();
-  </script>
+    <div class="loader"></div>
+    <div class="text">CONNECTING TO ITCH.IO...</div>
+    <script>
+        const params = new URLSearchParams(window.location.hash.slice(1));
+        const token = params.get('access_token');
+        if (token) window.location = '/token?t=' + token;
+    </script>
 </body>
 </html>"""
 
-_SUCCESS_PAGE = b"""<!DOCTYPE html>
+SUCCESS_PAGE = b"""<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<title>Isam AULauncher | Success</title>
-<style>
-  body { background: #0c120e; color: #4ade80; display: flex;
-         flex-direction: column; justify-content: center; align-items: center;
-         height: 100vh; margin: 0; font-family: 'Segoe UI', Arial, sans-serif; }
-  .icon { font-size: 64px; }
-  .msg { font-size: 22px; font-weight: bold; }
-  .sub { color: #888; margin-top: 8px; }
-</style>
+    <meta charset="UTF-8">
+    <title>ShadowSlime | Success</title>
+    <style>
+        body { background: #060608; color: #4ade80; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; font-family: 'Segoe UI', sans-serif; margin: 0; }
+        .icon { font-size: 60px; margin-bottom: 10px; }
+        .msg { font-size: 24px; font-weight: bold; }
+        .sub { color: #888; margin-top: 10px; }
+    </style>
 </head>
 <body>
-  <div class="icon">&#10004;</div>
-  <div class="msg">AUTHORIZATION COMPLETE</div>
-  <div class="sub">You can close this tab and return to the launcher.</div>
+    <div class="icon">&#10004;</div>
+    <div class="msg">AUTHORIZATION COMPLETE</div>
+    <div class="sub">You can close this tab and return to the fixer.</div>
 </body>
 </html>"""
 
 
-class _TokenHandler(BaseHTTPRequestHandler):
+class OAuthHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
         if parsed.path.startswith("/token"):
             token = urllib.parse.parse_qs(parsed.query).get("t", [None])[0]
-            self._reply(_SUCCESS_PAGE)
+            self._reply(SUCCESS_PAGE)
             if token:
                 self.server.capture_token(token)
             return
-        self._reply(_LOADING_PAGE)
+        self._reply(LOADING_PAGE)
 
     def _reply(self, body):
         self.send_response(200)
@@ -100,11 +94,11 @@ class _TokenHandler(BaseHTTPRequestHandler):
         pass
 
 
-class _ItchOAuthServer(HTTPServer):
+class ItchOAuthServer(HTTPServer):
     allow_reuse_address = True
 
     def __init__(self, addr, session):
-        super().__init__(addr, _TokenHandler)
+        super().__init__(addr, OAuthHandler)
         self.session = session
         self.token = None
         self.captured = threading.Event()
@@ -133,13 +127,10 @@ class ItchOAuthSession(QObject):
         self._httpd = None
 
     def auth_url(self):
-        params = urllib.parse.urlencode({
-            "client_id": ITCH_CLIENT_ID,
-            "scope": ITCH_SCOPE,
-            "redirect_uri": ITCH_REDIRECT,
-            "response_type": "token",
-        })
-        return f"{ITCH_AUTH_URL}?{params}"
+        # Same URL the Itch Login Fixer builds.
+        return (f"https://itch.io/user/oauth?client_id={CLIENT_ID}"
+                f"&scope={ITCH_SCOPE}&redirect_uri={ITCH_REDIRECT}"
+                f"&response_type=token")
 
     def start(self):
         """Bind the callback server and begin listening.
@@ -149,7 +140,7 @@ class ItchOAuthSession(QObject):
         """
         if self._httpd is not None:
             return
-        self._httpd = _ItchOAuthServer(("127.0.0.1", ITCH_OAUTH_PORT), self)
+        self._httpd = ItchOAuthServer(("127.0.0.1", PORT), self)
         threading.Thread(target=self._httpd.serve_forever, daemon=True).start()
         threading.Thread(target=self._watchdog, daemon=True).start()
 

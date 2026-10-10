@@ -1,9 +1,11 @@
 # Wine setup for Isam AULauncher
 
 Isam AULauncher uses Wine on Linux **only** to run Among Us (directly or via
-Lutris). Signing in to itch.io is a native browser flow and does **not** need
-Wine. The launcher does not install or modify Wine, and it does not touch your
-Wine prefix configuration.
+Lutris) and to store the itch.io token that Among Us reads. Signing in to
+itch.io requires Wine on Linux — if the `wine` command isn't detected the login
+is blocked, with a **"I have Wine — Continue anyway"** button for cases where
+Wine exists but wasn't auto-detected. The launcher does not install or modify
+Wine, and it does not touch your Wine prefix configuration.
 
 ## Install Wine
 

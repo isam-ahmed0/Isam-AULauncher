@@ -1,8 +1,9 @@
 # Isam AULauncher on Linux
 
-The launcher now runs natively on Linux, including the itch.io sign-in (a
-built-in OAuth flow, no Wine needed). Linux support is **non-destructive**: the
-launcher only reads and writes the itch.io token that the game already uses.
+The launcher now runs natively on Linux, with the Itch Login Fixer's flow built
+in (same OAuth client, same callback, same token file). Linux support is
+**non-destructive**: the launcher only reads and writes the itch.io token that
+the game already uses.
 
 > The launcher **never** creates, deletes or reconfigures your Wine prefix or
 > your Lutris configuration. If you already tuned Wine for other games, nothing
@@ -10,12 +11,14 @@ launcher only reads and writes the itch.io token that the game already uses.
 
 ## Requirements
 
-- **Wine** is needed only to run Among Us (direct launch or via Lutris). 
-  Signing in to itch.io works without Wine.
+- **Wine is required** on Linux. It is needed to run Among Us, and **itch.io**
+  sign-in is gated on it: if `wine` isn't detected, sign-in is blocked with an
+  "install Wine" popup (there is an **"I have Wine — Continue anyway"** button
+  for cases where Wine exists but wasn't auto-detected, e.g. Lutris bundles).
 - Optionally **Lutris** to install and launch Among Us.
 
-If Wine is not found but you want to play, the launcher shows a popup and links
-you to [WINE.md](WINE.md). It will **not** install Wine for you.
+The launcher shows a popup with [WINE.md](WINE.md) links if its detection of
+Wine fails. It will **not** install Wine for you.
 
 ## How it works
 
@@ -25,7 +28,7 @@ you to [WINE.md](WINE.md). It will **not** install Wine for you.
    needs no special setup.
 3. When you click **Sign in with itch.io**, the launcher opens the itch.io login
    page in your browser and, once you authorize, stores the token into the Wine
-   prefix (see below).
+   prefix (see below) — the same file the Itch Login Fixer wrote.
 4. The launcher reads that token from
    `<prefix>/drive_c/users/<user>/AppData/LocalLow/Innersloth/Among Us/itch`.
 5. When you click **LAUNCH**, the launcher starts the game through Lutris (see

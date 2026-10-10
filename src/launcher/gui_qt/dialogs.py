@@ -648,3 +648,44 @@ def show_wine_missing(parent=None):
         [("Open LINUX.md", LINUX_DOC_URL), ("Open WINE.md", WINE_DOC_URL)],
         preview_names=("WINE.md", "LINUX.md"),
     )
+
+
+def wine_login_gate(parent=None) -> bool:
+    """Gate itch.io sign-in on Wine availability (Linux only).
+
+    Returns ``True`` when sign-in may proceed: on Windows/macOS, when ``wine``
+    is found on PATH, or when the user explicitly forces it because they already
+    have Wine that wasn't auto-detected. Returns ``False`` to block sign-in.
+    """
+    from platform_utils import IS_LINUX, find_wine
+
+    if not IS_LINUX or find_wine():
+        return True
+
+    while True:
+        box = QMessageBox(parent)
+        box.setWindowTitle("Wine Not Found")
+        box.setIcon(QMessageBox.Icon.Warning)
+        box.setText("To sign in with itch.io on Linux, Wine is required.\n"
+                    "Please install Wine, then try again. The launcher will not "
+                    "install or modify Wine for you.")
+        box.setInformativeText("Already have Wine but it wasn't detected?\n"
+                               "That can happen with Lutris bundles or custom "
+                               "installs. Continue anyway as long as the game runs "
+                               "in the configured prefix.")
+        box.setStandardButtons(QMessageBox.StandardButton.Cancel)
+        force_btn = box.addButton("I have Wine — Continue anyway",
+                                  QMessageBox.ButtonRole.AcceptRole)
+        doc_wine = box.addButton("Open WINE.md", QMessageBox.ButtonRole.ActionRole)
+        doc_linux = box.addButton("Open LINUX.md", QMessageBox.ButtonRole.ActionRole)
+        box.exec()
+        clicked = box.clickedButton()
+        if clicked is force_btn:
+            return True
+        if clicked is doc_wine:
+            webbrowser.open(WINE_DOC_URL)
+            continue
+        if clicked is doc_linux:
+            webbrowser.open(LINUX_DOC_URL)
+            continue
+        return False

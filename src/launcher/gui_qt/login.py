@@ -325,6 +325,12 @@ class LoginWindow(QMainWindow):
     def _start_login(self):
         if self._logging_in:
             return
+
+        from gui_qt.dialogs import wine_login_gate
+        if not wine_login_gate(self):
+            self._set_status("Wine is required to sign in — see the documentation.")
+            return
+
         self._logging_in = True
         self._login_btn.setEnabled(False)
 
