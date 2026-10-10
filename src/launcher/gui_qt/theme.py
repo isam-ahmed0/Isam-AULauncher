@@ -77,6 +77,13 @@ QWidget {{
     color: {p["text_bright"]};
 }}
 
+#sidebar QPushButton#sidebarToggle {{
+    text-align: center;
+    padding: 8px;
+    max-width: 34px;
+    max-height: 34px;
+}}
+
 /* ===== PRIMARY ACTION BUTTON ===== */
 QPushButton#primaryBtn {{
     background-color: {p["accent"]};

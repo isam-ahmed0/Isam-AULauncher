@@ -13,6 +13,7 @@ _HERO_IMAGE_PATH = _RESOURCES_DIR / "hero.png"
 _ICON_PATH = _RESOURCES_DIR / "icon.ico"
 
 SIDEBAR_W = 200
+SIDEBAR_W_MIN = 64
 
 _FONT_FAMILY = "Segoe UI, Inter, Helvetica Neue, Arial"
 

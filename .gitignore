@@ -34,3 +34,4 @@ scratch/
 
 # Prevent accidental commits with full Windows absolute paths
 C:/Users/
+src/launcher/resources/phosphor-icons/

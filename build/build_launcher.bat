@@ -9,6 +9,7 @@ pyinstaller --noconfirm --onedir --windowed --noupx ^
   --name IsamAULauncher ^
   --icon src\launcher\resources\icon.ico ^
   --add-data "src\launcher\resources\icon.ico;resources" ^
+  --add-data "src\launcher\resources\phosphor-icons;resources\phosphor-icons" ^
   --add-data "DOC;DOC" ^
   --add-data "release\bepmods.zip;." ^
   --exclude-module PySide6.QtWebEngineCore ^

@@ -50,6 +50,7 @@ pyinstaller --noconfirm --onedir --windowed --noupx \
   --specpath build \
   --icon "$PWD/src/launcher/resources/icon.ico" \
   --add-data "$PWD/src/launcher/resources/icon.ico:resources" \
+  --add-data "$PWD/src/launcher/resources/phosphor-icons:resources/phosphor-icons" \
   --add-data "$PWD/DOC:DOC" \
   --add-data "$PWD/release/bepmods.zip:." \
   "${EXCLUDES[@]}" \

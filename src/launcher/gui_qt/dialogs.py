@@ -414,6 +414,12 @@ class SettingsPage(QWidget):
             if main_win:
                 for btn in main_win.nav_buttons.values():
                     enable_hover_glow(btn)
+                # Refresh sidebar nav icon colors for the new theme
+                from gui_qt import icons
+                icons.refresh_nav_buttons(main_win)
+                launcher = getattr(main_win, "_launcher", None)
+                if launcher is not None:
+                    launcher._refresh_toggle_icon()
                 # Restart playing pulse if game is running
                 if hasattr(main_win, 'game') and main_win.game.is_running:
                     from gui_qt.widgets import start_playing_pulse
@@ -434,6 +440,13 @@ class SettingsPage(QWidget):
         app = QApplication.instance()
         if app:
             theme.set_theme(app, name)
+            from gui_qt import icons
+            for w in app.topLevelWidgets():
+                if hasattr(w, 'nav_buttons'):
+                    icons.refresh_nav_buttons(w)
+                    launcher = getattr(w, "_launcher", None)
+                    if launcher is not None:
+                        launcher._refresh_toggle_icon()
         self._refresh_theme_grid()
 
     def _delete_theme(self, name: str):

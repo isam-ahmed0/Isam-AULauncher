@@ -13,12 +13,13 @@ from PySide6.QtWidgets import (
     QStatusBar, QComboBox, QScrollArea, QSystemTrayIcon, QMenu,
     QListWidget,
 )
-from PySide6.QtCore import Qt, QTimer, QPropertyAnimation, QEasingCurve
+from PySide6.QtCore import Qt, QTimer, QPropertyAnimation, QEasingCurve, QSize
 from PySide6.QtGui import QIcon, QAction
 from PySide6.QtWidgets import QGraphicsOpacityEffect
 
 from gui_qt.worker import _UISignaler, Worker
-from ..widgets import HeroBanner, _ICON_PATH, SIDEBAR_W, enable_hover_glow, start_playing_pulse, stop_playing_pulse
+from ..widgets import HeroBanner, _ICON_PATH, SIDEBAR_W, SIDEBAR_W_MIN, enable_hover_glow, start_playing_pulse, stop_playing_pulse
+from gui_qt import icons
 from ..dialogs import SettingsPage, AboutPage
 
 from config import (
@@ -194,12 +195,23 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         sidebar_layout.setContentsMargins(12, 20, 12, 20)
         sidebar_layout.setSpacing(4)
 
-        brand = QLabel(BRAND_SHORT)
-        brand.setObjectName("brandLabel")
-        sidebar_layout.addWidget(brand)
-        app_name = QLabel(APP_NAME)
-        app_name.setObjectName("brandSubLabel")
-        sidebar_layout.addWidget(app_name)
+        self._sidebar = sidebar
+        self._toggle_btn = QPushButton()
+        self._toggle_btn.setObjectName("sidebarToggle")
+        self._toggle_btn.setCheckable(False)
+        self._toggle_btn.setIcon(icons.icon_for("sidebar-simple", theme.ACCENT, 18))
+        self._toggle_btn.setIconSize(QSize(18, 18))
+        self._toggle_btn.setToolTip("Collapse sidebar")
+        self._toggle_btn.clicked.connect(self._toggle_sidebar)
+        sidebar_layout.addWidget(self._toggle_btn)
+        sidebar_layout.addSpacing(6)
+
+        self._brand_label = QLabel(BRAND_SHORT)
+        self._brand_label.setObjectName("brandLabel")
+        sidebar_layout.addWidget(self._brand_label)
+        self._app_name_label = QLabel(APP_NAME)
+        self._app_name_label.setObjectName("brandSubLabel")
+        sidebar_layout.addWidget(self._app_name_label)
         sidebar_layout.addSpacing(16)
 
         sep = QFrame()
@@ -228,20 +240,40 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         self.pages.addWidget(self.page_assets)
 
         self.nav_buttons = {}
+        self.nav_labels = {}
+        self.nav_tooltips = {}
+        self.nav_icon_names = {}
+        _nav_icons = {
+            "Game": "game-controller",
+            "Tools": "wrench",
+            "Profile": "user-circle",
+            "Mods": "puzzle-piece",
+            "Settings": "gear",
+            "About": "info",
+            "Assets": "package",
+        }
         for label, idx in [("Game", 0), ("Tools", 1), ("Profile", 2), ("Mods", 3),
                            ("Settings", 4), ("About", 5), ("Assets", 6)]:
             btn = QPushButton(label)
             btn.setCheckable(True)
             btn.setFixedHeight(42)
+            btn.setIcon(icons.nav_icon(_nav_icons[label]))
+            btn.setIconSize(QSize(20, 20))
+            btn._nav_icon_name = _nav_icons[label]
             btn.clicked.connect(lambda checked, i=idx, l=label: self._switch_page(i, l))
             sidebar_layout.addWidget(btn)
             self.nav_buttons[label] = btn
+            self.nav_labels[label] = label
+            self.nav_icon_names[label] = _nav_icons[label]
             enable_hover_glow(btn)
 
         sidebar_layout.addStretch()
 
         main_layout.addWidget(sidebar)
         main_layout.addWidget(self.pages)
+
+        self.window.nav_buttons = self.nav_buttons
+        self.window._launcher = self
 
         self.status_bar = QStatusBar()
         self.window.setStatusBar(self.status_bar)
@@ -258,6 +290,73 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         self.nav_buttons["Game"].setChecked(True)
         self.nav_buttons["Assets"].setEnabled(False)
         self.nav_buttons["Assets"].setToolTip("Coming soon in a future major version")
+
+        self._sidebar_collapsed = bool(self.config.settings.get("sidebar_collapsed", False))
+        if self._sidebar_collapsed:
+            self._apply_sidebar_collapsed(animate=False)
+
+    # ------------------------------------------------------------------ sidebar collapse
+    def _toggle_sidebar(self):
+        self._set_sidebar_collapsed(not self._sidebar_collapsed, animate=True)
+
+    def _set_sidebar_collapsed(self, collapsed: bool, animate=True):
+        self._sidebar_collapsed = collapsed
+        self.config.settings["sidebar_collapsed"] = collapsed
+        self.config.save_settings()
+        self._apply_sidebar_collapsed(animate)
+
+    def _ensure_sidebar_anim(self):
+        if getattr(self, "_sidebar_anim", None) is None:
+            self._sidebar_anim = QPropertyAnimation(self._sidebar, b"maximumWidth", self._sidebar)
+            self._sidebar_anim.setDuration(180)
+            self._sidebar_anim.setEasingCurve(QEasingCurve.Type.InOutCubic)
+            self._sidebar_anim.valueChanged.connect(
+                lambda v: self._sidebar.setFixedWidth(int(v)))
+            self._sidebar_anim.finished.connect(
+                lambda: self._sidebar.setFixedWidth(
+                    SIDEBAR_W_MIN if self._sidebar_collapsed else SIDEBAR_W))
+        return self._sidebar_anim
+
+    def _apply_sidebar_collapsed(self, animate=True):
+        start = self._sidebar.width()
+        end = SIDEBAR_W_MIN if self._sidebar_collapsed else SIDEBAR_W
+
+        if animate and start != end:
+            anim = self._ensure_sidebar_anim()
+            anim.stop()
+            anim.setStartValue(start)
+            anim.setEndValue(end)
+            anim.start()
+        else:
+            self._sidebar.setFixedWidth(end)
+
+        self._apply_sidebar_widget_state()
+
+    def _apply_sidebar_widget_state(self):
+        collapsed = self._sidebar_collapsed
+        icon_size = 26 if collapsed else 20
+        for label, btn in self.nav_buttons.items():
+            btn.setIconSize(QSize(icon_size, icon_size))
+            if collapsed:
+                if btn.text():
+                    self.nav_tooltips[label] = btn.toolTip()
+                btn.setText("")
+                btn.setToolTip(label)
+            else:
+                btn.setText(self.nav_labels[label])
+                btn.setToolTip(self.nav_tooltips.get(label) or "")
+        self._brand_label.setVisible(not collapsed)
+        self._app_name_label.setVisible(not collapsed)
+        self._refresh_toggle_icon()
+
+    def _refresh_nav_icons(self):
+        icons.refresh_nav_buttons(self.window)
+
+    def _refresh_toggle_icon(self):
+        collapsed = self._sidebar_collapsed
+        self._toggle_btn.setToolTip("Expand sidebar" if collapsed else "Collapse sidebar")
+        self._toggle_btn.setIcon(icons.icon_for(
+            "sidebar-simple", theme.ACCENT, 18, mirror=collapsed))
 
     # ------------------------------------------------------------------ pages
     def _build_game_page(self):
