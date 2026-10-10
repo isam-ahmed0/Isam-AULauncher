@@ -17,7 +17,7 @@ pacman -Syu --noconfirm --needed \
   base-devel rpm-tools python python-pip \
   mesa libglvnd fontconfig freetype2 libxkbcommon \
   libxcb libx11 libxext libxrender libxi libsm libice \
-  libxrandr libxcursor libxfixes libxdamage libxcomposite libxcb-util \
+  libxrandr libxcursor libxfixes libxdamage libxcomposite xcb-util \
   dbus
 
 echo "[ci] installing Python packages"
