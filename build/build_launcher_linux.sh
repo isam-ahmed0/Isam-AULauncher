@@ -48,12 +48,12 @@ pyinstaller --noconfirm --onedir --windowed --noupx \
   --distpath dist/linux \
   --workpath build/linux-work \
   --specpath build \
-  --icon src/launcher/resources/icon.ico \
-  --add-data "src/launcher/resources/icon.ico:resources" \
-  --add-data "DOC:DOC" \
-  --add-data "release/bepmods.zip:." \
+  --icon "$PWD/src/launcher/resources/icon.ico" \
+  --add-data "$PWD/src/launcher/resources/icon.ico:resources" \
+  --add-data "$PWD/DOC:DOC" \
+  --add-data "$PWD/release/bepmods.zip:." \
   "${EXCLUDES[@]}" \
-  src/launcher/main.py
+  "$PWD/src/launcher/main.py"
 
 echo
 echo "Built: dist/linux/IsamAULauncher/"
