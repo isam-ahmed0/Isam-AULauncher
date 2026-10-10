@@ -45,7 +45,8 @@ jobs:
         run: |
           mkdir -p release-assets
           find artifacts -type f \
-            \( -name '*.exe' -o -name '*.zip' -o -name '*.deb' -o -name '*.rpm' -o -name '*.pkg.tar.zst' \) \
+            \( -name '*.exe' -o -name '*.zip' -o -name '*.deb' -o -name '*.rpm' \
+               -o -name '*.pkg.tar.zst' -o -name '*.tar.gz' \) \
             -exec cp -v {} release-assets/ \;
           echo "--- release assets ---"
           ls -lh release-assets

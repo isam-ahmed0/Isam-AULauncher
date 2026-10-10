@@ -34,8 +34,15 @@ jobs:
             if (-not $m) { throw "Could not find LAUNCHER_VERSION in src/launcher/config.py" }
             $v = $m.Matches[0].Groups[1].Value
           }
+          # NSIS needs a numeric X.X.X.X file version; VERSION may be a
+          # prerelease tag (e.g. 1.0-beta.1).
+          $base = ($v -split '[-+]')[0]
+          $parts = @($base -split '\.' | Where-Object { $_ -match '^\d+$' })
+          while ($parts.Count -lt 4) { $parts += '0' }
+          $fileVersion = ($parts[0..3] -join '.')
           "VERSION=$v" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-          Write-Host "Version: $v"
+          "FILE_VERSION=$fileVersion" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          Write-Host "Version: $v (file $fileVersion)"
 
       - name: Install Python dependencies
         run: |
@@ -125,7 +132,7 @@ jobs:
             "installer\CrewLauncher-Universal.nsi"
           )) {
             Write-Host "makensis $nsi"
-            & $env:MAKENSIS "/DROOT=$root" "/DVERSION=$env:VERSION" $nsi
+            & $env:MAKENSIS "/DROOT=$root" "/DVERSION=$env:VERSION" "/DFILE_VERSION=$env:FILE_VERSION" $nsi
             if ($LASTEXITCODE -ne 0) { throw "makensis failed for $nsi" }
           }
 

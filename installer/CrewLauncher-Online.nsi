@@ -13,9 +13,14 @@
 !define APP_SHORT     "CrewLauncher"
 !define COMPANY       "Isam"
 !ifndef VERSION
-  !define VERSION     "1.0-beta.1"
+  !define VERSION     "1.0"
 !endif
-!define VERSION_DOT   "${VERSION}.0.0"
+; Numeric X.X.X.X for VIProductVersion/FileVersion (VERSION may be a prerelease
+; tag like 1.0-beta.1, which is not a valid file version). Build scripts pass
+; /DFILE_VERSION=; this is the fallback.
+!ifndef FILE_VERSION
+  !define FILE_VERSION "0.0.0.0"
+!endif
 
 !ifndef ROOT
   !define ROOT "${__FILEDIR__}\.."
@@ -40,10 +45,10 @@ UninstallIcon "${SRC_ICON}"
 
 BrandingText "CrewLauncher Installer"
 
-VIProductVersion "${VERSION_DOT}"
+VIProductVersion "${FILE_VERSION}"
 VIAddVersionKey "ProductName"    "${APP_NAME}"
 VIAddVersionKey "FileDescription" "${APP_NAME} ${VERSION} (Online)"
-VIAddVersionKey "FileVersion"     "${VERSION_DOT}"
+VIAddVersionKey "FileVersion"     "${FILE_VERSION}"
 VIAddVersionKey "ProductVersion"  "${VERSION}"
 VIAddVersionKey "CompanyName"     "${COMPANY}"
 VIAddVersionKey "LegalCopyright"  "Copyright (c) 2026 ${COMPANY}"

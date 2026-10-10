@@ -15,12 +15,9 @@ if not exist "dist\CrewLauncher-All.zip" (
   exit /b 1
 )
 
-REM Read version from config.py
-set "VERSION="
-for /f "tokens=2 delims== " %%v in ('findstr /B "LAUNCHER_VERSION =" src\launcher\config.py') do set "VERSION=%%~v"
-set "VERSION=%VERSION:"=%"
-if not defined VERSION set "VERSION=0.1"
-echo Using version: %VERSION%
+REM Read version (sets VERSION + FILE_VERSION)
+call "%~dp0_version.bat"
+echo Using version: %VERSION% (file %FILE_VERSION%)
 
 echo ============================================================
 echo  Compiling online installer
@@ -35,7 +32,7 @@ if not defined MAKENSIS (
 )
 
 echo Using: %MAKENSIS%
-"%MAKENSIS%" "/DROOT=%ROOT%" "/DVERSION=%VERSION%" "installer\CrewLauncher-Online.nsi"
+"%MAKENSIS%" "/DROOT=%ROOT%" "/DVERSION=%VERSION%" "/DFILE_VERSION=%FILE_VERSION%" "installer\CrewLauncher-Online.nsi"
 if errorlevel 1 (
   echo.
   echo Online installer build FAILED.

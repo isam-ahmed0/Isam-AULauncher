@@ -45,6 +45,9 @@ jobs:
             archlinux:latest \
             bash /work/build/ci/linux_build.sh
 
+      - name: Show packages
+        run: ls -lh dist/packages
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -54,3 +57,4 @@ jobs:
             dist/packages/CrewLauncher.deb
             dist/packages/CrewLauncher.rpm
             dist/packages/CrewLauncher.pkg.tar.zst
+            dist/packages/CrewLauncher-Linux.tar.gz

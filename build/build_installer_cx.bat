@@ -12,12 +12,9 @@ set "ROOT=%CD%"
 
 if not exist "dist" mkdir dist
 
-REM Read version from config.py
-set "VERSION="
-for /f "tokens=2 delims== " %%v in ('findstr "LAUNCHER_VERSION" src\launcher\config.py') do set "VERSION=%%~v"
-set "VERSION=%VERSION:"=%"
-if not defined VERSION set "VERSION=0.1"
-echo Using version: %VERSION%
+REM Read version (sets VERSION + FILE_VERSION)
+call "%~dp0_version.bat"
+echo Using version: %VERSION% (file %FILE_VERSION%)
 
 echo ============================================================
 echo  [1/3] Building with Cx_Freeze
@@ -57,7 +54,7 @@ if not defined MAKENSIS (
 )
 
 echo Using: %MAKENSIS%
-"%MAKENSIS%" "/DROOT=%ROOT%" "/DVERSION=%VERSION%" "/DBUILD_CX=1" "installer\CrewLauncher.nsi"
+"%MAKENSIS%" "/DROOT=%ROOT%" "/DVERSION=%VERSION%" "/DFILE_VERSION=%FILE_VERSION%" "/DBUILD_CX=1" "installer\CrewLauncher.nsi"
 if errorlevel 1 (
   echo.
   echo Installer build FAILED.
