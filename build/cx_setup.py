@@ -1,9 +1,9 @@
 """
-Cx_Freeze build script for Isam AULauncher.
-Builds both IsamAULauncher and Itch_Login_Fixer into a shared lib/ folder.
+Cx_Freeze build script for CrewLauncher.
+Builds both CrewLauncher and Itch_Login_Fixer into a shared lib/ folder.
 
 Usage (from repo root):
-    python build/cx_setup.py build --build-exe=dist/IsamAULauncher_cx
+    python build/cx_setup.py build --build-exe=dist/CrewLauncher_cx
 
 Requirements:
     pip install cx_Freeze>=8.7
@@ -43,7 +43,7 @@ executables = [
     Executable(
         "src/launcher/main.py",
         base="gui",
-        target_name="IsamAULauncher.exe",
+        target_name="CrewLauncher.exe",
         icon="src/launcher/resources/icon.ico",
     ),
     Executable(
@@ -55,9 +55,9 @@ executables = [
 ]
 
 setup(
-    name="Isam AULauncher",
+    name="CrewLauncher",
     version="0.2",
-    description="Isam AULauncher - Among Us launcher with mod support",
+    description="CrewLauncher - Among Us launcher with mod support",
     options={"build_exe": build_exe_options},
     executables=executables,
 )

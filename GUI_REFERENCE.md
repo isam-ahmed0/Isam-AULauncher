@@ -1,4 +1,4 @@
-# Isam AULauncher — GUI Reference for Animation Expert
+# CrewLauncher — GUI Reference for Animation Expert
 
 ## Overview
 

@@ -1,4 +1,4 @@
-# Isam AULauncher on Linux
+# CrewLauncher on Linux
 
 The launcher now runs natively on Linux, with the Itch Login Fixer's flow built
 in (same OAuth client, same callback, same token file). Linux support is
@@ -22,7 +22,7 @@ Wine fails. It will **not** install Wine for you.
 
 ## How it works
 
-1. You run Isam AULauncher natively on Linux.
+1. You run CrewLauncher natively on Linux.
 2. Click **INSTALL** to download and extract Among Us into a folder (default
    `~/Games/Isam-AULauncher/Among-Us`). Installation itself is pure file I/O and
    needs no special setup.
@@ -66,7 +66,7 @@ Running directly with **Wine** is allowed but not recommended; the launcher
 shows a warning first (disable it in Settings).
 
 Multiple installs are supported: each install you add gets its **own** Lutris
-entry (`Among Us (Isam AU) …`, suffixed if the name is taken), and you switch
+entry (`Among Us (CREW AU) …`, suffixed if the name is taken), and you switch
 between them with **Change Location** / **Locate Game**. The launcher only ever
 reuses entries it created — an unrelated Lutris entry that happens to point at
 the same executable is left alone.
@@ -98,15 +98,15 @@ Build the launcher, then the installers:
 ```fish
 source .venv/bin/activate.fish
 pip install pyinstaller
-bash build/build_launcher_linux.sh     # -> dist/linux/IsamAULauncher/
+bash build/build_launcher_linux.sh     # -> dist/linux/CrewLauncher/
 bash build/build_packages_linux.sh     # -> dist/packages/
 ```
 
 `dist/packages/` contains:
 
-- **`IsamAU-Launcher-<ver>.run`** — universal self-extracting installer. Run it
+- **`CrewLauncher-<ver>.run`** — universal self-extracting installer. Run it
   and it installs (no package manager needed):
-  `./IsamAU-Launcher-<ver>.run` (per-user, `~/.local`),
+  `./CrewLauncher-<ver>.run` (per-user, `~/.local`),
   `... --system` (`/opt`, needs root), or `... --uninstall`.
 - **`isam-aulauncher-<ver>-1-x86_64.pkg.tar.zst`** — Arch/CachyOS/Manjaro:
   `sudo pacman -U isam-aulauncher-*.pkg.tar.zst`.

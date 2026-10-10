@@ -7,7 +7,7 @@ REM
 REM Prerequisites:
 REM   1. NSIS (Unicode) installed from https://nsis.sourceforge.io/Download
 REM
-REM Produces: dist\IsamAU-Universal.exe
+REM Produces: dist\CrewLauncher-Universal.exe
 setlocal
 cd /d "%~dp0.."
 set "ROOT=%CD%"
@@ -27,7 +27,7 @@ if not defined MAKENSIS (
 )
 
 echo Using: %MAKENSIS%
-"%MAKENSIS%" "/DROOT=%ROOT%" "installer\IsamAU-Universal.nsi"
+"%MAKENSIS%" "/DROOT=%ROOT%" "installer\CrewLauncher-Universal.nsi"
 if errorlevel 1 (
   echo.
   echo Installer build FAILED.
@@ -36,7 +36,7 @@ if errorlevel 1 (
 
 echo.
 echo ============================================================
-echo  Done! Universal installer: dist\IsamAU-Universal.exe
+echo  Done! Universal installer: dist\CrewLauncher-Universal.exe
 echo  (Always downloads latest version - never needs recompile)
 echo ============================================================
 pause

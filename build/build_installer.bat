@@ -1,11 +1,11 @@
 @echo off
-REM Build the Isam AULauncher installer with NSIS.
+REM Build the CrewLauncher installer with NSIS.
 REM
 REM Requirements:
 REM   1. Python on PATH (or activate your venv) with build\requirements.txt installed
 REM   2. NSIS (Unicode) installed from https://nsis.sourceforge.io/Download
 REM
-REM Produces: dist\IsamAU-Setup.exe
+REM Produces: dist\CrewLauncher-Setup.exe
 setlocal
 cd /d "%~dp0.."
 set "ROOT=%CD%"
@@ -20,10 +20,10 @@ if not defined VERSION set "VERSION=0.1"
 echo Using version: %VERSION%
 
 echo ============================================================
-echo  [1/3] Building IsamAULauncher
+echo  [1/3] Building CrewLauncher
 echo ============================================================
 pyinstaller --noconfirm --onedir --windowed --noupx ^
-  --name IsamAULauncher ^
+  --name CrewLauncher ^
   --icon src\launcher\resources\icon.ico ^
   --add-data "src\launcher\resources\icon.ico;resources" ^
   --add-data "release\bepmods.zip;." ^
@@ -54,7 +54,7 @@ if not defined MAKENSIS (
 )
 
 echo Using: %MAKENSIS%
-"%MAKENSIS%" "/DROOT=%ROOT%" "/DVERSION=%VERSION%" "installer\IsamAU-Online.nsi"
+"%MAKENSIS%" "/DROOT=%ROOT%" "/DVERSION=%VERSION%" "installer\CrewLauncher-Online.nsi"
 if errorlevel 1 (
   echo.
   echo Installer build FAILED.
@@ -63,6 +63,6 @@ if errorlevel 1 (
 
 echo.
 echo ============================================================
-echo  Done! Installer: dist\IsamAU-Setup.exe (v%VERSION%)
+echo  Done! Installer: dist\CrewLauncher-Setup.exe (v%VERSION%)
 echo ============================================================
 pause

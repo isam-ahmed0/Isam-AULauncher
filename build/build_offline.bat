@@ -1,11 +1,11 @@
 @echo off
-REM Build the offline installer for Isam AULauncher.
+REM Build the offline installer for CrewLauncher.
 REM
 REM Requirements:
 REM   1. Python on PATH with build\requirements.txt installed
 REM   2. NSIS (Unicode) installed from https://nsis.sourceforge.io/Download
 REM
-REM Produces: dist\IsamAU-Setup-Offline.exe
+REM Produces: dist\CrewLauncher-Setup-Offline.exe
 setlocal
 cd /d "%~dp0.."
 set "ROOT=%CD%"
@@ -20,10 +20,10 @@ if not defined VERSION set "VERSION=0.1"
 echo Using version: %VERSION%
 
 echo ============================================================
-echo  [1/3] Building IsamAULauncher
+echo  [1/3] Building CrewLauncher
 echo ============================================================
 pyinstaller --noconfirm --onedir --windowed --noupx ^
-  --name IsamAULauncher ^
+  --name CrewLauncher ^
   --icon src\launcher\resources\icon.ico ^
   --add-data "src\launcher\resources\icon.ico;resources" ^
   --add-data "DOC;DOC" ^
@@ -83,7 +83,7 @@ if not defined MAKENSIS (
 )
 
 echo Using: %MAKENSIS%
-"%MAKENSIS%" "/DROOT=%ROOT%" "/DVERSION=%VERSION%" "installer\IsamAULauncher.nsi"
+"%MAKENSIS%" "/DROOT=%ROOT%" "/DVERSION=%VERSION%" "installer\CrewLauncher.nsi"
 if errorlevel 1 (
   echo.
   echo Offline installer build FAILED.
@@ -92,6 +92,6 @@ if errorlevel 1 (
 
 echo.
 echo ============================================================
-echo  Done! Offline installer: dist\IsamAU-Setup-Offline.exe (v%VERSION%)
+echo  Done! Offline installer: dist\CrewLauncher-Setup-Offline.exe (v%VERSION%)
 echo ============================================================
 pause

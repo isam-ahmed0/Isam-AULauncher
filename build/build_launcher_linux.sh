@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build Isam AULauncher on Linux with PyInstaller (onedir).
+# Build CrewLauncher on Linux with PyInstaller (onedir).
 #
 #   python3 -m venv .venv
 #   source .venv/bin/activate.fish
@@ -44,7 +44,7 @@ EXCLUDES=(
 )
 
 pyinstaller --noconfirm --onedir --windowed --noupx \
-  --name IsamAULauncher \
+  --name CrewLauncher \
   --distpath dist/linux \
   --workpath build/linux-work \
   --specpath build \
@@ -59,4 +59,4 @@ pyinstaller --noconfirm --onedir --windowed --noupx \
   "$PWD/src/launcher/main.py"
 
 echo
-echo "Built: dist/linux/IsamAULauncher/"
+echo "Built: dist/linux/CrewLauncher/"

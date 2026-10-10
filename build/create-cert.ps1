@@ -1,4 +1,4 @@
-# create-cert.ps1 — Generate a self-signed code signing certificate for Isam AULauncher
+# create-cert.ps1 — Generate a self-signed code signing certificate for CrewLauncher
 # Run this ONCE from PowerShell. Outputs signing-cert.pfx to ..\release\
 
 $ErrorActionPreference = "Stop"
@@ -13,7 +13,7 @@ if (-not (Test-Path $outDir)) {
 }
 
 Write-Host ""
-Write-Host "=== Isam AULauncher — Self-Signed Code Signing Certificate ===" -ForegroundColor Cyan
+Write-Host "=== CrewLauncher — Self-Signed Code Signing Certificate ===" -ForegroundColor Cyan
 Write-Host ""
 
 # Prompt for password

@@ -2,10 +2,10 @@
 REM Compile the online NSIS installer only (no PyInstaller build).
 REM
 REM Prerequisites:
-REM   1. dist\IsamAU-All.zip already uploaded as a GitHub Release asset
+REM   1. dist\CrewLauncher-All.zip already uploaded as a GitHub Release asset
 REM   2. NSIS (Unicode) installed from https://nsis.sourceforge.io/Download
 REM
-REM Produces: dist\IsamAU-Setup.exe
+REM Produces: dist\CrewLauncher-Setup.exe
 setlocal
 cd /d "%~dp0.."
 set "ROOT=%CD%"
@@ -32,7 +32,7 @@ if not defined MAKENSIS (
 )
 
 echo Using: %MAKENSIS%
-"%MAKENSIS%" "/DROOT=%ROOT%" "/DVERSION=%VERSION%" "installer\IsamAU-Online.nsi"
+"%MAKENSIS%" "/DROOT=%ROOT%" "/DVERSION=%VERSION%" "installer\CrewLauncher-Online.nsi"
 if errorlevel 1 (
   echo.
   echo Installer build FAILED.
@@ -41,6 +41,6 @@ if errorlevel 1 (
 
 echo.
 echo ============================================================
-echo  Done! Installer: dist\IsamAU-Setup.exe (v%VERSION%)
+echo  Done! Installer: dist\CrewLauncher-Setup.exe (v%VERSION%)
 echo ============================================================
 pause

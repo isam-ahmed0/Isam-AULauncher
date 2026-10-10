@@ -1,15 +1,15 @@
 #!/bin/sh
-# Isam AULauncher self-extracting installer / uninstaller.
+# CrewLauncher self-extracting installer / uninstaller.
 #
-#   ./IsamAU-Launcher-<ver>.run            install for the current user (~/.local)
-#   ./IsamAU-Launcher-<ver>.run --system   install system-wide (/opt, needs root)
-#   ./IsamAU-Launcher-<ver>.run --uninstall
+#   ./CrewLauncher-<ver>.run            install for the current user (~/.local)
+#   ./CrewLauncher-<ver>.run --system   install system-wide (/opt, needs root)
+#   ./CrewLauncher-<ver>.run --uninstall
 #
 # No package manager or root is required for the default per-user install.
 set -eu
 
 APP_ID="isam-au"
-APP_NAME="Isam AULauncher"
+APP_NAME="CrewLauncher"
 VERSION="@VERSION@"
 MARKER="__ISAMAU_PAYLOAD_BELOW__"
 
@@ -70,8 +70,8 @@ TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT INT TERM
 tail -n +"$PAYLOAD_LINE" "$0" | tar -xJ -C "$TMP"
 
-[ -e "$TMP/app/IsamAULauncher" ] || { echo "Corrupt installer (no app)." >&2; exit 1; }
-chmod +x "$TMP/app/IsamAULauncher" 2>/dev/null || true
+[ -e "$TMP/app/CrewLauncher" ] || { echo "Corrupt installer (no app)." >&2; exit 1; }
+chmod +x "$TMP/app/CrewLauncher" 2>/dev/null || true
 
 if [ "$MODE" = "system" ]; then
     DEST="/opt/isam-aulauncher"
@@ -79,7 +79,7 @@ if [ "$MODE" = "system" ]; then
     as_root install -d "$DEST"
     as_root cp -a "$TMP/app/." "$DEST/"
     as_root install -d /usr/bin
-    as_root ln -sf "$DEST/IsamAULauncher" "/usr/bin/$APP_ID"
+    as_root ln -sf "$DEST/CrewLauncher" "/usr/bin/$APP_ID"
     as_root install -Dm644 "$TMP/$APP_ID.desktop" "/usr/share/applications/$APP_ID.desktop"
     for sz in 16 32 48 64 128 256; do
         [ -f "$TMP/icons/$sz.png" ] && as_root install -Dm644 "$TMP/icons/$sz.png" "/usr/share/icons/hicolor/${sz}x${sz}/apps/$APP_ID.png"
@@ -94,7 +94,7 @@ else
     install -d "$DATA"
     cp -a "$TMP/app" "$DATA/app"
     mkdir -p "$APPS" "$BIN"
-    ln -sf "$DATA/app/IsamAULauncher" "$BIN/$APP_ID"
+    ln -sf "$DATA/app/CrewLauncher" "$BIN/$APP_ID"
     install -m644 "$TMP/$APP_ID.desktop" "$APPS/$APP_ID.desktop"
     for sz in 16 32 48 64 128 256; do
         [ -f "$TMP/icons/$sz.png" ] && install -Dm644 "$TMP/icons/$sz.png" "$ICON_ROOT/${sz}x${sz}/apps/$APP_ID.png"

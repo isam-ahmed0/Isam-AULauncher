@@ -2,16 +2,16 @@
 REM Compile the online installer.
 REM
 REM Prerequisites:
-REM   1. dist\IsamAU-All.zip already created (zip it yourself)
+REM   1. dist\CrewLauncher-All.zip already created (zip it yourself)
 REM   2. NSIS (Unicode) installed from https://nsis.sourceforge.io/Download
 REM
-REM Produces: dist\IsamAU-Online.exe
+REM Produces: dist\CrewLauncher-Online.exe
 setlocal
 cd /d "%~dp0.."
 set "ROOT=%CD%"
 
-if not exist "dist\IsamAU-All.zip" (
-  echo ERROR: dist\IsamAU-All.zip not found. Create it first.
+if not exist "dist\CrewLauncher-All.zip" (
+  echo ERROR: dist\CrewLauncher-All.zip not found. Create it first.
   exit /b 1
 )
 
@@ -35,7 +35,7 @@ if not defined MAKENSIS (
 )
 
 echo Using: %MAKENSIS%
-"%MAKENSIS%" "/DROOT=%ROOT%" "/DVERSION=%VERSION%" "installer\IsamAU-Online.nsi"
+"%MAKENSIS%" "/DROOT=%ROOT%" "/DVERSION=%VERSION%" "installer\CrewLauncher-Online.nsi"
 if errorlevel 1 (
   echo.
   echo Online installer build FAILED.
@@ -44,6 +44,6 @@ if errorlevel 1 (
 
 echo.
 echo ============================================================
-echo  Done! Online installer: dist\IsamAU-Online.exe (v%VERSION%)
+echo  Done! Online installer: dist\CrewLauncher-Online.exe (v%VERSION%)
 echo ============================================================
 pause

@@ -23,10 +23,10 @@
 !define SIDEBAR_BMP   "${ROOT}\installer\sidebar.bmp"
 
 ; Universal Latest Release Download Endpoint
-!define DOWNLOAD_URL  "https://github.com/isam-ahmed0/Isam-AULauncher/releases/latest/download/IsamAU-All.zip"
+!define DOWNLOAD_URL  "https://github.com/icis-org/CrewLauncher/releases/latest/download/CrewLauncher-All.zip"
 
 Name    "${APP_NAME}"
-OutFile "${ROOT}\dist\IsamAU-Universal.exe"
+OutFile "${ROOT}\dist\CrewLauncher-Universal.exe"
 
 InstallDir "$LOCALAPPDATA\Programs\${APP_NAME}"
 InstallDirRegKey HKCU "Software\${APP_NAME}" "Install_Location"
@@ -38,7 +38,7 @@ SetCompressor /SOLID lzma
 Icon    "${SRC_ICON}"
 UninstallIcon "${SRC_ICON}"
 
-BrandingText "Isam Installer"
+BrandingText "CrewLauncher Installer"
 
 VIProductVersion "${VERSION_DOT}"
 VIAddVersionKey "ProductName"     "${APP_NAME}"
@@ -61,7 +61,7 @@ VIAddVersionKey "LegalCopyright"   "Copyright (c) 2026 ${COMPANY}"
 
 !define MUI_FINISHPAGE_TITLE "Done"
 !define MUI_FINISHPAGE_TEXT "Setup is complete."
-!define MUI_FINISHPAGE_RUN "$INSTDIR\IsamAULauncher.exe"
+!define MUI_FINISHPAGE_RUN "$INSTDIR\CrewLauncher.exe"
 !define MUI_FINISHPAGE_RUN_TEXT "Launch ${APP_NAME} now"
 
 !insertmacro MUI_PAGE_WELCOME
@@ -81,7 +81,7 @@ Function .onInit
 FunctionEnd
 
 ;------------------------------- Components --------------------------------
-Section "Isam AULauncher (required)" SecMain
+Section "CrewLauncher (required)" SecMain
   SectionIn RO
 
   DetailPrint "Fetching the latest version from GitHub..."
@@ -91,7 +91,7 @@ Section "Isam AULauncher (required)" SecMain
   System::Call 'wininet::InternetSetOption(0, 11, 0, 0) i'
 
   ; URLDownloadToFile with flag 0x10 (BINDF_GETNEWESTVERSION) to prevent cache hits on dynamic redirects
-  System::Call 'urlmon::URLDownloadToFile(0, t"${DOWNLOAD_URL}", t"$PLUGINSDIR\IsamAU-All.zip", i 0x10, i0) i .r0'
+  System::Call 'urlmon::URLDownloadToFile(0, t"${DOWNLOAD_URL}", t"$PLUGINSDIR\CrewLauncher-All.zip", i 0x10, i0) i .r0'
 
   ${If} $0 != "0"
     MessageBox MB_ICONSTOP "Download failed (error code $0). Please check your internet connection or verify the latest release exists on GitHub."
@@ -99,7 +99,7 @@ Section "Isam AULauncher (required)" SecMain
   ${EndIf}
 
   ; Verify downloaded asset
-  IfFileExists "$PLUGINSDIR\IsamAU-All.zip" 0 download_failed
+  IfFileExists "$PLUGINSDIR\CrewLauncher-All.zip" 0 download_failed
     Goto download_ok
   download_failed:
     MessageBox MB_ICONSTOP "Download failed. The installer archive was not created."
@@ -112,7 +112,7 @@ Section "Isam AULauncher (required)" SecMain
   CreateDirectory "$PLUGINSDIR\extracted"
 
   FileOpen $0 "$PLUGINSDIR\_extract.ps1" w
-  FileWrite $0 'Expand-Archive -Path "$PLUGINSDIR\IsamAU-All.zip" -DestinationPath "$PLUGINSDIR\extracted" -Force$\r$\n'
+  FileWrite $0 'Expand-Archive -Path "$PLUGINSDIR\CrewLauncher-All.zip" -DestinationPath "$PLUGINSDIR\extracted" -Force$\r$\n'
   FileClose $0
 
   nsExec::ExecToStack 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$PLUGINSDIR\_extract.ps1"'
@@ -126,13 +126,13 @@ Section "Isam AULauncher (required)" SecMain
   ; --- Copy launcher files ---
   DetailPrint "Installing launcher..."
   SetOutPath "$INSTDIR"
-  nsExec::ExecToStack 'cmd /c xcopy /E /Y "$PLUGINSDIR\extracted\IsamAULauncher\*" "$INSTDIR\"'
+  nsExec::ExecToStack 'cmd /c xcopy /E /Y "$PLUGINSDIR\extracted\CrewLauncher\*" "$INSTDIR\"'
   Pop $0
 
   WriteUninstaller "$INSTDIR\Uninstall.exe"
 
   CreateDirectory "$SMPROGRAMS\${APP_SHORT}"
-  CreateShortcut "$SMPROGRAMS\${APP_SHORT}\${APP_SHORT}.lnk" "$INSTDIR\IsamAULauncher.exe"
+  CreateShortcut "$SMPROGRAMS\${APP_SHORT}\${APP_SHORT}.lnk" "$INSTDIR\CrewLauncher.exe"
   CreateShortcut "$SMPROGRAMS\${APP_SHORT}\Uninstall ${APP_SHORT}.lnk" "$INSTDIR\Uninstall.exe"
 
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" "DisplayName"     "${APP_NAME}"
@@ -166,7 +166,7 @@ Section "Support tools (7-zip + mods)" SecTools
 SectionEnd
 
 Section /o "Desktop shortcut" SecDesktop
-  CreateShortcut "$DESKTOP\${APP_SHORT}.lnk" "$INSTDIR\IsamAULauncher.exe"
+  CreateShortcut "$DESKTOP\${APP_SHORT}.lnk" "$INSTDIR\CrewLauncher.exe"
 SectionEnd
 
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN

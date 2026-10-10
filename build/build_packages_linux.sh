@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # Build Linux installer packages from the PyInstaller onedir build.
 #
-#   bash build/build_launcher_linux.sh      # first, produces dist/linux/IsamAULauncher/
+#   bash build/build_launcher_linux.sh      # first, produces dist/linux/CrewLauncher/
 #   bash build/build_packages_linux.sh      # then, produces dist/packages/*
 #
 # Outputs (dist/packages/):
 #   isam-aulauncher-<ver>-1-x86_64.pkg.tar.zst   Arch/CachyOS/Manjaro (pacman -U)
 #   isam-aulauncher_<ver>-1_amd64.deb            Debian/Ubuntu/Mint/Pop (apt install ./)
 #   isam-aulauncher-<ver>-1*.rpm                 Fedora/RHEL/openSUSE (dnf install ./) [if rpmbuild]
-#   IsamAU-Launcher-<ver>.run                    universal self-extracting installer
+#   CrewLauncher-<ver>.run                       universal self-extracting installer
 #
 # The Itch Login Fixer stays a separate standalone Windows tool (account
 # merging). The launcher's own itch.io login is native and needs no Wine.
@@ -17,11 +17,11 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-APP_NAME="IsamAULauncher"
+APP_NAME="CrewLauncher"
 APP_ID="isam-au"
 PKG_NAME="isam-aulauncher"
 MAINTAINER="Isam Ahmed <isam-ahmed0@users.noreply.github.com>"
-HOMEPAGE="https://github.com/isam-ahmed0/Isam-AULauncher"
+HOMEPAGE="https://github.com/icis-org/CrewLauncher"
 DESC_SHORT="Among Us launcher with mod support"
 
 APP_DIR="$ROOT/dist/linux/$APP_NAME"
@@ -40,7 +40,7 @@ VERSION="$(grep -m1 '^LAUNCHER_VERSION' src/launcher/config.py | sed -E 's/.*"([
 PKGVER="${VERSION//-/.}"          # pacman/rpm versions may not contain '-'
 DEBVER="${VERSION//-/.}"          # keep it simple and valid
 
-echo "Isam AULauncher packaging"
+echo "CrewLauncher packaging"
 echo "  version : $VERSION  (pkgver $PKGVER)"
 echo "  app dir : $APP_DIR"
 echo "  output  : $OUT"
@@ -116,7 +116,7 @@ Section: games
 Priority: optional
 Homepage: $HOMEPAGE
 Description: $DESC_SHORT
- Isam AULauncher is an Among Us launcher with mod support.
+ CrewLauncher is an Among Us launcher with mod support.
 EOF
 
     ( cd "$data" && tar --owner=0 --group=0 --numeric-owner -cJf "$root/data.tar.xz" . )
@@ -150,7 +150,7 @@ Recommends: lutris
 %global debug_package %{nil}
 %global __os_install_post %{nil}
 %description
-Isam AULauncher is an Among Us launcher with mod support.
+CrewLauncher is an Among Us launcher with mod support.
 %install
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/opt/isam-aulauncher
@@ -176,7 +176,7 @@ EOF
 build_run() {
     echo "[run] building universal self-extracting installer"
     local payload="$WORK/run-payload.tar.xz"
-    local out="$OUT/IsamAU-Launcher-$VERSION.run"
+    local out="$OUT/CrewLauncher-$VERSION.run"
     ( cd "$STAGE" && tar -cJf "$payload" app icons "$APP_ID.desktop" )
     sed "s/@VERSION@/$VERSION/" build/pkg/run_header.sh > "$WORK/run-header.sh"
     cat "$WORK/run-header.sh" "$payload" > "$out"

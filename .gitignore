@@ -2,7 +2,7 @@
 __pycache__/
 *.py[cod]
 *.egg-info/
-src/Isam_AULauncher.egg-info/
+src/CrewLauncher.egg-info/
 .venv/
 
 # Build outputs
@@ -18,8 +18,8 @@ build/exe.*/
 build/linux-work/
 build/windows-work/
 build/pkg-work/
-build/IsamAULauncher/
-build/IsamAULauncher_Lite/
+build/CrewLauncher/
+build/CrewLauncher_Lite/
 build/IsamAULauncherBootstrapper/
 build/Itch_Login_Fixer/
 build/error.txt

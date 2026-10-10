@@ -1,7 +1,7 @@
 @echo off
 REM sign-installer.bat — Sign the NSIS installer with a self-signed certificate
 REM Usage: sign-installer.bat [path-to-exe]
-REM   Default: signs IsamAU-Setup.exe in the project root
+REM   Default: signs CrewLauncher-Setup.exe in the project root
 
 setlocal enabledelayedexpansion
 
@@ -9,7 +9,7 @@ set "PROJECT_DIR=%~dp0.."
 set "CERT_FILE=%PROJECT_DIR%\release\signing-cert.pfx"
 set "TARGET=%~1"
 
-if "%TARGET%"=="" set "TARGET=%PROJECT_DIR%\dist\IsamAU-Setup.exe"
+if "%TARGET%"=="" set "TARGET=%PROJECT_DIR%\dist\CrewLauncher-Setup.exe"
 
 REM Find signtool.exe
 set "SIGNTOOL="
@@ -33,7 +33,7 @@ if not exist "%TARGET%" (
 )
 
 echo.
-echo === Isam AULauncher — Sign Installer ===
+echo === CrewLauncher — Sign Installer ===
 echo.
 echo   Signtool: %SIGNTOOL%
 echo   Cert:     %CERT_FILE%

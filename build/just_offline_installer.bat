@@ -2,10 +2,10 @@
 REM Compile the offline NSIS installer only (no PyInstaller build).
 REM
 REM Prerequisites:
-REM   1. dist\IsamAULauncher\ folder already built by PyInstaller
+REM   1. dist\CrewLauncher\ folder already built by PyInstaller
 REM   2. NSIS (Unicode) installed from https://nsis.sourceforge.io/Download
 REM
-REM Produces: dist\IsamAU-Setup-Offline.exe
+REM Produces: dist\CrewLauncher-Setup-Offline.exe
 setlocal
 cd /d "%~dp0.."
 set "ROOT=%CD%"
@@ -32,7 +32,7 @@ if not defined MAKENSIS (
 )
 
 echo Using: %MAKENSIS%
-"%MAKENSIS%" "/DROOT=%ROOT%" "/DVERSION=%VERSION%" "installer\IsamAULauncher.nsi"
+"%MAKENSIS%" "/DROOT=%ROOT%" "/DVERSION=%VERSION%" "installer\CrewLauncher.nsi"
 if errorlevel 1 (
   echo.
   echo Offline installer build FAILED.
@@ -41,6 +41,6 @@ if errorlevel 1 (
 
 echo.
 echo ============================================================
-echo  Done! Offline installer: dist\IsamAU-Setup-Offline.exe (v%VERSION%)
+echo  Done! Offline installer: dist\CrewLauncher-Setup-Offline.exe (v%VERSION%)
 echo ============================================================
 pause
