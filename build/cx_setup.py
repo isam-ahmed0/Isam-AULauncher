@@ -30,7 +30,9 @@ build_exe_options = {
     ],
     "include_files": [
         ("src/launcher/resources/icon.ico", "resources/icon.ico"),
+        ("src/launcher/resources/splash.png", "resources/splash.png"),
         ("src/launcher/resources/phosphor-icons", "resources/phosphor-icons"),
+        ("src/launcher/resources/login", "resources/login"),
     ],
     "include_msvcr": True,
     "optimize": 1,

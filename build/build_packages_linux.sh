@@ -192,3 +192,12 @@ build_run
 echo
 echo "Packages in $OUT:"
 ls -lh "$OUT"
+
+# The staging tree holds full copies of the app (hundreds of MB). Drop it unless
+# explicitly kept for debugging.
+if [ "${KEEP_PKG_WORK:-0}" = "1" ]; then
+    echo
+    echo "Kept staging dir (KEEP_PKG_WORK=1): $WORK"
+else
+    rm -rf "$WORK"
+fi
