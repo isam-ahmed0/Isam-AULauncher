@@ -12,7 +12,8 @@ import requests
 
 from config import (
     GITHUB_REPO, REQUEST_TIMEOUT, CHUNK_SIZE,
-    DISCORD_CLIENT_ID, APP_NAME, LAUNCHER_VERSION
+    DISCORD_CLIENT_ID, DISCORD_DOWNLOAD_URL, DISCORD_WEBSITE_URL,
+    APP_NAME, LAUNCHER_VERSION
 )
 
 try:
@@ -225,7 +226,7 @@ class DiscordRPC:
             self.rpc = None
             return False
 
-    def update_status(self, state: str, details: str, large_text: str = "CREW AU"):
+    def update_status(self, state: str, details: str, large_text: str = APP_NAME):
         with self._lock:
             if not self.connected or not self.rpc:
                 return
@@ -235,7 +236,11 @@ class DiscordRPC:
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore", RuntimeWarning)
                     rpc.update(state=state, details=details,
-                               large_image="isam_au", large_text=large_text)
+                               large_image="isam_au", large_text=large_text,
+                               buttons=[
+                                   {"label": "Download CrewLauncher", "url": DISCORD_DOWNLOAD_URL},
+                                   {"label": "Website", "url": DISCORD_WEBSITE_URL},
+                               ])
             except Exception as e:
                 logging.error(f"RPC update failed: {e}")
         threading.Thread(target=_do, daemon=True).start()
