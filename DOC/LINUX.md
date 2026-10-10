@@ -1,9 +1,8 @@
 # Isam AULauncher on Linux
 
-The launcher now runs natively on Linux. Because Among Us and the Itch Login
-Fixer are Windows programs, Linux support is **non-destructive**: the launcher
-only reads and writes the itch.io token that the game already uses, and it runs
-the Windows fixer through the **global Wine prefix** you already have.
+The launcher now runs natively on Linux, including the itch.io sign-in (a
+built-in OAuth flow, no Wine needed). Linux support is **non-destructive**: the
+launcher only reads and writes the itch.io token that the game already uses.
 
 > The launcher **never** creates, deletes or reconfigures your Wine prefix or
 > your Lutris configuration. If you already tuned Wine for other games, nothing
@@ -11,11 +10,12 @@ the Windows fixer through the **global Wine prefix** you already have.
 
 ## Requirements
 
-- A working **Wine** installation (the `wine` command on your `PATH`).
+- **Wine** is needed only to run Among Us (direct launch or via Lutris). 
+  Signing in to itch.io works without Wine.
 - Optionally **Lutris** to install and launch Among Us.
 
-If Wine is not found, the launcher shows a popup and links you to
-[WINE.md](WINE.md). It will **not** install Wine for you.
+If Wine is not found but you want to play, the launcher shows a popup and links
+you to [WINE.md](WINE.md). It will **not** install Wine for you.
 
 ## How it works
 
@@ -23,9 +23,9 @@ If Wine is not found, the launcher shows a popup and links you to
 2. Click **INSTALL** to download and extract Among Us into a folder (default
    `~/Games/Isam-AULauncher/Among-Us`). Installation itself is pure file I/O and
    needs no special setup.
-3. When you click **Sign in with itch.io**, the launcher starts the Windows
-   `Itch_Login_Fixer.exe` using your global `wine`. The fixer opens the itch.io
-   login page and writes the token into your Wine prefix.
+3. When you click **Sign in with itch.io**, the launcher opens the itch.io login
+   page in your browser and, once you authorize, stores the token into the Wine
+   prefix (see below).
 4. The launcher reads that token from
    `<prefix>/drive_c/users/<user>/AppData/LocalLow/Innersloth/Among Us/itch`.
 5. When you click **LAUNCH**, the launcher starts the game through Lutris (see
@@ -88,6 +88,40 @@ Lutris detection works across distributions and honours the forced path above.
 If `lutris -l --json` isn't supported by your Lutris version, the launcher reads
 your `~/.local/share/lutris/pga.db` **read-only** to find the entry instead.
 
+## Installing on Linux
+
+Build the launcher, then the installers:
+
+```fish
+source .venv/bin/activate.fish
+pip install pyinstaller
+bash build/build_launcher_linux.sh     # -> dist/linux/IsamAULauncher/
+bash build/build_packages_linux.sh     # -> dist/packages/
+```
+
+`dist/packages/` contains:
+
+- **`IsamAU-Launcher-<ver>.run`** — universal self-extracting installer. Run it
+  and it installs (no package manager needed):
+  `./IsamAU-Launcher-<ver>.run` (per-user, `~/.local`),
+  `... --system` (`/opt`, needs root), or `... --uninstall`.
+- **`isam-aulauncher-<ver>-1-x86_64.pkg.tar.zst`** — Arch/CachyOS/Manjaro:
+  `sudo pacman -U isam-aulauncher-*.pkg.tar.zst`.
+- **`isam-aulauncher_<ver>-1_amd64.deb`** — Debian/Ubuntu/Mint/Pop:
+  `sudo apt install ./isam-aulauncher_*.deb`.
+- **`isam-aulauncher-<ver>-1*.rpm`** — Fedora/RHEL/openSUSE:
+  `sudo dnf install ./isam-aulauncher-*.rpm` (built only if `rpmbuild` is
+  installed; `pacman -S rpm-tools`).
+
+All installs place files under `/opt/isam-aulauncher` (or
+`~/.local/share/IsamAULauncher` for the per-user `.run`), add an `isam-au`
+command, a `Game` menu entry and an icon. Wine and Lutris stay optional
+dependencies (the app detects them).
+
+Publishing to package repositories (AUR for `paru`/`yay`, Fedora COPR, a hosted
+APT repo) is a separate step; the packages above can also simply be attached to
+a GitHub release.
+
 ## Desktop shortcut
 
 **Create Shortcut** writes a freedesktop `.desktop` launcher to
@@ -98,12 +132,12 @@ exists). It launches through Lutris when an entry exists, otherwise with Wine.
 
 - **"Wine Not Found"** — install Wine for your distribution and make sure the
   `wine` command works in a terminal, then try again.
-- **Login times out** — finish the login in the fixer window that opened. The
-  launcher waits for the token file to appear and then restarts automatically.
+- **Login times out** — the login callback waits up to 5 minutes for your
+  browser to return the token. Authorize the itch.io page and keep it open.
 - **Token is not detected** — confirm your game runs in the same Wine prefix the
   launcher used (`$WINEPREFIX` or `~/.wine`).
-- **"Lutris entry not detected"** — finish the Lutris install window, then click
-  LAUNCH again.
+- **"Lutris entry not detected"** — close Lutris completely (it rewrites its
+  library on exit), then use **Tools → Add to Lutris** again.
 - **"Lutris was not found"** — use **Tools → Fix Lutris**. It detects native,
   Flatpak, Snap and Nix installs; if it still fails, Browse for the executable.
   Logs are at `~/.local/share/IsamAULauncher/logs/launcher.log`.

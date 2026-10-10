@@ -1,10 +1,11 @@
 import logging
+import webbrowser
 from pathlib import Path
 
 import requests as _req
 
 from platform_utils import IS_WINDOWS, itch_token_dir
-from gui_qt.fixer_launcher import launch_itch_fixer, LAUNCHED, NO_WINE
+from itch_auth import ItchOAuthSession
 
 
 ITCHIO_API = "https://itch.io/api/1/key/me"
@@ -32,34 +33,50 @@ class ItchProfileMixin:
             prefix = self.config.get_wine_prefix()
         return itch_token_dir(prefix) / "itch"
 
-    # ------------------------------------------------------------------ sign-in via the fixer
+    # ------------------------------------------------------------------ sign-in (native)
     def open_itch_fixer(self):
-        """Open the standalone Itch Login Fixer instead of handling OAuth in-process.
+        """Native itch.io login — no Wine or external fixer needed.
 
-        Windows: runs Itch_Login_Fixer.exe.
-        Linux: runs the Windows fixer through the global Wine prefix.
-        No Wine: shows an "install Wine" documentation popup.
+        Starts the local OAuth callback server, opens itch.io in the browser,
+        and on success saves the token to the same prefix the game uses.
         """
-        result = launch_itch_fixer(
-            self.config.get_wine_prefix() if getattr(self, "config", None) and not IS_WINDOWS else None
-        )
-        parent = getattr(self, "window", None)
-
-        if result == LAUNCHED:
-            self._set_status("Itch Login Fixer opened — finish signing in there.", "info")
-        elif result == NO_WINE:
-            from gui_qt.dialogs import show_wine_missing
-            show_wine_missing(parent)
-            self._set_status("Wine is required — see the documentation.", "warning")
-        elif IS_WINDOWS:
-            from PySide6.QtWidgets import QMessageBox
-            QMessageBox.warning(
-                parent, "Not Found",
-                "Itch_Login_Fixer.exe was not found.\nPlease reinstall the launcher.",
+        if getattr(self, "_itch_auth_session", None) is not None:
+            return
+        session = ItchOAuthSession()
+        session.token.connect(self._on_itch_token)
+        session.failed.connect(self._on_itch_auth_failed)
+        session.timed_out.connect(self._on_itch_auth_timed_out)
+        try:
+            session.start()
+        except OSError:
+            self._set_status(
+                "itch.io login could not start: port 7890 is in use. "
+                "Close the Itch Login Fixer or any other app using it, then try again.",
+                "warning",
             )
-        else:
-            from gui_qt.dialogs import show_linux_docs
-            show_linux_docs(parent)
+            return
+        self._itch_auth_session = session
+        webbrowser.open(session.auth_url())
+        self._set_status("Check your browser to authorize your itch.io account.", "info")
+
+    def _on_itch_token(self, token: str):
+        try:
+            self._save_itch_token(token)
+        except OSError as e:
+            self._set_status(f"itch.io login succeeded but the token could not be saved: {e}", "danger")
+            self._itch_auth_session = None
+            return
+        self._itch_auth_session = None
+        self._set_status("itch.io login successful!", "success")
+        self._load_itch_profile()
+
+    def _on_itch_auth_failed(self, message: str):
+        self._set_status(message, "warning")
+        self._itch_auth_session = None
+
+    def _on_itch_auth_timed_out(self):
+        self._set_status("itch.io login timed out. Try again.", "warning")
+        self._itch_auth_session = None
 
     def _save_itch_token(self, token: str):
         """Save the itch.io access token to the file Among Us reads."""

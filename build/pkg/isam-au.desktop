@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Isam AULauncher
+GenericName=Among Us Launcher
+Comment=Among Us launcher with mod support
+Exec=isam-au
+Icon=isam-au
+Terminal=false
+Categories=Game;
+StartupNotify=true
+StartupWMClass=IsamAULauncher

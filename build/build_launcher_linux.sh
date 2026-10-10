@@ -10,7 +10,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-mkdir -p dist
+mkdir -p dist/linux
 
 EXCLUDES=(
   --exclude-module PySide6.QtWebEngineCore
@@ -45,6 +45,9 @@ EXCLUDES=(
 
 pyinstaller --noconfirm --onedir --windowed --noupx \
   --name IsamAULauncher \
+  --distpath dist/linux \
+  --workpath build/linux-work \
+  --specpath build \
   --icon src/launcher/resources/icon.ico \
   --add-data "src/launcher/resources/icon.ico:resources" \
   --add-data "DOC:DOC" \
@@ -53,4 +56,4 @@ pyinstaller --noconfirm --onedir --windowed --noupx \
   src/launcher/main.py
 
 echo
-echo "Built: dist/IsamAULauncher/"
+echo "Built: dist/linux/IsamAULauncher/"

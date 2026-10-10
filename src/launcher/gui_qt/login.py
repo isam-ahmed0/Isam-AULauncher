@@ -1,6 +1,6 @@
 """
 LoginWindow — full-page Steam/Epic-style login for Isam AULauncher.
-Uses the existing itch.io OAuth from itch_profile.py.
+Uses the native itch.io OAuth flow from itch_auth.py.
 Right sidebar supports image, GIF, and slideshow.
 """
 import os
@@ -16,14 +16,14 @@ from PySide6.QtGui import (
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QPushButton, QFrame, QApplication,
-    QGraphicsOpacityEffect,
+    QGraphicsOpacityEffect, QMessageBox,
 )
 
 from config import APP_NAME, BRAND_SHORT, LAUNCHER_VERSION, MAKER
 import gui_qt.theme as theme
 from gui_qt.widgets import _ICON_PATH, _hex_to_qcolor
-from gui_qt.fixer_launcher import launch_itch_fixer, LAUNCHED, NO_WINE
-from platform_utils import IS_WINDOWS, itch_token_dir
+from itch_auth import ItchOAuthSession, save_itch_token
+import webbrowser
 
 _LOGIN_DIR = Path(__file__).parent.parent / "resources" / "login"
 
@@ -207,7 +207,7 @@ class _RightSidebar(QWidget):
 class LoginWindow(QMainWindow):
     """Full-page login window matching the main launcher style."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, prefix=None):
         super().__init__(parent)
         self.setWindowTitle(f"{APP_NAME} — Sign In")
         self.setMinimumSize(960, 580)
@@ -217,6 +217,8 @@ class LoginWindow(QMainWindow):
 
         self._status = ""
         self._logging_in = False
+        self._prefix = prefix
+        self._auth = None
 
         central = QWidget()
         self.setCentralWidget(central)
@@ -319,64 +321,59 @@ class LoginWindow(QMainWindow):
 
         layout.addWidget(body_widget)
 
-    # ------------------------------------------------------------------ sign-in via fixer
+    # ------------------------------------------------------------------ sign-in (native)
     def _start_login(self):
         if self._logging_in:
             return
         self._logging_in = True
         self._login_btn.setEnabled(False)
 
-        result = launch_itch_fixer()
-        if result == LAUNCHED:
-            self._set_status("Itch Login Fixer opened — finish signing in there.")
-            self._poll_for_token()
-        elif result == NO_WINE:
-            from gui_qt.dialogs import show_wine_missing
-            show_wine_missing(self)
-            self._set_status("Wine is required — see the documentation.")
-            self._reset_btn()
-        elif IS_WINDOWS:
-            from PySide6.QtWidgets import QMessageBox
-            QMessageBox.warning(
-                self, "Not Found",
-                "Itch_Login_Fixer.exe was not found.\nPlease reinstall the launcher.",
-            )
-            self._reset_btn()
-        else:
-            from gui_qt.dialogs import show_linux_docs
-            show_linux_docs(self)
-            self._reset_btn()
+        if self._auth is not None:
+            self._auth.stop()
+        self._auth = ItchOAuthSession(parent=self)
+        self._auth.token.connect(self._on_token)
+        self._auth.failed.connect(self._on_auth_failed)
+        self._auth.timed_out.connect(self._on_timed_out)
 
-    def _poll_for_token(self):
-        """Wait for the fixer to write the token, then restart into the launcher."""
-        token_file = itch_token_dir() / "itch"
-        attempts = {"n": 0}
+        try:
+            self._auth.start()
+        except OSError:
+            self._finish_port_busy()
+            return
 
-        def check():
-            try:
-                if token_file.exists() and token_file.read_text().strip():
-                    self._set_status("Login successful! Restarting...")
-                    QTimer.singleShot(800, self._restart_app)
-                    return
-            except OSError:
-                pass
-            attempts["n"] += 1
-            if attempts["n"] < 150:
-                QTimer.singleShot(2000, check)
-            else:
-                self._set_status("Login timed out. Try again.")
-                self._reset_btn()
+        webbrowser.open(self._auth.auth_url())
+        self._set_status("Check your browser — authorize your itch.io account there.")
 
-        QTimer.singleShot(2000, check)
+    def _finish_port_busy(self):
+        QMessageBox.warning(
+            self, "Couldn't Start Login",
+            "The itch.io login callback port (7890) is already in use.\n"
+            "Close the Itch Login Fixer or any other app using that port, "
+            "then try again.",
+        )
+        self._reset_btn()
+
+    def _on_token(self, token: str):
+        try:
+            self._save_token(token)
+        except OSError as e:
+            self._set_status(f"Login succeeded but the token could not be saved: {e}")
+            self._reset_btn()
+            return
+        self._set_status("Login successful! Restarting...")
+        QTimer.singleShot(800, self._restart_app)
+
+    def _on_auth_failed(self, message: str):
+        self._set_status(message)
+        self._reset_btn()
+
+    def _on_timed_out(self):
+        self._set_status("Login timed out. Try again.")
+        self._reset_btn()
 
     def _save_token(self, token: str):
-        try:
-            token_file = itch_token_dir() / "itch"
-            token_file.parent.mkdir(parents=True, exist_ok=True)
-            token_file.write_text(token)
-            logging.info("Itch token saved successfully")
-        except OSError as e:
-            logging.error(f"Failed to save itch token: {e}")
+        save_itch_token(token, self._prefix)
+        logging.info("Itch token saved successfully")
 
     def _restart_app(self):
         os.execv(sys.executable, [sys.executable] + sys.argv)
@@ -390,6 +387,8 @@ class LoginWindow(QMainWindow):
         self._status_label.setText(text)
 
     def closeEvent(self, event):
+        if self._auth is not None:
+            self._auth.stop()
         if self._sidebar._movie:
             self._sidebar._movie.stop()
         QApplication.quit()

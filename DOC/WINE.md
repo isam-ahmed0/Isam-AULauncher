@@ -1,8 +1,9 @@
 # Wine setup for Isam AULauncher
 
-Isam AULauncher uses Wine on Linux **only** to run the Windows Itch Login Fixer
-and to locate the itch.io token that Among Us reads. It does not install or
-modify Wine, and it does not touch your Wine prefix configuration.
+Isam AULauncher uses Wine on Linux **only** to run Among Us (directly or via
+Lutris). Signing in to itch.io is a native browser flow and does **not** need
+Wine. The launcher does not install or modify Wine, and it does not touch your
+Wine prefix configuration.
 
 ## Install Wine
 
@@ -29,7 +30,7 @@ The launcher uses your existing global prefix:
 
 It never runs `wineboot`, `winetricks`, or any command that could change the
 prefix. The only write it performs is the itch.io token file the game itself
-uses:
+uses (written by the built-in itch.io login flow):
 
 ```
 <prefix>/drive_c/users/<user>/AppData/LocalLow/Innersloth/Among Us/itch
@@ -49,7 +50,8 @@ in the same prefix the launcher reads the token from, sign-in carries over.
 
 - **`wine --version` fails** — Wine is not installed or not on your `PATH`.
 - **Wrong prefix** — set `WINEPREFIX` before starting the launcher, choose it in
-  **Settings → Linux**, or make sure your Lutris game uses `~/.wine`.
-- **Nothing happens on sign-in** — check the terminal output for the `wine`
-  process; make sure the fixer executable exists next to the launcher in the
-  `Fixer/` folder.
+  **Settings → Linux**, or make sure your Lutris game uses the same prefix. The
+  itch.io sign-in saves the token into the prefix configured here.
+- **Login doesn't start** — the callback port is 7890. If another app holds it
+  (for example an old Itch Login Fixer instance), the launcher shows a warning;
+  close that app and try again.

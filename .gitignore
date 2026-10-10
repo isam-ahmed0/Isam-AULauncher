@@ -15,6 +15,9 @@ build/exe.*/
 *.pfx
 
 # Build intermediates
+build/linux-work/
+build/windows-work/
+build/pkg-work/
 build/IsamAULauncher/
 build/IsamAULauncher_Lite/
 build/IsamAULauncherBootstrapper/

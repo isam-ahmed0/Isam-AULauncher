@@ -56,7 +56,7 @@ if __name__ == "__main__":
                     launcher.window.show()
                 else:
                     from gui_qt.login import LoginWindow
-                    launcher._login_window = LoginWindow()
+                    launcher._login_window = LoginWindow(prefix=launcher.config.get_wine_prefix())
                     launcher._login_window.show()
                 qapp.exec()
                 launcher.shutdown()
@@ -75,7 +75,7 @@ if __name__ == "__main__":
                             launcher.window.show()
                         else:
                             from gui_qt.login import LoginWindow
-                            launcher._login_window = LoginWindow()
+                            launcher._login_window = LoginWindow(prefix=launcher.config.get_wine_prefix())
                             launcher._login_window.show()
 
                     splash.finished.connect(on_splash_done)
@@ -111,7 +111,7 @@ if __name__ == "__main__":
                     launcher.window.show()
                 else:
                     from gui_qt.login import LoginWindow
-                    launcher._login_window = LoginWindow()
+                    launcher._login_window = LoginWindow(prefix=launcher.config.get_wine_prefix())
                     launcher._login_window.show()
 
             splash.finished.connect(on_splash_done)
