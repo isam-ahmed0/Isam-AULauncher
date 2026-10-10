@@ -77,13 +77,6 @@ QWidget {{
     color: {p["text_bright"]};
 }}
 
-#sidebar QPushButton#sidebarToggle {{
-    text-align: center;
-    padding: 8px;
-    max-width: 34px;
-    max-height: 34px;
-}}
-
 /* ===== PRIMARY ACTION BUTTON ===== */
 QPushButton#primaryBtn {{
     background-color: {p["accent"]};
@@ -184,6 +177,27 @@ QPushButton#toolBtn:pressed {{
     background-color: {p["bg_active"]};
     padding-top: 11px;
     padding-bottom: 9px;
+}}
+
+/* ===== STATUS BAR BUTTONS (compact) ===== */
+QPushButton#statusBtn {{
+    background-color: {p["bg_elevated"]};
+    color: {p["text_secondary"]};
+    border: 1px solid {p["border_subtle"]};
+    border-radius: 6px;
+    padding: 4px 12px;
+    font-size: 13px;
+    font-weight: 500;
+}}
+
+QPushButton#statusBtn:hover {{
+    background-color: {p["bg_hover"]};
+    border-color: {p["accent"]};
+    color: {p["text_primary"]};
+}}
+
+QPushButton#statusBtn:pressed {{
+    background-color: {p["bg_active"]};
 }}
 
 /* ===== MODAL BUTTONS ===== */
@@ -482,6 +496,164 @@ QLabel#profileDetail {{
 QLabel#profileStatus {{
     font-size: 12px;
     font-weight: 600;
+}}
+
+/* ===== GLOBAL TOP HEADER ===== */
+#topHeader {{
+    background-color: {p["bg_sidebar"]};
+    border-bottom: 1px solid {p["border_subtle"]};
+}}
+
+QLabel#headerBrand {{
+    font-size: 18px;
+    font-weight: 700;
+    color: {p["accent"]};
+}}
+
+QLabel#headerUser {{
+    font-size: 13px;
+    font-weight: 600;
+    color: {p["text_primary"]};
+}}
+
+QLabel#headerUserDetail {{
+    font-size: 12px;
+    color: {p["text_muted"]};
+}}
+
+QLabel#launcherVersion {{
+    background-color: {p["bg_elevated"]};
+    border: 1px solid {p["border_subtle"]};
+    border-radius: 10px;
+    padding: 3px 12px;
+    font-size: 12px;
+    color: {p["text_secondary"]};
+}}
+
+/* ===== HOME VIEW (unique keys — isolated from the global theme) ===== */
+QFrame#homeCard {{
+    background-color: {p["bg_surface"]};
+    border: 1px solid {p["border_subtle"]};
+    border-radius: 14px;
+}}
+
+/* Game section sits directly on the window background (no boxed card). */
+QFrame#homeGamePanel {{
+    background-color: transparent;
+    border: none;
+}}
+
+QLabel#homeGameTitle {{
+    font-size: 30px;
+    font-weight: 800;
+    color: {p["text_bright"]};
+}}
+
+QLabel#homeCardTitle {{
+    font-size: 22px;
+    font-weight: 700;
+    color: {p["text_bright"]};
+}}
+
+QLabel#homeCardSubtitle {{
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: {p["text_muted"]};
+}}
+
+QLabel#homeCardValue {{
+    font-size: 15px;
+    color: {p["text_secondary"]};
+}}
+
+QLabel#homeCardValue[state="installed"] {{
+    color: {p["success"]};
+    font-weight: 600;
+}}
+
+QLabel#homeCardValue[state="muted"] {{
+    color: {p["text_muted"]};
+}}
+
+QLabel#homeCustomMedia {{
+    background-color: {p["bg_elevated"]};
+    border: 1px solid {p["border_subtle"]};
+    border-radius: 10px;
+    color: {p["text_muted"]};
+    font-size: 14px;
+    padding: 20px;
+}}
+
+/* Home action buttons — unique keys so global button styles stay untouched. */
+QPushButton#homePrimaryBtn,
+QPushButton#homeSuccessBtn,
+QPushButton#homeDangerBtn {{
+    color: {p["text_bright"]};
+    border: none;
+    border-radius: 10px;
+    padding: 15px 26px;
+    font-size: 16px;
+    font-weight: 700;
+    min-height: 26px;
+}}
+
+QPushButton#homePrimaryBtn {{
+    background-color: {p["accent"]};
+}}
+
+QPushButton#homePrimaryBtn:hover {{
+    background-color: {p["accent_hover"]};
+}}
+
+QPushButton#homeSuccessBtn {{
+    background-color: {p["success"]};
+}}
+
+QPushButton#homeSuccessBtn:hover {{
+    background-color: {p["success_hover"]};
+}}
+
+QPushButton#homeDangerBtn {{
+    background-color: {p["danger"]};
+}}
+
+QPushButton#homeDangerBtn:hover {{
+    background-color: {p["danger_hover"]};
+}}
+
+QPushButton#homePrimaryBtn:pressed,
+QPushButton#homeSuccessBtn:pressed,
+QPushButton#homeDangerBtn:pressed {{
+    padding-top: 16px;
+    padding-bottom: 14px;
+}}
+
+QPushButton#homeToolBtn {{
+    background-color: {p["bg_elevated"]};
+    color: {p["text_primary"]};
+    border: 1px solid {p["border_subtle"]};
+    border-radius: 10px;
+    padding: 13px 20px;
+    font-size: 15px;
+    font-weight: 500;
+}}
+
+QPushButton#homeToolBtn:hover {{
+    background-color: {p["bg_hover"]};
+    border-color: {p["accent"]};
+}}
+
+QPushButton#homeToolBtn:pressed {{
+    background-color: {p["bg_active"]};
+    padding-top: 14px;
+    padding-bottom: 12px;
+}}
+
+/* ===== SIDEBAR ICON RAIL ===== */
+#sidebar QPushButton {{
+    text-align: center;
+    padding: 0px;
 }}
 """
 

@@ -84,6 +84,7 @@ class Config:
             "launch_method": "ask", "warn_plain_wine": True,
             "wine_prefix": "", "lutris_game_ids": {}, "lutris_entries": {},
             "lutris_cmd_override": None,
+            "home_image_path": "", "home_note": "",
         }
         try:
             if self.config_file.exists():

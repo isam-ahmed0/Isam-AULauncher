@@ -12,8 +12,7 @@ _RESOURCES_DIR = Path(__file__).parent.parent / "resources"
 _HERO_IMAGE_PATH = _RESOURCES_DIR / "hero.png"
 _ICON_PATH = _RESOURCES_DIR / "icon.ico"
 
-SIDEBAR_W = 200
-SIDEBAR_W_MIN = 64
+SIDEBAR_W = 80
 
 _FONT_FAMILY = "Segoe UI, Inter, Helvetica Neue, Arial"
 
@@ -167,3 +166,47 @@ class HeroBanner(QLabel):
         painter.drawText(bx, by, tw, 24, Qt.AlignmentFlag.AlignCenter, badge_text)
 
         painter.end()
+
+
+class CoverLabel(QLabel):
+    """QLabel that shows text/placeholder or a cover-fit image.
+
+    In ``text`` mode it behaves like a normal word-wrapping QLabel. In
+    ``cover`` mode it scales a pixmap to fill the widget while preserving the
+    aspect ratio (cropping the overflow) and rescales on resize.
+    """
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._mode = "text"
+        self._source = None
+        self.setWordWrap(True)
+        self.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+    def set_text(self, text: str):
+        self._mode = "text"
+        self._source = None
+        self.setText(text)
+        self.update()
+
+    def set_image(self, pixmap: QPixmap):
+        self._mode = "cover"
+        self._source = pixmap if (pixmap is not None and not pixmap.isNull()) else None
+        self.setText("")
+        self.update()
+
+    def paintEvent(self, event):
+        if self._mode == "cover" and self._source is not None:
+            painter = QPainter(self)
+            painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
+            scaled = self._source.scaled(
+                self.size(),
+                Qt.AspectRatioMode.KeepAspectRatioByExpanding,
+                Qt.TransformationMode.SmoothTransformation,
+            )
+            x = (self.width() - scaled.width()) // 2
+            y = (self.height() - scaled.height()) // 2
+            painter.drawPixmap(x, y, scaled)
+            painter.end()
+            return
+        super().paintEvent(event)

@@ -25,6 +25,8 @@ class ModManagerMixin:
         self._profile_combo.blockSignals(False)
         self._update_profile_label()
         self._cb_refresh_mods()
+        if hasattr(self, "_refresh_home_mods_card"):
+            self._refresh_home_mods_card()
 
     def _update_profile_label(self):
         active = self.config.get_active_profile()
@@ -187,6 +189,8 @@ class ModManagerMixin:
         self._mods_status.setObjectName("successText")
         self._mods_status.style().polish(self._mods_status)
         self._cb_refresh_mods()
+        if hasattr(self, "_refresh_home_mods_card"):
+            self._refresh_home_mods_card()
 
     def _cb_remove_mods(self):
         selected = self._mods_list.selectedItems()
@@ -213,6 +217,8 @@ class ModManagerMixin:
         self._mods_status.setObjectName("successText")
         self._mods_status.style().polish(self._mods_status)
         self._cb_refresh_mods()
+        if hasattr(self, "_refresh_home_mods_card"):
+            self._refresh_home_mods_card()
 
     def _cb_mod_info(self):
         selected = self._mods_list.selectedItems()
@@ -245,3 +251,5 @@ class ModManagerMixin:
         self._mods_status.setObjectName("successText")
         self._mods_status.style().polish(self._mods_status)
         self._cb_refresh_mods()
+        if hasattr(self, "_refresh_home_mods_card"):
+            self._refresh_home_mods_card()

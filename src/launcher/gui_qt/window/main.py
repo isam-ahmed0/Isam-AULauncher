@@ -8,17 +8,20 @@ import logging
 from pathlib import Path
 
 from PySide6.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
+    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
     QPushButton, QStackedWidget, QLabel, QFrame, QProgressBar,
     QStatusBar, QComboBox, QScrollArea, QSystemTrayIcon, QMenu,
-    QListWidget,
+    QListWidget, QFileDialog, QInputDialog,
 )
 from PySide6.QtCore import Qt, QTimer, QPropertyAnimation, QEasingCurve, QSize
-from PySide6.QtGui import QIcon, QAction
+from PySide6.QtGui import QIcon, QAction, QPixmap
 from PySide6.QtWidgets import QGraphicsOpacityEffect
 
 from gui_qt.worker import _UISignaler, Worker
-from ..widgets import HeroBanner, _ICON_PATH, SIDEBAR_W, SIDEBAR_W_MIN, enable_hover_glow, start_playing_pulse, stop_playing_pulse
+from ..widgets import (
+    HeroBanner, CoverLabel, _ICON_PATH, SIDEBAR_W,
+    enable_hover_glow, start_playing_pulse, stop_playing_pulse,
+)
 from gui_qt import icons
 from ..dialogs import SettingsPage, AboutPage
 
@@ -188,36 +191,47 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
 
+        # ---- sidebar: fixed icon-only rail ----
         sidebar = QWidget()
         sidebar.setObjectName("sidebar")
         sidebar.setFixedWidth(SIDEBAR_W)
         sidebar_layout = QVBoxLayout(sidebar)
-        sidebar_layout.setContentsMargins(12, 20, 12, 20)
-        sidebar_layout.setSpacing(4)
-
+        sidebar_layout.setContentsMargins(0, 14, 0, 14)
+        sidebar_layout.setSpacing(6)
+        sidebar_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self._sidebar = sidebar
-        self._toggle_btn = QPushButton()
-        self._toggle_btn.setObjectName("sidebarToggle")
-        self._toggle_btn.setCheckable(False)
-        self._toggle_btn.setIcon(icons.icon_for("sidebar-simple", theme.ACCENT, 18))
-        self._toggle_btn.setIconSize(QSize(18, 18))
-        self._toggle_btn.setToolTip("Collapse sidebar")
-        self._toggle_btn.clicked.connect(self._toggle_sidebar)
-        sidebar_layout.addWidget(self._toggle_btn)
-        sidebar_layout.addSpacing(6)
 
-        self._brand_label = QLabel(BRAND_SHORT)
-        self._brand_label.setObjectName("brandLabel")
-        sidebar_layout.addWidget(self._brand_label)
-        self._app_name_label = QLabel(APP_NAME)
-        self._app_name_label.setObjectName("brandSubLabel")
-        sidebar_layout.addWidget(self._app_name_label)
-        sidebar_layout.addSpacing(16)
+        self.nav_buttons = {}
+        self.nav_icon_names = {}
+        for label, idx, icon_name in [
+            ("Home", 0, "game-controller"),
+            ("Assets", 6, "package"),
+            ("Tools", 1, "wrench"),
+            ("Profile", 2, "user-circle"),
+            ("Settings", 4, "gear"),
+            ("About", 5, "info"),
+        ]:
+            btn = QPushButton()
+            btn.setCheckable(True)
+            btn.setFixedSize(52, 52)
+            btn.setIcon(icons.nav_icon(icon_name))
+            btn.setIconSize(QSize(24, 24))
+            btn.setToolTip(label)
+            btn._nav_icon_name = icon_name
+            btn.clicked.connect(lambda checked, i=idx, l=label: self._switch_page(i, l))
+            sidebar_layout.addWidget(btn, 0, Qt.AlignmentFlag.AlignHCenter)
+            self.nav_buttons[label] = btn
+            self.nav_icon_names[label] = icon_name
+            enable_hover_glow(btn)
 
-        sep = QFrame()
-        sep.setFrameShape(QFrame.Shape.HLine)
-        sidebar_layout.addWidget(sep)
-        sidebar_layout.addSpacing(8)
+        sidebar_layout.addStretch()
+
+        # ---- right column: global header + stacked pages ----
+        right = QWidget()
+        right_layout = QVBoxLayout(right)
+        right_layout.setContentsMargins(0, 0, 0, 0)
+        right_layout.setSpacing(0)
+        right_layout.addWidget(self._build_header())
 
         self.pages = QStackedWidget()
         self.page_game = self._build_game_page()
@@ -239,43 +253,17 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         self.pages.addWidget(self.page_about)
         self.pages.addWidget(self.page_assets)
 
-        self.nav_buttons = {}
-        self.nav_labels = {}
-        self.nav_tooltips = {}
-        self.nav_icon_names = {}
-        _nav_icons = {
-            "Game": "game-controller",
-            "Tools": "wrench",
-            "Profile": "user-circle",
-            "Mods": "puzzle-piece",
-            "Settings": "gear",
-            "About": "info",
-            "Assets": "package",
-        }
-        for label, idx in [("Game", 0), ("Tools", 1), ("Profile", 2), ("Mods", 3),
-                           ("Settings", 4), ("About", 5), ("Assets", 6)]:
-            btn = QPushButton(label)
-            btn.setCheckable(True)
-            btn.setFixedHeight(42)
-            btn.setIcon(icons.nav_icon(_nav_icons[label]))
-            btn.setIconSize(QSize(20, 20))
-            btn._nav_icon_name = _nav_icons[label]
-            btn.clicked.connect(lambda checked, i=idx, l=label: self._switch_page(i, l))
-            sidebar_layout.addWidget(btn)
-            self.nav_buttons[label] = btn
-            self.nav_labels[label] = label
-            self.nav_icon_names[label] = _nav_icons[label]
-            enable_hover_glow(btn)
-
-        sidebar_layout.addStretch()
+        right_layout.addWidget(self.pages, 1)
 
         main_layout.addWidget(sidebar)
-        main_layout.addWidget(self.pages)
+        main_layout.addWidget(right, 1)
 
         self.window.nav_buttons = self.nav_buttons
         self.window._launcher = self
 
         self.status_bar = QStatusBar()
+        self.status_bar.setFixedHeight(40)
+        self.status_bar.setSizeGripEnabled(False)
         self.window.setStatusBar(self.status_bar)
         self.status_icon_label = QLabel("●")
         self.status_icon_label.setObjectName("statusDot")
@@ -283,191 +271,318 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         self.status_text_label.setObjectName("statusText")
         self.status_bar.addWidget(self.status_icon_label)
         self.status_bar.addWidget(self.status_text_label)
-        permanent_label = QLabel(f"{APP_NAME} v{LAUNCHER_VERSION} — Made by {MAKER}")
-        permanent_label.setObjectName("footerText")
-        self.status_bar.addPermanentWidget(permanent_label)
 
-        self.nav_buttons["Game"].setChecked(True)
-        self.nav_buttons["Assets"].setEnabled(False)
-        self.nav_buttons["Assets"].setToolTip("Coming soon in a future major version")
-
-        self._sidebar_collapsed = bool(self.config.settings.get("sidebar_collapsed", False))
-        if self._sidebar_collapsed:
-            self._apply_sidebar_collapsed(animate=False)
-
-    # ------------------------------------------------------------------ sidebar collapse
-    def _toggle_sidebar(self):
-        self._set_sidebar_collapsed(not self._sidebar_collapsed, animate=True)
-
-    def _set_sidebar_collapsed(self, collapsed: bool, animate=True):
-        self._sidebar_collapsed = collapsed
-        self.config.settings["sidebar_collapsed"] = collapsed
-        self.config.save_settings()
-        self._apply_sidebar_collapsed(animate)
-
-    def _ensure_sidebar_anim(self):
-        if getattr(self, "_sidebar_anim", None) is None:
-            self._sidebar_anim = QPropertyAnimation(self._sidebar, b"maximumWidth", self._sidebar)
-            self._sidebar_anim.setDuration(180)
-            self._sidebar_anim.setEasingCurve(QEasingCurve.Type.InOutCubic)
-            self._sidebar_anim.valueChanged.connect(
-                lambda v: self._sidebar.setFixedWidth(int(v)))
-            self._sidebar_anim.finished.connect(
-                lambda: self._sidebar.setFixedWidth(
-                    SIDEBAR_W_MIN if self._sidebar_collapsed else SIDEBAR_W))
-        return self._sidebar_anim
-
-    def _apply_sidebar_collapsed(self, animate=True):
-        start = self._sidebar.width()
-        end = SIDEBAR_W_MIN if self._sidebar_collapsed else SIDEBAR_W
-
-        if animate and start != end:
-            anim = self._ensure_sidebar_anim()
-            anim.stop()
-            anim.setStartValue(start)
-            anim.setEndValue(end)
-            anim.start()
-        else:
-            self._sidebar.setFixedWidth(end)
-
-        self._apply_sidebar_widget_state()
-
-    def _apply_sidebar_widget_state(self):
-        collapsed = self._sidebar_collapsed
-        icon_size = 26 if collapsed else 20
-        for label, btn in self.nav_buttons.items():
-            btn.setIconSize(QSize(icon_size, icon_size))
-            if collapsed:
-                if btn.text():
-                    self.nav_tooltips[label] = btn.toolTip()
-                btn.setText("")
-                btn.setToolTip(label)
-            else:
-                btn.setText(self.nav_labels[label])
-                btn.setToolTip(self.nav_tooltips.get(label) or "")
-        self._brand_label.setVisible(not collapsed)
-        self._app_name_label.setVisible(not collapsed)
-        self._refresh_toggle_icon()
-
-    def _refresh_nav_icons(self):
-        icons.refresh_nav_buttons(self.window)
-
-    def _refresh_toggle_icon(self):
-        collapsed = self._sidebar_collapsed
-        self._toggle_btn.setToolTip("Expand sidebar" if collapsed else "Collapse sidebar")
-        self._toggle_btn.setIcon(icons.icon_for(
-            "sidebar-simple", theme.ACCENT, 18, mirror=collapsed))
-
-    # ------------------------------------------------------------------ pages
-    def _build_game_page(self):
-        page = QWidget()
-        layout = QVBoxLayout(page)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-
-        self._hero_game = HeroBanner(
-            "Game Management",
-            "Install, update, and manage your Among Us installation",
-        )
-        layout.addWidget(self._hero_game)
-
-        profile_widget = QWidget()
-        profile_layout = QHBoxLayout(profile_widget)
-        profile_layout.setContentsMargins(32, 12, 32, 0)
-        profile_icon = QLabel("●")
-        profile_icon.setObjectName("statusDot")
-        profile_icon.setStyleSheet(f"color: {theme.TEXT_MUTED};")
-        profile_layout.addWidget(profile_icon)
-        self.profile_game_text = QLabel("Loading...")
-        self.profile_game_text.setObjectName("profileDetail")
-        profile_layout.addWidget(self.profile_game_text)
-        self.profile_game_detail = QLabel("")
-        self.profile_game_detail.setObjectName("profileDetail")
-        profile_layout.addWidget(self.profile_game_detail)
-        profile_layout.addStretch()
-        layout.addWidget(profile_widget)
-
-        btn_row = QWidget()
-        btn_layout = QHBoxLayout(btn_row)
-        btn_layout.setContentsMargins(32, 16, 32, 0)
-        self.main_action_btn = QPushButton("INSTALL GAME")
-        self.main_action_btn.setObjectName("successBtn")
-        self.main_action_btn.setFixedHeight(38)
-        self.main_action_btn.clicked.connect(self._cb_main_action)
-        btn_layout.addWidget(self.main_action_btn)
-        layout.addWidget(btn_row)
-
-        loc_row = QWidget()
-        loc_layout = QHBoxLayout(loc_row)
-        loc_layout.setContentsMargins(32, 8, 32, 0)
-        self.locate_btn = QPushButton("LOCATE GAME")
-        self.locate_btn.setObjectName("toolBtn")
-        self.locate_btn.setFixedHeight(38)
-        self.locate_btn.clicked.connect(self._cb_locate_game)
-        self.locate_btn.hide()
-        loc_layout.addWidget(self.locate_btn)
-        layout.addWidget(loc_row)
-
-        info_widget = QWidget()
-        info_layout = QHBoxLayout(info_widget)
-        info_layout.setContentsMargins(32, 16, 32, 0)
-
-        left = QVBoxLayout()
-        left.addWidget(self._muted_label("INSTALLED"))
-        self.ver_installed = QLabel("Not Installed")
-        self.ver_installed.setObjectName("mutedText")
-        left.addWidget(self.ver_installed)
-        left.addSpacing(16)
-        latest_header = QHBoxLayout()
-        latest_header.addWidget(self._muted_label("LATEST"))
-        latest_header.addStretch()
-        self.choose_version_btn = QPushButton("Choose Version")
-        self.choose_version_btn.setObjectName("toolBtn")
-        self.choose_version_btn.setFixedHeight(38)
-        self.choose_version_btn.clicked.connect(self._open_version_picker)
-        latest_header.addWidget(self.choose_version_btn)
-        left.addLayout(latest_header)
-        self.ver_latest = QLabel("Checking...")
-        self.ver_latest.setObjectName("infoText")
-        left.addWidget(self.ver_latest)
-        info_layout.addLayout(left)
-
-        info_layout.addSpacing(20)
-
-        right = QVBoxLayout()
-        right.addWidget(self._muted_label("STATUS"))
-        status_row = QHBoxLayout()
-        self.game_status_icon = QLabel("●")
-        self.game_status_icon.setObjectName("statusDot")
-        self.game_status_text = QLabel("Starting...")
-        self.game_status_text.setObjectName("statusText")
-        status_row.addWidget(self.game_status_icon)
-        status_row.addWidget(self.game_status_text)
-        status_row.addStretch()
-        right.addLayout(status_row)
-        right.addSpacing(10)
+        # These used to live inside the Game card. They now sit in the status bar
+        # so the Home card stays minimal while every existing binding keeps working.
+        self.game_status_icon = self.status_icon_label
+        self.game_status_text = self.status_text_label
 
         self.progress_bar = QProgressBar()
         self.progress_bar.setRange(0, 100)
         self.progress_bar.setValue(0)
         self.progress_bar.setFormat("0%")
         self.progress_bar.setTextVisible(True)
-        self.progress_bar.setFixedHeight(16)
-        right.addWidget(self.progress_bar)
+        self.progress_bar.setFixedWidth(160)
+        self.progress_bar.setFixedHeight(14)
+        self.progress_bar.hide()
+        self.status_bar.addWidget(self.progress_bar)
 
-        self.game_ready_text = QLabel("Ready")
-        self.game_ready_text.setObjectName("mutedText")
-        right.addWidget(self.game_ready_text)
+        self.ver_latest = QLabel("Latest: Checking...")
+        self.ver_latest.setObjectName("infoText")
+        self.status_bar.addPermanentWidget(self.ver_latest)
 
         self.lutris_text = QLabel("")
         self.lutris_text.setObjectName("mutedText")
-        right.addWidget(self.lutris_text)
+        self.status_bar.addPermanentWidget(self.lutris_text)
 
-        info_layout.addLayout(right)
-        layout.addWidget(info_widget)
+        self.choose_version_btn = QPushButton("Versions")
+        self.choose_version_btn.setObjectName("statusBtn")
+        self.choose_version_btn.clicked.connect(self._open_version_picker)
+        self.status_bar.addPermanentWidget(self.choose_version_btn)
+
+        self.locate_btn = QPushButton("LOCATE GAME")
+        self.locate_btn.setObjectName("statusBtn")
+        self.locate_btn.clicked.connect(self._cb_locate_game)
+        self.locate_btn.hide()
+        self.status_bar.addPermanentWidget(self.locate_btn)
+
+        permanent_label = QLabel(f"{APP_NAME} v{LAUNCHER_VERSION} — Made by {MAKER}")
+        permanent_label.setObjectName("footerText")
+        self.status_bar.addPermanentWidget(permanent_label)
+
+        self.nav_buttons["Home"].setChecked(True)
+        self.nav_buttons["Assets"].setEnabled(False)
+        self.nav_buttons["Assets"].setToolTip("Coming soon in a future major version")
+
+    def _build_header(self):
+        """Global top bar: brand on the left, itch user + launcher version right."""
+        header = QWidget()
+        header.setObjectName("topHeader")
+        header.setFixedHeight(56)
+        layout = QHBoxLayout(header)
+        layout.setContentsMargins(24, 0, 24, 0)
+        layout.setSpacing(12)
+
+        brand = QLabel("CREW LAUNCHER")
+        brand.setObjectName("headerBrand")
+        layout.addWidget(brand)
+        layout.addStretch()
+
+        user_box = QVBoxLayout()
+        user_box.setSpacing(0)
+        self.profile_game_text = QLabel("Loading...")
+        self.profile_game_text.setObjectName("headerUser")
+        self.profile_game_text.setAlignment(
+            Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        self.profile_game_detail = QLabel("")
+        self.profile_game_detail.setObjectName("headerUserDetail")
+        self.profile_game_detail.setAlignment(
+            Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        user_box.addWidget(self.profile_game_text)
+        user_box.addWidget(self.profile_game_detail)
+        layout.addLayout(user_box)
+
+        self.launcher_version_label = QLabel(f"v{LAUNCHER_VERSION}")
+        self.launcher_version_label.setObjectName("launcherVersion")
+        layout.addWidget(self.launcher_version_label)
+        return header
+
+    def _refresh_nav_icons(self):
+        icons.refresh_nav_buttons(self.window)
+
+    def _refresh_toggle_icon(self):
+        # Sidebar is now a fixed icon rail; keep this hook for theme switching.
+        self._refresh_nav_icons()
+
+    # ------------------------------------------------------------------ home page
+    def _build_game_page(self):
+        page = QWidget()
+        page.setObjectName("homePage")
+        outer = QVBoxLayout(page)
+        outer.setContentsMargins(24, 20, 24, 20)
+        outer.setSpacing(16)
+
+        grid = QGridLayout()
+        grid.setSpacing(16)
+        grid.setColumnStretch(0, 1)
+        grid.setColumnStretch(1, 1)
+        grid.setRowStretch(0, 1)
+        grid.setRowStretch(1, 1)
+
+        grid.addWidget(self._build_game_card(), 0, 0)
+        grid.addWidget(self._build_custom_card(), 0, 1)
+        grid.addWidget(self._build_mods_card(), 1, 0)
+        grid.addWidget(self._build_tools_card(), 1, 1)
+
+        outer.addLayout(grid)
+        self._update_game_size()
+        return page
+
+    def _build_game_card(self):
+        card = QFrame()
+        card.setObjectName("homeGamePanel")
+        layout = QVBoxLayout(card)
+        layout.setContentsMargins(24, 22, 24, 22)
+        layout.setSpacing(10)
+
+        title = QLabel("Among Us")
+        title.setObjectName("homeGameTitle")
+        layout.addWidget(title)
+
+        layout.addSpacing(6)
+
+        self.ver_installed = QLabel("Version: Not Installed")
+        self.ver_installed.setObjectName("homeCardValue")
+        layout.addWidget(self.ver_installed)
+
+        self.game_size_text = QLabel("Size: —")
+        self.game_size_text.setObjectName("homeCardValue")
+        layout.addWidget(self.game_size_text)
 
         layout.addStretch()
-        return page
+
+        self.main_action_btn = QPushButton("INSTALL GAME")
+        self.main_action_btn.setObjectName("homeSuccessBtn")
+        self.main_action_btn.setMinimumHeight(54)
+        self.main_action_btn.clicked.connect(self._cb_main_action)
+        layout.addWidget(self.main_action_btn)
+
+        return card
+
+    def _build_custom_card(self):
+        card = QFrame()
+        card.setObjectName("homeCard")
+        layout = QVBoxLayout(card)
+        layout.setContentsMargins(24, 22, 24, 22)
+        layout.setSpacing(16)
+
+        header = QHBoxLayout()
+        header.setSpacing(10)
+        title = QLabel("CUSTOM")
+        title.setObjectName("homeCardSubtitle")
+        header.addWidget(title)
+        header.addStretch()
+
+        img_btn = QPushButton("Image")
+        img_btn.setObjectName("homeToolBtn")
+        img_btn.clicked.connect(self._cb_set_home_image)
+        header.addWidget(img_btn)
+
+        note_btn = QPushButton("Note")
+        note_btn.setObjectName("homeToolBtn")
+        note_btn.clicked.connect(self._cb_set_home_note)
+        header.addWidget(note_btn)
+        layout.addLayout(header)
+
+        self.custom_media = CoverLabel()
+        self.custom_media.setObjectName("homeCustomMedia")
+        self.custom_media.setMinimumHeight(150)
+        layout.addWidget(self.custom_media, 1)
+
+        self._render_custom_card()
+        return card
+
+    def _build_mods_card(self):
+        card = QFrame()
+        card.setObjectName("homeCard")
+        layout = QVBoxLayout(card)
+        layout.setContentsMargins(24, 22, 24, 22)
+        layout.setSpacing(10)
+
+        title = QLabel("Mods")
+        title.setObjectName("homeCardTitle")
+        layout.addWidget(title)
+
+        layout.addSpacing(4)
+
+        self.home_profile_label = QLabel("Profile: —")
+        self.home_profile_label.setObjectName("homeCardValue")
+        layout.addWidget(self.home_profile_label)
+
+        self.home_mods_count_label = QLabel("Mods: —")
+        self.home_mods_count_label.setObjectName("homeCardValue")
+        layout.addWidget(self.home_mods_count_label)
+
+        layout.addStretch()
+
+        manage_btn = QPushButton("Manage Mods")
+        manage_btn.setObjectName("homeToolBtn")
+        manage_btn.setMinimumHeight(48)
+        manage_btn.clicked.connect(lambda: self._switch_page(3, "Mods"))
+        layout.addWidget(manage_btn)
+
+        self._refresh_home_mods_card()
+        return card
+
+    def _build_tools_card(self):
+        card = QFrame()
+        card.setObjectName("homeCard")
+        layout = QVBoxLayout(card)
+        layout.setContentsMargins(24, 22, 24, 22)
+        layout.setSpacing(10)
+
+        title = QLabel("Tools")
+        title.setObjectName("homeCardTitle")
+        layout.addWidget(title)
+        subtitle = QLabel("Quick Tools")
+        subtitle.setObjectName("homeCardSubtitle")
+        layout.addWidget(subtitle)
+
+        layout.addStretch()
+
+        btn_grid = QGridLayout()
+        btn_grid.setSpacing(12)
+        for label, cb, obj_name, r, c in [
+            ("Change Location", self._cb_change_location, "homeToolBtn", 0, 0),
+            ("Create Shortcut", self._cb_create_shortcut, "homeToolBtn", 0, 1),
+            ("Open Folder", self._cb_open_folder, "homeToolBtn", 1, 0),
+            ("Uninstall", self._cb_uninstall, "homeDangerBtn", 1, 1),
+        ]:
+            btn = QPushButton(label)
+            btn.setObjectName(obj_name)
+            btn.setMinimumHeight(48)
+            btn.clicked.connect(cb)
+            btn_grid.addWidget(btn, r, c)
+        layout.addLayout(btn_grid)
+
+        return card
+
+    # ------------------------------------------------------------------ home cards data
+    def _refresh_home_mods_card(self):
+        if not hasattr(self, "home_profile_label"):
+            return
+        active = self.config.get_active_profile()
+        self.home_profile_label.setText(f"Profile: {active}")
+        count = 0
+        try:
+            profile_dir = self.profile_mgr.profile_path(active)
+            if profile_dir.exists():
+                count = len(list(profile_dir.glob("*.dll")))
+        except Exception:
+            count = 0
+        self.home_mods_count_label.setText(f"Mods: {count}")
+
+    def _update_game_size(self):
+        if not hasattr(self, "game_size_text"):
+            return
+        gp = self.config.get_game_path()
+        if not gp or not (gp / "Among Us.exe").exists():
+            self.game_size_text.setText("Size: —")
+            return
+
+        def compute():
+            from file_manager import FileManager
+            total = 0
+            try:
+                for f in gp.rglob("*"):
+                    if f.is_file():
+                        total += f.stat().st_size
+            except OSError:
+                pass
+            text = FileManager.format_size(total)
+            self._invoke_main(lambda: self.game_size_text.setText(f"Size: {text}"))
+
+        self._run(compute)
+
+    # ------------------------------------------------------------------ custom card
+    def _cb_set_home_image(self):
+        path, _ = QFileDialog.getOpenFileName(
+            self.window, "Choose Image", "",
+            "Images (*.png *.jpg *.jpeg *.bmp *.gif *.webp);;All Files (*)",
+        )
+        if not path:
+            return
+        self.config.settings["home_image_path"] = path
+        self.config.save_settings()
+        self._render_custom_card()
+
+    def _cb_set_home_note(self):
+        note, ok = QInputDialog.getMultiLineText(
+            self.window, "Custom Note", "Text to show on your Home card:",
+            self.config.settings.get("home_note", ""),
+        )
+        if not ok:
+            return
+        self.config.settings["home_note"] = note
+        self.config.save_settings()
+        self._render_custom_card()
+
+    def _render_custom_card(self):
+        if not hasattr(self, "custom_media"):
+            return
+        img = (self.config.settings.get("home_image_path") or "").strip()
+        note = (self.config.settings.get("home_note") or "").strip()
+        if img and Path(img).exists():
+            pm = QPixmap(img)
+            if not pm.isNull():
+                self.custom_media.set_image(pm)
+                return
+        if note:
+            self.custom_media.set_text(note)
+            return
+        self.custom_media.set_text(
+            "No custom image or note yet.\nUse Image / Note to add one."
+        )
 
     def _build_tools_page(self):
         page = QWidget()
@@ -870,8 +985,9 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         def _swap():
             self.pages.setCurrentIndex(index)
             self._active_page = label.lower()
+            effective = label if label in self.nav_buttons else "Home"
             for name, btn in self.nav_buttons.items():
-                btn.setChecked(name == label)
+                btn.setChecked(name == effective)
             fade_in = QPropertyAnimation(effect, b"opacity", self.pages)
             fade_in.setDuration(120)
             fade_in.setStartValue(0.0)
@@ -906,15 +1022,16 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         self.progress = pct
         self.progress_bar.setValue(int(pct))
         self.progress_bar.setFormat(f"{pct:.0f}%")
+        self.progress_bar.setVisible(pct > 0)
 
     def _update_version_display(self):
-        self.ver_installed.setText(self.current_version)
-        if self.current_version and self.current_version not in ("Not Installed", "Unknown"):
-            self.ver_installed.setObjectName("successText")
-        else:
-            self.ver_installed.setObjectName("mutedText")
+        self.ver_installed.setText(f"Version: {self.current_version}")
+        installed = bool(self.current_version) and self.current_version not in ("Not Installed", "Unknown")
+        self.ver_installed.setProperty("state", "installed" if installed else "muted")
+        self.ver_installed.style().unpolish(self.ver_installed)
         self.ver_installed.style().polish(self.ver_installed)
-        self.ver_latest.setText(self.latest_version)
+        self.ver_latest.setText(f"Latest: {self.latest_version}")
+        self._update_game_size()
 
     def _update_lutris_info(self):
         """Show whether the current install has a Lutris entry (Linux only)."""
@@ -940,7 +1057,7 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         self._update_lutris_info()
         if self.game.is_running:
             self.main_action_btn.setText("PLAYING")
-            self.main_action_btn.setObjectName("dangerBtn")
+            self.main_action_btn.setObjectName("homeDangerBtn")
             self.main_action_btn.style().polish(self.main_action_btn)
             self.locate_btn.hide()
             start_playing_pulse(self.main_action_btn, color=theme.DANGER)
@@ -953,17 +1070,17 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         gp = self.config.get_game_path()
         if cur == "Not Installed" or not gp or not (gp / "Among Us.exe").exists():
             self.main_action_btn.setText("INSTALL GAME")
-            self.main_action_btn.setObjectName("successBtn")
+            self.main_action_btn.setObjectName("homeSuccessBtn")
             self.main_action_btn.style().polish(self.main_action_btn)
             self.locate_btn.show()
         elif cur != lat and lat != "Checking...":
             self.main_action_btn.setText("UPDATE AVAILABLE")
-            self.main_action_btn.setObjectName("primaryBtn")
+            self.main_action_btn.setObjectName("homePrimaryBtn")
             self.main_action_btn.style().polish(self.main_action_btn)
             self.locate_btn.hide()
         else:
             self.main_action_btn.setText("LAUNCH GAME")
-            self.main_action_btn.setObjectName("successBtn")
+            self.main_action_btn.setObjectName("homeSuccessBtn")
             self.main_action_btn.style().polish(self.main_action_btn)
             self.locate_btn.hide()
 
