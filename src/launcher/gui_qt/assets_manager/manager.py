@@ -152,6 +152,26 @@ class AUASManager:
             log.error(f"Failed to delete AUAS pack {name}: {e}")
             return False
 
+    def duplicate_pack(self, src: str, new: str) -> bool:
+        if not self.is_valid_name(new) or new == src:
+            return False
+        source = self.pack_path(src)
+        dest = self.pack_path(new)
+        if source is None or dest is None:
+            return False
+        if not source.is_dir() or dest.exists():
+            return False
+        try:
+            shutil.copytree(str(source), str(dest))
+            meta = self.get_metadata(new)
+            if meta:
+                meta.name = new
+                self.save_metadata(new, meta)
+            return True
+        except OSError as e:
+            log.error(f"Failed to duplicate AUAS pack {src} -> {new}: {e}")
+            return False
+
     def rename_pack(self, old: str, new: str) -> bool:
         if not self.is_valid_name(new) or new == old:
             return False
@@ -355,15 +375,46 @@ class AUASManager:
             active=self.get_active_pack() == name,
         )
 
-    def copy_assets(self, name: str, items: List[Tuple[Path, str]]) -> Tuple[int, List[str]]:
+    def find_conflicts(self, name: str, items: List[Tuple[Path, str]]) -> List[str]:
+        """Return the source names whose target already exists in the pack."""
+        target = self.pack_path(name)
+        if target is None or not target.is_dir():
+            return []
+        conflicts: List[str] = []
+        for src, category in items:
+            if category not in ASSET_CATEGORIES:
+                continue
+            if (target / category / Path(src).name).exists():
+                conflicts.append(Path(src).name)
+        return conflicts
+
+    @staticmethod
+    def _unique_dest(dest_dir: Path, filename: str) -> Path:
+        dest = dest_dir / filename
+        if not dest.exists():
+            return dest
+        stem, suffix = Path(filename).stem, Path(filename).suffix
+        i = 1
+        while True:
+            candidate = dest_dir / f"{stem} ({i}){suffix}"
+            if not candidate.exists():
+                return candidate
+            i += 1
+
+    def copy_assets(self, name: str, items: List[Tuple[Path, str]],
+                    overwrite: bool = True) -> Tuple[int, int, List[str]]:
         """Copy (source_file, category) pairs into the pack.
 
-        Returns (copied_count, error_messages).
+        When ``overwrite`` is False, colliding filenames are saved alongside
+        the existing file as ``name (1).ext``.
+
+        Returns (copied_count, skipped_count, error_messages).
         """
         target = self.pack_path(name)
         if target is None or not target.is_dir():
-            return 0, ["Pack does not exist"]
+            return 0, 0, ["Pack does not exist"]
         copied = 0
+        skipped = 0
         errors: List[str] = []
         for src, category in items:
             src = Path(src)
@@ -373,11 +424,17 @@ class AUASManager:
             dest_dir = target / category
             try:
                 dest_dir.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(str(src), str(dest_dir / src.name))
+                if not src.exists():
+                    errors.append(f"{src.name}: file not found")
+                    continue
+                dest = dest_dir / src.name
+                if dest.exists() and not overwrite:
+                    dest = self._unique_dest(dest_dir, src.name)
+                shutil.copy2(str(src), str(dest))
                 copied += 1
             except OSError as e:
                 errors.append(f"{src.name}: {e}")
-        return copied, errors
+        return copied, skipped, errors
 
     def remove_asset(self, name: str, category: str, relpath: str) -> bool:
         target = self.pack_path(name)
@@ -414,8 +471,8 @@ class AUASManager:
         target = self.pack_path(name)
         if target is None or not target.is_dir():
             return False
-        if dest.suffix.lower() not in (".zip", ".aupack"):
-            dest = dest.with_suffix(".aupack")
+        if dest.suffix.lower() != ".zip":
+            dest = dest.with_name(dest.stem + ".zip")
         meta = self.get_metadata(name) or PackMetadata(name=name)
         if not meta.name:
             meta.name = name

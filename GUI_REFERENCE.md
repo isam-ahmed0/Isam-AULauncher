@@ -108,11 +108,40 @@ src/launcher/gui_qt/
 | 3 | Mods | `_build_mods_page()` | Yes | No |
 | 4 | Settings | `SettingsPage` (dialogs.py) | Yes | No |
 | 5 | About | `AboutPage` (dialogs.py) | Yes | No |
-| 6 | Assets | `_build_assets_page()` | Yes | No |
+| 6 | Assets | `_build_assets_page()` | No | No |
 
 ### Page Margins
 - Game/Profile: 32, 20, 32, 20 (content below hero)
 - Tools/Mods/Settings/About: 32, 20, 32, 20
+
+### Assets Manager (page 6)
+Two-pane `QSplitter` (`gui_qt/assets_manager/tab.py`), each pane built from
+`QFrame#assetsPanelCard` containers (14-16px inner padding):
+- **Left:** a *PACKS* card holding the pack list (`QListWidget`; row 0 is
+  *None (Vanilla)*, each pack shows its asset count and a `● ACTIVE` badge;
+  **single-click activates**, writing `ActivePack` to the AUAS plugin config),
+  plus a separate *MANAGE* card holding: New Pack, Import Pack / Duplicate,
+  Rename / **Delete Pack** (soft-danger `dangerSoftBtn`). Min width 270 so
+  labels never wrap.
+- **Right:**
+  - Page title (`assetsPageTitle`) + help banner.
+  - **Active Pack Info card**: 108px cover image, title/details/description,
+    top-right *Edit Info*, and a row of **clickable category pills**
+    (`pillBtn`, `FlowLayout` that wraps; `All · Sprites n · …`).
+  - **Files** header with a count and a **Show/Hide file list** toggle; the
+    themed `QTreeWidget#assetsFileTree` is **hidden until toggled** and filtered
+    by the selected pill; an image preview appears on sprite/texture selection.
+  - Two aligned 40px toolbar rows: `Add Files · Add Folder` and
+    `Remove Selected · Open Folder · Export .zip`.
+- **Adding assets:** Add Files / Add Folder / **drag & drop** auto-route by
+  extension (`AUASManager.guess_category`). The category/overwrite dialog only
+  appears when there are unknown types or filename conflicts.
+- **Export** is always a `.zip` (assets + `pack.json`); Import accepts `.zip`
+  and `.aupack`.
+- Scoped QSS keys added to `theme.py`: `assetsPanelCard`, `assetsPageTitle`,
+  `assetsCardTitle`, `assetsSectionLabel`, `assetsCover`, `pillBtn`,
+  `dangerSoftBtn`, `assetsFileTree` (plus an `_rgba()` helper for the soft
+  danger tint).
 
 ---
 

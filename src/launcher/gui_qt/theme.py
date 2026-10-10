@@ -36,6 +36,13 @@ BG_SIDEBAR = "#08090c"
 CURRENT_THEME = "Forest"
 
 
+def _rgba(hex_color: str, alpha: float) -> str:
+    """Convert a #rrggbb color to an rgba() string with the given alpha."""
+    h = hex_color.lstrip("#")
+    r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+    return f"rgba({r}, {g}, {b}, {alpha})"
+
+
 # ---------------------------------------------------------------------------
 # QSS builder
 # ---------------------------------------------------------------------------
@@ -654,6 +661,106 @@ QPushButton#homeToolBtn:pressed {{
 #sidebar QPushButton {{
     text-align: center;
     padding: 0px;
+}}
+
+/* ===== ASSETS MANAGER (scoped keys) ===== */
+QFrame#assetsPanelCard {{
+    background-color: {p["bg_surface"]};
+    border: 1px solid {p["border_subtle"]};
+    border-radius: 12px;
+}}
+
+QLabel#assetsPageTitle {{
+    font-size: 20px;
+    font-weight: 800;
+    color: {p["text_bright"]};
+}}
+
+QLabel#assetsCardTitle {{
+    font-size: 16px;
+    font-weight: 700;
+    color: {p["text_bright"]};
+}}
+
+QLabel#assetsSectionLabel {{
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: {p["text_muted"]};
+}}
+
+QLabel#assetsCover {{
+    background-color: {p["bg_elevated"]};
+    border: 1px solid {p["border_subtle"]};
+    border-radius: 10px;
+    color: {p["text_muted"]};
+}}
+
+QPushButton#pillBtn {{
+    background-color: {p["bg_elevated"]};
+    color: {p["text_secondary"]};
+    border: 1px solid {p["border_subtle"]};
+    border-radius: 14px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 600;
+}}
+
+QPushButton#pillBtn:hover {{
+    background-color: {p["bg_hover"]};
+    border-color: {p["accent"]};
+    color: {p["text_primary"]};
+}}
+
+QPushButton#pillBtn:checked {{
+    background-color: {p["accent"]};
+    border-color: {p["accent"]};
+    color: {p["text_bright"]};
+}}
+
+QPushButton#dangerSoftBtn {{
+    background-color: {_rgba(p["danger"], 0.15)};
+    color: {p["danger"]};
+    border: 1px solid {_rgba(p["danger"], 0.35)};
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 700;
+    min-height: 20px;
+}}
+
+QPushButton#dangerSoftBtn:hover {{
+    background-color: {_rgba(p["danger"], 0.25)};
+    border-color: {p["danger"]};
+}}
+
+QPushButton#dangerSoftBtn:pressed {{
+    background-color: {_rgba(p["danger"], 0.35)};
+    padding-top: 11px;
+    padding-bottom: 9px;
+}}
+
+QPushButton#dangerSoftBtn:disabled {{
+    background-color: {p["btn_disabled_bg"]};
+    color: {p["btn_disabled_text"]};
+    border-color: {p["border_subtle"]};
+}}
+
+QTreeWidget#assetsFileTree {{
+    background-color: {p["bg_elevated"]};
+    border: 1px solid {p["border_subtle"]};
+    border-radius: 8px;
+    outline: none;
+    font-size: 14px;
+}}
+
+QTreeWidget#assetsFileTree::item {{
+    padding: 4px 6px;
+}}
+
+QTreeWidget#assetsFileTree::item:selected {{
+    background-color: {p["accent"]};
+    color: {p["text_bright"]};
 }}
 """
 
