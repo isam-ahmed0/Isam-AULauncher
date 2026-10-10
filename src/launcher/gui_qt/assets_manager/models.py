@@ -1,7 +1,7 @@
-"""Data models for the Assets Manager."""
+"""Data models for the Assets Manager (AU-Assets-Swapper packs)."""
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, Dict
 
 
 @dataclass
@@ -17,9 +17,11 @@ class PackMetadata:
 
 
 @dataclass
-class PackProfile:
+class AssetPack:
     name: str
     path: Path
     asset_count: int = 0
-    categories: List[str] = field(default_factory=list)
+    total_size: int = 0
+    categories: Dict[str, int] = field(default_factory=dict)
     metadata: Optional[PackMetadata] = None
+    active: bool = False

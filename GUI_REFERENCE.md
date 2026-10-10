@@ -49,13 +49,13 @@ src/launcher/gui_qt/
 │   ├── mod_manager.py    # ModManagerMixin
 │   ├── itch_profile.py   # ItchProfileMixin
 │   └── updater.py        # UpdaterMixin
-└── assets_manager/       # DISABLED (coming soon)
+└── assets_manager/       # AU-Assets-Swapper resource-pack manager
     ├── __init__.py
-    ├── models.py
-    ├── profile_manager.py
-    ├── pack_io.py
-    ├── tab.py
-    └── mixin.py
+    ├── models.py          # PackMetadata, AssetPack
+    ├── manager.py         # AUASManager (AUAS_Data + ActivePack config)
+    ├── pack_info.py       # PackInfoDialog (edit pack.json)
+    ├── tab.py             # AssetsManagerPage
+    └── mixin.py           # AssetsManagerMixin
 ```
 
 ---
@@ -108,7 +108,7 @@ src/launcher/gui_qt/
 | 3 | Mods | `_build_mods_page()` | Yes | No |
 | 4 | Settings | `SettingsPage` (dialogs.py) | Yes | No |
 | 5 | About | `AboutPage` (dialogs.py) | Yes | No |
-| 6 | Assets | Placeholder QWidget | No | No |
+| 6 | Assets | `_build_assets_page()` | Yes | No |
 
 ### Page Margins
 - Game/Profile: 32, 20, 32, 20 (content below hero)
@@ -383,4 +383,4 @@ from PySide6.QtWidgets import (
 5. **Worker threads** — Network calls run in QThread via Worker class. UI updates must be dispatched to main thread via `_invoke_main()`.
 6. **Sidebar is fixed 200px** — Do not make responsive.
 7. **Hero is fixed 180px** — Do not make responsive.
-8. **7 nav buttons** — Game, Tools, Profile, Mods, Settings, About, Assets (Assets is disabled).
+8. **7 nav buttons** — Game, Tools, Profile, Mods, Settings, About, Assets.

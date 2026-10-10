@@ -1,17 +1,18 @@
-"""AssetsManagerMixin — adds assets page to LauncherApp."""
-from pathlib import Path
-from typing import Optional
-
-from .profile_manager import AUASProfileManager
-from .tab import AssetsManagerTab
+"""AssetsManagerMixin — adds the AUAS resource-pack page to LauncherApp."""
+from .tab import AssetsManagerPage
 
 
 class AssetsManagerMixin:
-    def _build_assets_page(self) -> AssetsManagerTab:
-        gp = self.config.get_game_path()
-        profiles_base = gp.parent / "AUAS_Profiles" if gp else Path.home() / "AUAS_Profiles"
-        self.auas_profile_mgr = AUASProfileManager(profiles_base)
-        self.assets_tab = AssetsManagerTab(
-            self.auas_profile_mgr, self.config.get_game_path,
+    def _build_assets_page(self) -> AssetsManagerPage:
+        self.assets_page = AssetsManagerPage(
+            game_path_getter=self.config.get_game_path,
+            game_running_getter=self._assets_game_running,
         )
-        return self.assets_tab
+        return self.assets_page
+
+    def _assets_game_running(self) -> bool:
+        try:
+            game = getattr(self, "game", None)
+            return bool(game and game.is_running)
+        except Exception:
+            return False

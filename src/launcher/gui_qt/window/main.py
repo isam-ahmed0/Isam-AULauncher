@@ -40,9 +40,10 @@ from .region_editor import RegionEditorMixin
 from .mod_manager import ModManagerMixin
 from .itch_profile import ItchProfileMixin
 from .updater import UpdaterMixin
+from ..assets_manager import AssetsManagerMixin
 
 
-class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProfileMixin, UpdaterMixin):
+class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProfileMixin, UpdaterMixin, AssetsManagerMixin):
     def __init__(self, existing_app=None):
         self.config = Config()
         try:
@@ -240,11 +241,7 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         self.page_mods = self._build_mods_page()
         self.page_settings = SettingsPage(self.config, self.discord, self.profile_mgr)
         self.page_about = AboutPage()
-        self.page_assets = QWidget()
-        coming_soon = QLabel("Assets Manager coming soon in a future major version.")
-        coming_soon.setObjectName("mutedText")
-        coming_soon.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        QVBoxLayout(self.page_assets).addWidget(coming_soon)
+        self.page_assets = self._build_assets_page()
         self.pages.addWidget(self.page_game)
         self.pages.addWidget(self.page_tools)
         self.pages.addWidget(self.page_profile)
@@ -311,8 +308,6 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         self.status_bar.addPermanentWidget(permanent_label)
 
         self.nav_buttons["Home"].setChecked(True)
-        self.nav_buttons["Assets"].setEnabled(False)
-        self.nav_buttons["Assets"].setToolTip("Coming soon in a future major version")
 
     def _build_header(self):
         """Global top bar: brand on the left, itch user + launcher version right."""
@@ -985,6 +980,11 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         def _swap():
             self.pages.setCurrentIndex(index)
             self._active_page = label.lower()
+            if label == "Assets" and hasattr(self, "assets_page"):
+                try:
+                    self.assets_page.refresh()
+                except Exception:
+                    logging.exception("Failed to refresh assets page")
             effective = label if label in self.nav_buttons else "Home"
             for name, btn in self.nav_buttons.items():
                 btn.setChecked(name == effective)
