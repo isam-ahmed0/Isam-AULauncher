@@ -1,0 +1,141 @@
+name: Build (Windows)
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: "Version to embed. Blank = keep src/launcher/config.py"
+        required: false
+        type: string
+        default: ""
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to embed. Blank = keep src/launcher/config.py"
+        required: false
+        default: ""
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Resolve version
+        shell: pwsh
+        run: |
+          $v = "${{ inputs.version }}"
+          if ([string]::IsNullOrWhiteSpace($v)) {
+            $m = Select-String -Path src/launcher/config.py -Pattern '^LAUNCHER_VERSION\s*=\s*"([^"]+)"'
+            if (-not $m) { throw "Could not find LAUNCHER_VERSION in src/launcher/config.py" }
+            $v = $m.Matches[0].Groups[1].Value
+          }
+          "VERSION=$v" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          Write-Host "Version: $v"
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r src/launcher/requirements.txt pyinstaller customtkinter
+
+      - name: Patch embedded version
+        run: python build/set_version.py "$env:VERSION"
+
+      - name: Build CrewLauncher (PyInstaller)
+        shell: cmd
+        run: |
+          pyinstaller --noconfirm --onedir --windowed --noupx ^
+            --name CrewLauncher ^
+            --icon src\launcher\resources\icon.ico ^
+            --add-data "src\launcher\resources\icon.ico;resources" ^
+            --add-data "src\launcher\resources\splash.png;resources" ^
+            --add-data "src\launcher\resources\phosphor-icons;resources\phosphor-icons" ^
+            --add-data "src\launcher\resources\login;resources\login" ^
+            --add-data "DOC;DOC" ^
+            --add-data "release\bepmods.zip;." ^
+            --exclude-module PySide6.QtWebEngineCore ^
+            --exclude-module PySide6.QtWebEngineWidgets ^
+            --exclude-module PySide6.QtWebEngineQuick ^
+            --exclude-module PySide6.QtQuick ^
+            --exclude-module PySide6.QtQuickWidgets ^
+            --exclude-module PySide6.QtQml ^
+            --exclude-module PySide6.Qt3DCore ^
+            --exclude-module PySide6.Qt3DRender ^
+            --exclude-module PySide6.Qt3DAnimation ^
+            --exclude-module PySide6.Qt3DExtras ^
+            --exclude-module PySide6.Qt3DInput ^
+            --exclude-module PySide6.Qt3DLogic ^
+            --exclude-module PySide6.QtCharts ^
+            --exclude-module PySide6.QtDataVisualization ^
+            --exclude-module PySide6.QtPdf ^
+            --exclude-module PySide6.QtPdfWidgets ^
+            --exclude-module PySide6.QtDesigner ^
+            --exclude-module PySide6.QtTest ^
+            --exclude-module PySide6.QtSql ^
+            --exclude-module PySide6.QtBluetooth ^
+            --exclude-module PySide6.QtNfc ^
+            --exclude-module PySide6.QtPositioning ^
+            --exclude-module PySide6.QtSerialPort ^
+            --exclude-module PySide6.QtSensors ^
+            --exclude-module PySide6.QtHelp ^
+            --exclude-module PySide6.QtWebSockets ^
+            --exclude-module PySide6.QtWebChannel ^
+            --exclude-module dearpygui ^
+            src\launcher\main.py
+
+      - name: Build Itch Login Fixer (PyInstaller)
+        shell: cmd
+        run: |
+          pyinstaller --noconfirm --onedir --windowed --noupx ^
+            --name Itch_Login_Fixer ^
+            --icon src\fixer\assets\icon.ico ^
+            --hidden-import customtkinter ^
+            --collect-submodules customtkinter ^
+            src\fixer\Itch_Login_Fixer.py
+
+      - name: Create portable All.zip
+        run: python build/package_all_zip.py
+
+      - name: Install NSIS
+        run: choco install nsis -y --no-progress
+
+      - name: Locate NSIS
+        shell: pwsh
+        run: |
+          $candidates = @(
+            "${env:ProgramFiles(x86)}\NSIS\makensis.exe",
+            "$env:ProgramFiles\NSIS\makensis.exe"
+          )
+          $nsis = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not $nsis) { throw "NSIS (makensis) not found" }
+          "MAKENSIS=$nsis" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          Write-Host "makensis: $nsis"
+
+      - name: Compile installers
+        shell: pwsh
+        run: |
+          $root = (Get-Location).Path
+          foreach ($nsi in @(
+            "installer\CrewLauncher.nsi",
+            "installer\CrewLauncher-Online.nsi",
+            "installer\CrewLauncher-Universal.nsi"
+          )) {
+            Write-Host "makensis $nsi"
+            & $env:MAKENSIS "/DROOT=$root" "/DVERSION=$env:VERSION" $nsi
+            if ($LASTEXITCODE -ne 0) { throw "makensis failed for $nsi" }
+          }
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          if-no-files-found: error
+          path: |
+            dist/CrewLauncher-Setup.exe
+            dist/CrewLauncher-Setup-Offline.exe
+            dist/CrewLauncher-Universal.exe
+            dist/CrewLauncher-All.zip

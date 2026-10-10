@@ -1,0 +1,56 @@
+name: Build (Linux)
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: "Version to embed. Blank = keep src/launcher/config.py"
+        required: false
+        type: string
+        default: ""
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to embed. Blank = keep src/launcher/config.py"
+        required: false
+        default: ""
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve version
+        run: |
+          v="${{ inputs.version }}"
+          if [ -z "$v" ]; then
+            v="$(grep -oP '^LAUNCHER_VERSION\s*=\s*"\K[^"]+' src/launcher/config.py || true)"
+          fi
+          if [ -z "$v" ]; then
+            echo "ERROR: could not determine version" >&2
+            exit 1
+          fi
+          echo "VERSION=$v" >> "$GITHUB_ENV"
+          echo "Version: $v"
+
+      - name: Patch embedded version
+        run: python3 build/set_version.py "$VERSION"
+
+      - name: Build + package (Arch container)
+        run: |
+          docker run --rm \
+            -v "$PWD:/work" \
+            -w /work \
+            archlinux:latest \
+            bash /work/build/ci/linux_build.sh
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          if-no-files-found: error
+          path: |
+            dist/packages/CrewLauncher.deb
+            dist/packages/CrewLauncher.rpm
+            dist/packages/CrewLauncher.pkg.tar.zst

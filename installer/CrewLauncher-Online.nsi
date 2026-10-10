@@ -13,7 +13,7 @@
 !define APP_SHORT     "CrewLauncher"
 !define COMPANY       "Isam"
 !ifndef VERSION
-  !define VERSION     "0.6"
+  !define VERSION     "1.0-beta.1"
 !endif
 !define VERSION_DOT   "${VERSION}.0.0"
 

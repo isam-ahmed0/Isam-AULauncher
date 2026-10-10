@@ -5,10 +5,13 @@
 #   bash build/build_packages_linux.sh      # then, produces dist/packages/*
 #
 # Outputs (dist/packages/):
-#   isam-aulauncher-<ver>-1-x86_64.pkg.tar.zst   Arch/CachyOS/Manjaro (pacman -U)
-#   isam-aulauncher_<ver>-1_amd64.deb            Debian/Ubuntu/Mint/Pop (apt install ./)
-#   isam-aulauncher-<ver>-1*.rpm                 Fedora/RHEL/openSUSE (dnf install ./) [if rpmbuild]
-#   CrewLauncher-<ver>.run                       universal self-extracting installer
+#   CrewLauncher.pkg.tar.zst   Arch/CachyOS/Manjaro (pacman -U)      [internal pkg: isam-aulauncher]
+#   CrewLauncher.deb           Debian/Ubuntu/Mint/Pop (apt install ./) [internal pkg: isam-aulauncher]
+#   CrewLauncher.rpm           Fedora/RHEL/openSUSE (dnf install ./) [if rpmbuild; internal pkg: isam-aulauncher]
+#
+# The file names are intentionally unversioned so release download URLs stay
+# stable; the packages' internal name/version metadata keeps upgrades working.
+# Set BUILD_RUN=1 to additionally build the CrewLauncher-<ver>.run installer.
 #
 # The Itch Login Fixer stays a separate standalone Windows tool (account
 # merging). The launcher's own itch.io login is native and needs no Wine.
@@ -84,7 +87,8 @@ package() {
 }
 EOF
     ( cd "$dir" && PKGDEST="$OUT" makepkg -f --nodeps --noconfirm >/dev/null )
-    echo "  -> $(ls "$OUT"/${PKG_NAME}-${PKGVER}-1-*.pkg.tar.zst)"
+    mv "$OUT"/${PKG_NAME}-${PKGVER}-1-*.pkg.tar.zst "$OUT/CrewLauncher.pkg.tar.zst"
+    echo "  -> $OUT/CrewLauncher.pkg.tar.zst"
 }
 
 # ------------------------------------------------------------------- deb
@@ -123,7 +127,7 @@ EOF
     ( cd "$root/control" && tar --owner=0 --group=0 --numeric-owner -cJf "$root/control.tar.xz" ./control )
     printf '2.0\n' > "$root/debian-binary"
 
-    local deb="$OUT/${PKG_NAME}_${DEBVER}-1_amd64.deb"
+    local deb="$OUT/CrewLauncher.deb"
     ( cd "$root" && ar rc "$deb" debian-binary control.tar.xz data.tar.xz )
     echo "  -> $deb"
 }
@@ -168,8 +172,8 @@ done
 /usr/share/icons/hicolor/*/apps/$APP_ID.png
 EOF
     rpmbuild -bb --define "_topdir $top" "$top/SPECS/$PKG_NAME.spec" >/dev/null
-    find "$top/RPMS" -name '*.rpm' -exec cp {} "$OUT/" \;
-    echo "  -> $(ls "$OUT"/${PKG_NAME}-${PKGVER}-*.rpm | head -1)"
+    find "$top/RPMS" -name '*.rpm' -exec cp {} "$OUT/CrewLauncher.rpm" \;
+    echo "  -> $OUT/CrewLauncher.rpm"
 }
 
 # ------------------------------------------------------------------- run
@@ -187,7 +191,9 @@ build_run() {
 build_pacman
 build_deb
 build_rpm
-build_run
+if [ "${BUILD_RUN:-0}" = "1" ]; then
+    build_run
+fi
 
 echo
 echo "Packages in $OUT:"
