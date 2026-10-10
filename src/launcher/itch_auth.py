@@ -1,4 +1,4 @@
-"""Native itch.io login for Isam AULauncher.
+"""Native itch.io login for CrewLauncher.
 
 This is the Itch Login Fixer's logic embedded in the launcher: the same OAuth
 client, the same local callback server on 127.0.0.1:7890, the same redirect

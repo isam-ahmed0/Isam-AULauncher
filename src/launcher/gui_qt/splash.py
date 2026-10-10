@@ -1,5 +1,5 @@
 """
-SplashScreen — transparent PNG splash screen for Isam AULauncher.
+SplashScreen — transparent PNG splash screen for CrewLauncher.
 Frameless window displaying a PNG image with loading status overlay.
 """
 import logging

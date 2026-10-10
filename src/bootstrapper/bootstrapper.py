@@ -9,7 +9,7 @@ import subprocess
 # Initialize colorama
 init(autoreset=True)
 
-APP_NAME = "Isam AULauncher"
+APP_NAME = "CrewLauncher"
 
 def download_file(url, local_filename):
     start_time = time.time()
@@ -77,7 +77,7 @@ def read_version_file(file_path):
         return None
 
 def main():
-    print(f"{Fore.CYAN}=========================== ISAM AULAUNCHER BOOTSTRAPPER ==========================={Style.RESET_ALL}\n")
+    print(f"{Fore.CYAN}============================ CREWLAUNCHER BOOTSTRAPPER ============================{Style.RESET_ALL}\n")
 
     print_colored("[*] Checking for Updates...", "yellow")
 
@@ -146,7 +146,7 @@ def main():
     elif choice == '4':
         webbrowser.open("https://jogamerforgames2021.github.io/")
 
-    print(f"\n{Fore.GREEN}Thanks for using Isam AULauncher!{Style.RESET_ALL}\n")
+    print(f"\n{Fore.GREEN}Thanks for using CrewLauncher!{Style.RESET_ALL}\n")
 
 if __name__ == "__main__":
     main()

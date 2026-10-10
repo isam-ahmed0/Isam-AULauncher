@@ -1,5 +1,5 @@
 """
-Window — Steam-style sidebar launcher for Isam AULauncher (PySide6).
+Window — Steam-style sidebar launcher for CrewLauncher (PySide6).
 Professional dark UI with sidebar navigation and stacked pages.
 """
 import os

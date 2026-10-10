@@ -1,6 +1,6 @@
 ;-------------------------------------------------------------------------------
-; Isam AULauncher - NSIS installer
-; Compile with: makensis.exe installer\IsamAULauncher.nsi
+; CrewLauncher - NSIS installer
+; Compile with: makensis.exe installer\CrewLauncher.nsi
 ; Paths are resolved relative to this script, so it builds from anywhere.
 ;
 ; Packages PyInstaller --onedir output (folders with exe + _internal/).
@@ -9,8 +9,8 @@
 !include "MUI2.nsh"
 !include "LogicLib.nsh"
 
-!define APP_NAME      "Isam AULauncher"
-!define APP_SHORT     "Isam AULauncher"
+!define APP_NAME      "CrewLauncher"
+!define APP_SHORT     "CrewLauncher"
 !define COMPANY       "Isam"
 !ifndef VERSION
   !define VERSION     "0.6"
@@ -23,13 +23,13 @@
 !endif
 !define SRC_ICON      "${ROOT}\src\launcher\resources\icon.ico"
 !define SIDEBAR_BMP   "${ROOT}\installer\sidebar.bmp"
-!define LAUNCHER_DIR  "${ROOT}\dist\IsamAULauncher"
+!define LAUNCHER_DIR  "${ROOT}\dist\CrewLauncher"
 !define FIXER_DIR     "${ROOT}\dist\Itch_Login_Fixer"
 !define SEVENZ_EXE    "${ROOT}\release\7z.exe"
 !define BEPMODS_ZIP   "${ROOT}\release\bepmods.zip"
 
 Name    "${APP_NAME}"
-OutFile "${ROOT}\dist\IsamAU-Setup-Offline.exe"
+OutFile "${ROOT}\dist\CrewLauncher-Setup-Offline.exe"
 
 InstallDir "$LOCALAPPDATA\Programs\${APP_NAME}"
 InstallDirRegKey HKCU "Software\${APP_NAME}" "Install_Location"
@@ -42,7 +42,7 @@ Icon    "${SRC_ICON}"
 UninstallIcon "${SRC_ICON}"
 
 ; Replace "Nullsoft Install System" branding
-BrandingText "Isam Installer"
+BrandingText "CrewLauncher Installer"
 
 ; Installer / uninstaller metadata
 VIProductVersion "${VERSION_DOT}"
@@ -69,7 +69,7 @@ VIAddVersionKey "LegalCopyright"  "Copyright (c) 2026 ${COMPANY}"
 ; Finish page
 !define MUI_FINISHPAGE_TITLE "Done"
 !define MUI_FINISHPAGE_TEXT "Setup is complete."
-!define MUI_FINISHPAGE_RUN "$INSTDIR\IsamAULauncher.exe"
+!define MUI_FINISHPAGE_RUN "$INSTDIR\CrewLauncher.exe"
 !define MUI_FINISHPAGE_RUN_TEXT "Launch ${APP_NAME} now"
 
 !insertmacro MUI_PAGE_WELCOME
@@ -88,7 +88,7 @@ Function .onInit
 FunctionEnd
 
 ;------------------------------- Components --------------------------------
-Section "Isam AULauncher (required)" SecMain
+Section "CrewLauncher (required)" SecMain
   SectionIn RO
 
   ; Install entire --onedir folder to $INSTDIR
@@ -99,7 +99,7 @@ Section "Isam AULauncher (required)" SecMain
 
   ; Start menu
   CreateDirectory "$SMPROGRAMS\${APP_SHORT}"
-  CreateShortcut "$SMPROGRAMS\${APP_SHORT}\${APP_SHORT}.lnk" "$INSTDIR\IsamAULauncher.exe"
+  CreateShortcut "$SMPROGRAMS\${APP_SHORT}\${APP_SHORT}.lnk" "$INSTDIR\CrewLauncher.exe"
   CreateShortcut "$SMPROGRAMS\${APP_SHORT}\Uninstall ${APP_SHORT}.lnk" "$INSTDIR\Uninstall.exe"
 
   ; Uninstall registry entry
@@ -131,7 +131,7 @@ Section "Support tools (7-zip + mods)" SecTools
 SectionEnd
 
 Section /o "Desktop shortcut" SecDesktop
-  CreateShortcut "$DESKTOP\${APP_SHORT}.lnk" "$INSTDIR\IsamAULauncher.exe"
+  CreateShortcut "$DESKTOP\${APP_SHORT}.lnk" "$INSTDIR\CrewLauncher.exe"
 SectionEnd
 
 ;------------------------------- Component descriptions --------------------

@@ -32,30 +32,30 @@ logging.basicConfig(
 # ---------------------------------------------------------------------------
 # Branding
 # ---------------------------------------------------------------------------
-APP_NAME = "Isam AULauncher"
-BRAND_SHORT = "ISAM AU"
+APP_NAME = "CrewLauncher"
+BRAND_SHORT = "CREW AU"
 MAKER = "Isam"
 LAUNCHER_VERSION = "1.0-beta.1"
 
 VERSION_URL = "https://raw.githubusercontent.com/jogamerforgames2021/BootstrapperTEST/main/Version.txt"
 MESSAGE_URL = "https://raw.githubusercontent.com/jogamerforgames2021/AmongUsLauncherNew/refs/heads/main/message.txt"
 PATCHES_URL = "https://raw.githubusercontent.com/jogamerforgames2021/AmongUsLauncherNew/refs/heads/main/Patches.xml"
-SOURCE_CODE_URL = "https://github.com/isam-ahmed0/Isam-AULauncher"
+SOURCE_CODE_URL = "https://github.com/icis-org/CrewLauncher"
 DOCS_BASE_URL = f"{SOURCE_CODE_URL}/blob/main/DOC"
 LINUX_DOC_URL = f"{DOCS_BASE_URL}/LINUX.md"
 WINE_DOC_URL = f"{DOCS_BASE_URL}/WINE.md"
-DOCS_RAW_BASE = "https://raw.githubusercontent.com/isam-ahmed0/Isam-AULauncher/main/DOC"
+DOCS_RAW_BASE = "https://raw.githubusercontent.com/icis-org/CrewLauncher/main/DOC"
 LINUX_DOC_RAW_URL = f"{DOCS_RAW_BASE}/LINUX.md"
 WINE_DOC_RAW_URL = f"{DOCS_RAW_BASE}/WINE.md"
 GITHUB_REPO = "jogamerforgames2021/AmongUsLauncherNew"
-ISAM_CLIENT_URL = "https://raw.githubusercontent.com/isam-ahmed0/Isam-AULauncher/main/isam-client.zip"
+ISAM_CLIENT_URL = "https://raw.githubusercontent.com/icis-org/CrewLauncher/main/isam-client.zip"
 DISCORD_CLIENT_ID = "1543527340963930193"
 DISCORD_INVITE = ""
 YOUTUBE_CHANNEL = "https://www.youtube.com/@isam0ahmed"
 REQUEST_TIMEOUT = 10
 CHUNK_SIZE = 8192
-LAUNCHER_UPDATE_URL = "https://raw.githubusercontent.com/isam-ahmed0/Isam-AULauncher/main/LAUNCHER_VERSION"
-LAUNCHER_SETUP_URL = f"https://github.com/isam-ahmed0/Isam-AULauncher/releases/download/{LAUNCHER_VERSION}/IsamAU-Setup.exe"
+LAUNCHER_UPDATE_URL = "https://raw.githubusercontent.com/icis-org/CrewLauncher/main/LAUNCHER_VERSION"
+LAUNCHER_SETUP_URL = f"https://github.com/icis-org/CrewLauncher/releases/download/{LAUNCHER_VERSION}/CrewLauncher-Setup.exe"
 
 GAME_CRITICAL_FILES = ["Among Us.exe"]
 GAME_CRITICAL_DIRS = ["BepInEx", "dotnet"]

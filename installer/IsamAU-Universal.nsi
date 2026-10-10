@@ -1,6 +1,6 @@
 ;-------------------------------------------------------------------------------
-; Isam AULauncher - UNIVERSAL ONLINE NSIS installer
-; Compile with: makensis.exe installer\IsamAU-Online.nsi
+; CrewLauncher - UNIVERSAL ONLINE NSIS installer
+; Compile with: makensis.exe installer\CrewLauncher-Universal.nsi
 ;
 ; Automatically downloads the LATEST release from GitHub Releases via URLDownloadToFile.
 ;-------------------------------------------------------------------------------
@@ -8,8 +8,8 @@
 !include "MUI2.nsh"
 !include "LogicLib.nsh"
 
-!define APP_NAME      "Isam AULauncher"
-!define APP_SHORT     "Isam AULauncher"
+!define APP_NAME      "CrewLauncher"
+!define APP_SHORT     "CrewLauncher"
 !define COMPANY       "Isam"
 !ifndef VERSION
   !define VERSION     "Latest"

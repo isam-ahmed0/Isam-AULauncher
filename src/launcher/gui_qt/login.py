@@ -1,5 +1,5 @@
 """
-LoginWindow — full-page Steam/Epic-style login for Isam AULauncher.
+LoginWindow — full-page Steam/Epic-style login for CrewLauncher.
 Uses the native itch.io OAuth flow from itch_auth.py.
 Right sidebar supports image, GIF, and slideshow.
 """

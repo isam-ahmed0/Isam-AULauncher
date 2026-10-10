@@ -575,7 +575,7 @@ class GameActionsMixin:
 
         ver = self.config.get_version() or ""
         suffix = f" {ver}" if ver and ver not in ("Unknown", "Not Installed") else ""
-        base_name = f"Among Us (Isam AU){suffix}"
+        base_name = f"Among Us (CREW AU){suffix}"
         existing = [g.get("name", "") for g in lutris_list_games(lutris_cmd)]
         name, slug = lutris_unique_name_slug(
             base_name, LUTRIS_SLUG_PREFIX, existing)
@@ -657,7 +657,7 @@ class GameActionsMixin:
                 break
         try:
             path = create_desktop_shortcut(
-                "Among Us (Isam AU)", exe, gp,
+                "Among Us (CREW AU)", exe, gp,
                 prefix=self.config.get_wine_prefix(),
                 lutris_id=lutris_id, icon_source=icon)
             QMessageBox.information(

@@ -1,5 +1,5 @@
 """
-Isam AULauncher — main entry point.
+CrewLauncher — main entry point.
 Default: PySide6 (Qt) GUI with splash screen. Use --gui-2 for legacy Dear PyGui GUI.
 """
 import sys
@@ -12,7 +12,7 @@ from config import APP_NAME
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Isam AULauncher")
+    parser = argparse.ArgumentParser(description="CrewLauncher")
     parser.add_argument("--gui-2", action="store_true",
                         help="Use legacy Dear PyGui GUI")
     parser.add_argument("--no-splash", action="store_true",

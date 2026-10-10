@@ -225,7 +225,7 @@ class DiscordRPC:
             self.rpc = None
             return False
 
-    def update_status(self, state: str, details: str, large_text: str = "Isam AU"):
+    def update_status(self, state: str, details: str, large_text: str = "CREW AU"):
         with self._lock:
             if not self.connected or not self.rpc:
                 return

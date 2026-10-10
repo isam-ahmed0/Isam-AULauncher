@@ -260,7 +260,7 @@ class ThemeMakerDialog(QDialog):
         )
         preview_layout = QVBoxLayout(self._preview_frame)
 
-        preview_hero = QLabel("Isam AULauncher")
+        preview_hero = QLabel("CrewLauncher")
         preview_hero.setStyleSheet(
             f"color: {self._palette.get('text_bright', '#ffffff')}; font-size: 20px; font-weight: bold; background: transparent;"
         )

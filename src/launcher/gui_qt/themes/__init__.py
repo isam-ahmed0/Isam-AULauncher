@@ -1,4 +1,4 @@
-"""Theme palettes for Isam AULauncher."""
+"""Theme palettes for CrewLauncher."""
 import json
 import logging
 from config import config_data_dir
