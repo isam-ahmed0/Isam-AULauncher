@@ -1,0 +1,556 @@
+"""
+Theme dispatcher — loads palette files, builds QSS, applies to QApplication.
+All palette constants are module-level and update when set_theme() is called.
+"""
+
+# ---------------------------------------------------------------------------
+# Current palette (updated by set_theme)
+# ---------------------------------------------------------------------------
+BG_BASE = "#0a0b0f"
+BG_SURFACE = "#111318"
+BG_ELEVATED = "#181b22"
+BG_HOVER = "#1f232c"
+BG_ACTIVE = "#272b36"
+
+BORDER_SUBTLE = "#22252d"
+BORDER_FOCUS = "#7c6cf6"
+
+ACCENT = "#7c6cf6"
+ACCENT_HOVER = "#9284f9"
+ACCENT_2 = "#2dd4bf"
+
+SUCCESS = "#2dd4bf"
+SUCCESS_HOVER = "#14b8a6"
+INFO = "#60a5fa"
+WARNING = "#fbbf24"
+DANGER = "#fb7185"
+DANGER_HOVER = "#f43f5e"
+
+TEXT_PRIMARY = "#e8e9ed"
+TEXT_SECONDARY = "#a1a5b0"
+TEXT_MUTED = "#666b78"
+TEXT_BRIGHT = "#ffffff"
+
+BG_SIDEBAR = "#08090c"
+
+CURRENT_THEME = "Forest"
+
+
+# ---------------------------------------------------------------------------
+# QSS builder
+# ---------------------------------------------------------------------------
+def build_qss(p: dict) -> str:
+    return f"""
+/* ===== GLOBAL ===== */
+QWidget {{
+    background-color: {p["bg_base"]};
+    color: {p["text_primary"]};
+    font-family: "Segoe UI", "Inter", "Helvetica Neue", Arial;
+    font-size: 14px;
+}}
+
+/* ===== SIDEBAR ===== */
+#sidebar {{
+    background-color: {p["bg_sidebar"]};
+    border-right: 1px solid {p["border_subtle"]};
+}}
+
+/* ===== NAV BUTTONS ===== */
+#sidebar QPushButton {{
+    background-color: transparent;
+    color: {p["text_secondary"]};
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    text-align: left;
+    font-size: 14px;
+    font-weight: 500;
+}}
+
+#sidebar QPushButton:hover {{
+    background-color: {p["bg_hover"]};
+    color: {p["text_primary"]};
+}}
+
+#sidebar QPushButton:checked {{
+    background-color: {p["accent"]};
+    color: {p["text_bright"]};
+}}
+
+#sidebar QPushButton#sidebarToggle {{
+    text-align: center;
+    padding: 8px;
+    max-width: 34px;
+    max-height: 34px;
+}}
+
+/* ===== PRIMARY ACTION BUTTON ===== */
+QPushButton#primaryBtn {{
+    background-color: {p["accent"]};
+    color: {p["text_bright"]};
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 700;
+    min-height: 20px;
+}}
+
+QPushButton#primaryBtn:hover {{
+    background-color: {p["accent_hover"]};
+}}
+
+QPushButton#primaryBtn:disabled {{
+    background-color: {p["btn_disabled_bg"]};
+    color: {p["btn_disabled_text"]};
+}}
+
+QPushButton#primaryBtn:pressed {{
+    background-color: {p["accent_muted"]};
+    padding-top: 11px;
+    padding-bottom: 9px;
+}}
+
+/* ===== SUCCESS BUTTON ===== */
+QPushButton#successBtn {{
+    background-color: {p["success"]};
+    color: {p["text_bright"]};
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 700;
+    min-height: 20px;
+}}
+
+QPushButton#successBtn:hover {{
+    background-color: {p["success_hover"]};
+}}
+
+QPushButton#successBtn:disabled {{
+    background-color: {p["btn_disabled_bg"]};
+    color: {p["btn_disabled_text"]};
+}}
+
+QPushButton#successBtn:pressed {{
+    background-color: {p["success_hover"]};
+    padding-top: 11px;
+    padding-bottom: 9px;
+}}
+
+/* ===== DANGER BUTTON ===== */
+QPushButton#dangerBtn {{
+    background-color: {p["danger"]};
+    color: {p["text_bright"]};
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 700;
+    min-height: 20px;
+}}
+
+QPushButton#dangerBtn:hover {{
+    background-color: {p["danger_hover"]};
+}}
+
+QPushButton#dangerBtn:disabled {{
+    background-color: {p["btn_disabled_bg"]};
+    color: {p["btn_disabled_text"]};
+}}
+
+QPushButton#dangerBtn:pressed {{
+    background-color: {p["danger_hover"]};
+    padding-top: 11px;
+    padding-bottom: 9px;
+}}
+
+/* ===== SECONDARY / TOOL BUTTONS ===== */
+QPushButton#toolBtn {{
+    background-color: {p["bg_elevated"]};
+    color: {p["text_primary"]};
+    border: 1px solid {p["border_subtle"]};
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 14px;
+}}
+
+QPushButton#toolBtn:hover {{
+    background-color: {p["bg_hover"]};
+    border-color: {p["accent"]};
+}}
+
+QPushButton#toolBtn:pressed {{
+    background-color: {p["bg_active"]};
+    padding-top: 11px;
+    padding-bottom: 9px;
+}}
+
+/* ===== MODAL BUTTONS ===== */
+QPushButton#modalPrimary {{
+    background-color: {p["accent"]};
+    color: {p["text_bright"]};
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 600;
+}}
+
+QPushButton#modalPrimary:hover {{
+    background-color: {p["accent_hover"]};
+}}
+
+QPushButton#modalSecondary {{
+    background-color: {p["bg_elevated"]};
+    color: {p["text_primary"]};
+    border: 1px solid {p["border_subtle"]};
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 13px;
+}}
+
+QPushButton#modalSecondary:hover {{
+    background-color: {p["bg_hover"]};
+}}
+
+QPushButton#modalDanger {{
+    background-color: {p["danger"]};
+    color: {p["text_bright"]};
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 13px;
+}}
+
+QPushButton#modalDanger:hover {{
+    background-color: {p["danger_hover"]};
+}}
+
+/* ===== PROGRESS BAR ===== */
+QProgressBar {{
+    background-color: {p["bg_elevated"]};
+    border: none;
+    border-radius: 6px;
+    text-align: center;
+    color: transparent;
+}}
+
+QProgressBar::chunk {{
+    background: qlineargradient(
+        x1:0, y1:0, x2:1, y2:0,
+        stop:0 {p["accent"]},
+        stop:1 {p["success"]}
+    );
+    border-radius: 6px;
+}}
+
+/* ===== LABELS ===== */
+QLabel {{
+    background-color: transparent;
+    color: {p["text_primary"]};
+    border: none;
+}}
+
+QLabel#brandLabel {{
+    font-size: 22px;
+    font-weight: 700;
+    color: {p["accent"]};
+}}
+
+QLabel#brandSubLabel {{
+    font-size: 12px;
+    color: {p["text_muted"]};
+}}
+
+QLabel#sectionTitle {{
+    font-size: 12px;
+    font-weight: 600;
+    color: {p["text_muted"]};
+}}
+
+QLabel#heroTitle {{
+    font-size: 24px;
+    font-weight: 700;
+    color: {p["text_bright"]};
+}}
+
+QLabel#heroSubtitle {{
+    font-size: 14px;
+    color: {p["text_secondary"]};
+}}
+
+QLabel#versionBadge {{
+    background-color: {p["bg_elevated"]};
+    border: 1px solid {p["accent"]};
+    border-radius: 10px;
+    padding: 3px 10px;
+    font-size: 12px;
+    color: {p["success"]};
+}}
+
+QLabel#successText {{
+    color: {p["success"]};
+    font-weight: 600;
+}}
+
+QLabel#infoText {{
+    color: {p["accent_hover"]};
+    font-weight: 600;
+}}
+
+QLabel#mutedText {{
+    color: {p["text_muted"]};
+    font-size: 12px;
+}}
+
+QLabel#statusDot {{
+    color: {p["success"]};
+    font-size: 14px;
+}}
+
+QLabel#statusText {{
+    color: {p["text_secondary"]};
+    font-size: 12px;
+}}
+
+QLabel#footerText {{
+    color: {p["text_muted"]};
+    font-size: 12px;
+}}
+
+QLabel#warningText {{
+    color: {p["warning"]};
+    font-weight: 600;
+}}
+
+QLabel#dangerText {{
+    color: {p["danger"]};
+    font-weight: 600;
+}}
+
+QLabel#bodyText {{
+    font-size: 14px;
+    color: {p["text_secondary"]};
+}}
+
+/* ===== SCROLLBAR ===== */
+QScrollBar:vertical {{
+    background-color: {p["bg_base"]};
+    width: 8px;
+    border-radius: 4px;
+    margin: 0;
+}}
+
+QScrollBar::handle:vertical {{
+    background-color: {p["scrollbar_handle"]};
+    border-radius: 4px;
+    min-height: 30px;
+}}
+
+QScrollBar::handle:vertical:hover {{
+    background-color: {p["scrollbar_hover"]};
+}}
+
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
+    height: 0px;
+}}
+
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{
+    background: none;
+}}
+
+/* ===== SCROLL AREA ===== */
+QScrollArea {{
+    background-color: transparent;
+    border: none;
+}}
+
+QScrollArea > QWidget > QWidget {{
+    background-color: transparent;
+}}
+
+/* ===== LIST WIDGETS ===== */
+QListWidget {{
+    background-color: {p["bg_elevated"]};
+    color: {p["text_primary"]};
+    border: 1px solid {p["border_subtle"]};
+    border-radius: 8px;
+    padding: 4px;
+    outline: none;
+    font-size: 14px;
+}}
+
+QListWidget::item {{
+    padding: 6px 8px;
+    border-radius: 4px;
+}}
+
+QListWidget::item:selected {{
+    background-color: {p["accent"]};
+    color: {p["text_bright"]};
+}}
+
+QListWidget::item:hover {{
+    background-color: {p["bg_hover"]};
+}}
+
+/* ===== CHECKBOX ===== */
+QCheckBox {{
+    spacing: 8px;
+    color: {p["text_primary"]};
+}}
+
+QCheckBox::indicator {{
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    border: 2px solid {p["checkbox_border"]};
+    background-color: {p["bg_elevated"]};
+}}
+
+QCheckBox::indicator:checked {{
+    background-color: {p["accent"]};
+    border-color: {p["accent"]};
+    image: none;
+}}
+
+QCheckBox::indicator:hover {{
+    border-color: {p["accent"]};
+}}
+
+/* ===== TOOLTIP ===== */
+QToolTip {{
+    background-color: {p["bg_elevated"]};
+    color: {p["text_primary"]};
+    border: 1px solid {p["border_subtle"]};
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 12px;
+}}
+
+/* ===== SEPARATOR ===== */
+/* frameShape="4" = HLine, frameShape="5" = VLine (PySide6 QFrame enum values) */
+QFrame[frameShape="4"],
+QFrame[frameShape="5"] {{
+    color: {p["border_subtle"]};
+    max-height: 1px;
+}}
+
+/* ===== STATUS BAR ===== */
+QStatusBar {{
+    background-color: {p["bg_sidebar"]};
+    color: {p["text_muted"]};
+    border-top: 1px solid {p["border_subtle"]};
+    font-size: 12px;
+}}
+
+QStatusBar::item {{
+    border: none;
+}}
+
+/* ===== DIALOG ===== */
+QDialog {{
+    background-color: {p["bg_surface"]};
+}}
+
+/* ===== PROFILE CARD ===== */
+QFrame#profileCard {{
+    background-color: {p["bg_surface"]};
+    border: 1px solid {p["border_subtle"]};
+    border-radius: 10px;
+    padding: 20px;
+}}
+
+QLabel#profileTitle {{
+    font-size: 12px;
+    font-weight: 600;
+    color: {p["text_muted"]};
+}}
+
+QLabel#profileName {{
+    font-size: 16px;
+    font-weight: 700;
+    color: {p["text_bright"]};
+}}
+
+QLabel#profileDetail {{
+    font-size: 14px;
+    color: {p["text_secondary"]};
+}}
+
+QLabel#profileStatus {{
+    font-size: 12px;
+    font-weight: 600;
+}}
+"""
+
+
+# ---------------------------------------------------------------------------
+# Theme switching
+# ---------------------------------------------------------------------------
+def _apply_palette(p: dict):
+    """Update module-level constants from a palette dict."""
+    global BG_BASE, BG_SURFACE, BG_ELEVATED, BG_HOVER, BG_ACTIVE
+    global BORDER_SUBTLE, BORDER_FOCUS
+    global ACCENT, ACCENT_HOVER, ACCENT_2
+    global SUCCESS, SUCCESS_HOVER, INFO, WARNING, DANGER, DANGER_HOVER
+    global TEXT_PRIMARY, TEXT_SECONDARY, TEXT_MUTED, TEXT_BRIGHT
+    global BG_SIDEBAR
+
+    BG_BASE = p["bg_base"]
+    BG_SURFACE = p["bg_surface"]
+    BG_ELEVATED = p["bg_elevated"]
+    BG_HOVER = p["bg_hover"]
+    BG_ACTIVE = p["bg_active"]
+    BG_SIDEBAR = p["bg_sidebar"]
+
+    BORDER_SUBTLE = p["border_subtle"]
+    BORDER_FOCUS = p["border_focus"]
+
+    ACCENT = p["accent"]
+    ACCENT_HOVER = p["accent_hover"]
+    ACCENT_2 = p["accent_2"]
+
+    SUCCESS = p["success"]
+    SUCCESS_HOVER = p["success_hover"]
+    INFO = p["info"]
+    WARNING = p["warning"]
+    DANGER = p["danger"]
+    DANGER_HOVER = p["danger_hover"]
+
+    TEXT_PRIMARY = p["text_primary"]
+    TEXT_SECONDARY = p["text_secondary"]
+    TEXT_MUTED = p["text_muted"]
+    TEXT_BRIGHT = p["text_bright"]
+
+
+def get_palette_dict() -> dict:
+    """Return the current palette as a dict of hex color strings."""
+    from gui_qt.themes import THEMES
+    return dict(THEMES.get(CURRENT_THEME, {}))
+
+
+def set_theme(app, theme_name: str):
+    """Switch the active theme and re-apply stylesheet."""
+    global CURRENT_THEME
+    from gui_qt.themes import THEMES
+
+    if theme_name not in THEMES:
+        theme_name = "Forest"
+    CURRENT_THEME = theme_name
+    palette = THEMES[theme_name]
+    _apply_palette(palette)
+    if app:
+        app.setStyleSheet(build_qss(palette))
+
+
+def apply_theme(app):
+    """Apply the default theme on startup."""
+    app.setStyle("Fusion")
+    from gui_qt.themes import load_custom_themes
+    load_custom_themes()
+    from config import Config
+    config = Config()
+    theme_name = config.settings.get("theme", "Forest")
+    set_theme(app, theme_name)
