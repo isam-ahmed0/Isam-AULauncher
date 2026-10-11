@@ -83,7 +83,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            libgl1-mesa-dev libglvnd0 fontconfig libfontconfig1 \
+            libegl1 libgl1 libgl1-mesa-dev libglvnd0 fontconfig libfontconfig1 \
             libfreetype6 libxkbcommon0 libxkbcommon-x11-0 libxcb1 \
             libx11-6 libxext6 libxrender1 libxi6 libsm6 libice6 \
             libxrandr2 libxcursor1 libxfixes3 libxdamage1 libxcomposite1 \
@@ -92,7 +92,7 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -r src/launcher/requirements.txt pyinstaller
+          python -m pip install -r src/launcher/requirements.txt pyinstaller pillow
 
       - name: Patch embedded version
         run: python3 build/set_version.py "$VERSION"

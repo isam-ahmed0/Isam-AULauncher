@@ -16,7 +16,7 @@ pacman -Syu --noconfirm --needed \
 
 echo "[ci-arch] installing Python packages"
 python -m pip install --break-system-packages --upgrade pip
-python -m pip install --break-system-packages PySide6 requests pypresence pyinstaller
+python -m pip install --break-system-packages PySide6 requests pypresence pyinstaller pillow
 
 echo "[ci-arch] creating unprivileged builder (makepkg refuses to run as root)"
 id -u builder &>/dev/null || useradd -m builder
