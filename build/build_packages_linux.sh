@@ -54,11 +54,19 @@ mkdir -p "$STAGE" "$OUT"
 
 echo "[stage] copying app + icons + desktop entry"
 cp -a "$APP_DIR" "$STAGE/app"
-python build/pkg/make_icon.py src/launcher/resources/icon.ico "$STAGE/icons"
+PYTHON_BIN="python"
+if ! command -v python >/dev/null 2>&1 && command -v python3 >/dev/null 2>&1; then
+    PYTHON_BIN="python3"
+fi
+"$PYTHON_BIN" build/pkg/make_icon.py src/launcher/resources/icon.ico "$STAGE/icons"
 cp build/pkg/isam-au.desktop "$STAGE/$APP_ID.desktop"
 
 # ---------------------------------------------------------------- pacman
 build_pacman() {
+    if ! command -v makepkg >/dev/null 2>&1; then
+        echo "[pacman] skipped (makepkg not installed)"
+        return 0
+    fi
     echo "[pacman] building .pkg.tar.zst"
     local dir="$WORK/arch"
     mkdir -p "$dir"
@@ -93,6 +101,10 @@ EOF
 
 # ------------------------------------------------------------------- deb
 build_deb() {
+    if ! command -v ar >/dev/null 2>&1; then
+        echo "[deb] skipped (ar not installed; install 'binutils' to build one)"
+        return 0
+    fi
     echo "[deb] building .deb"
     local root="$WORK/deb" data="$WORK/deb/data"
     rm -rf "$root"
@@ -188,12 +200,23 @@ build_run() {
     echo "  -> $out"
 }
 
-build_pacman
-build_deb
-build_rpm
-if [ "${BUILD_RUN:-0}" = "1" ]; then
-    build_run
+TARGETS=("$@")
+if [ ${#TARGETS[@]} -eq 0 ]; then
+    TARGETS=("pacman" "deb" "rpm")
+    if [ "${BUILD_RUN:-0}" = "1" ]; then
+        TARGETS+=("run")
+    fi
 fi
+
+for target in "${TARGETS[@]}"; do
+    case "$target" in
+        pacman|arch) build_pacman ;;
+        deb|ubuntu|debian) build_deb ;;
+        rpm|fedora) build_rpm ;;
+        run) build_run ;;
+        *) echo "Unknown package target: $target" >&2; exit 1 ;;
+    esac
+done
 
 echo
 echo "Packages in $OUT:"
