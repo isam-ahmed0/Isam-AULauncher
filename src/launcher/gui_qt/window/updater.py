@@ -2,6 +2,7 @@ import os
 import subprocess
 import logging
 from pathlib import Path
+from packaging.version import Version, InvalidVersion
 
 from PySide6.QtWidgets import QMessageBox
 
@@ -53,8 +54,17 @@ class UpdaterMixin:
             if not remote:
                 return
             remote = remote.strip()
-            if remote == LAUNCHER_VERSION:
+            try:
+                if Version(remote) <= Version(LAUNCHER_VERSION):
+                    return
+            except InvalidVersion:
+                logging.warning(
+                    "Skipping launcher update check: invalid version "
+                    "(local=%r, remote=%r)",
+                    LAUNCHER_VERSION, remote,
+                )
                 return
+
             self._invoke_main(lambda: self._prompt_launcher_update(remote))
         except Exception as e:
             logging.debug(f"Launcher update check failed: {e}")

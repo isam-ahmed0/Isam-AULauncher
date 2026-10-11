@@ -34,3 +34,6 @@ scratch/
 
 # Prevent accidental commits with full Windows absolute paths
 C:/Users/
+
+# Bak
+src/launcher copy/
