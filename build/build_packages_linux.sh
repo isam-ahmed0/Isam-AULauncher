@@ -24,7 +24,7 @@ APP_NAME="CrewLauncher"
 APP_ID="isam-au"
 PKG_NAME="isam-aulauncher"
 MAINTAINER="Isam Ahmed <isam-ahmed0@users.noreply.github.com>"
-HOMEPAGE="https://github.com/icis-org/CrewLauncher"
+HOMEPAGE="https://github.com/isam-ahmed0/Isam-AULauncher"
 DESC_SHORT="Among Us launcher with mod support"
 
 APP_DIR="$ROOT/dist/linux/$APP_NAME"

@@ -1,7 +1,7 @@
 #!/bin/sh
 # CrewLauncher installer / updater for any Linux distro.
 #
-#   curl -fsSL https://raw.githubusercontent.com/icis-org/CrewLauncher/main/ux/setup.sh | sh
+#   curl -fsSL https://raw.githubusercontent.com/isam-ahmed0/Isam-AULauncher/main/ux/setup.sh | sh
 #
 #   sh setup.sh [install]       install latest via your package manager   [default]
 #   sh setup.sh --user          portable install into ~/.local (no sudo)
@@ -14,8 +14,8 @@
 # Env: SETUP_MIRROR=url        override the release download base URL (testing)
 set -e
 
-ROOT="${SETUP_MIRROR:-https://github.com/icis-org/CrewLauncher/releases/latest/download}"
-SRC_URL="https://codeload.github.com/icis-org/CrewLauncher/tar.gz/refs/heads/main"
+ROOT="${SETUP_MIRROR:-https://github.com/isam-ahmed0/Isam-AULauncher/releases/latest/download}"
+SRC_URL="https://codeload.github.com/isam-ahmed0/Isam-AULauncher/tar.gz/refs/heads/main"
 PKG_NAME="isam-aulauncher"
 APP_ID="isam-au"
 APP_BIN="CrewLauncher"
@@ -47,7 +47,7 @@ CrewLauncher installer / updater
   sh setup.sh --selfbuild     build from source + install (slow, explicit only)
   sh setup.sh -h              this help
 
-curl -fsSL https://raw.githubusercontent.com/icis-org/CrewLauncher/main/ux/setup.sh | sh
+curl -fsSL https://raw.githubusercontent.com/isam-ahmed0/Isam-AULauncher/main/ux/setup.sh | sh
 EOF
 }
 

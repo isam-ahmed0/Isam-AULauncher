@@ -38,4 +38,4 @@ Upstream backend URLs (the `jogamerforgames2021/*` sources), game executable nam
 `isam_au` rich-presence image asset, the `isam-client.zip` payload, the Lutris
 slug prefix (`among-us-isam`) and the per-user data directory names must stay
 unchanged so updates, downloads and existing installs keep working. The project
-repository itself lives at `https://github.com/icis-org/CrewLauncher`.
+repository itself lives at `https://github.com/isam-ahmed0/Isam-AULauncher`.

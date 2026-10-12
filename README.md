@@ -4,9 +4,9 @@
 
 ## Install
 
-The easiest way to use is download the CrewLauncher-Setup.exe from [Releases](https://github.com/icis-org/CrewLauncher/releases/latest).
+The easiest way to use is download the CrewLauncher-Setup.exe from [Releases](https://github.com/isam-ahmed0/Isam-AULauncher/releases/latest).
 
-The default installer is [`CrewLauncher-Setup.exe`](https://github.com/icis-org/CrewLauncher/releases/latest/download/CrewLauncher-Setup.exe), but there's also [`CrewLauncher-Setup-Offline.exe`](https://github.com/icis-org/CrewLauncher/releases/latest/download/CrewLauncher-Setup-Offline.exe) which is compiled. [`CrewLauncher-Universal.exe`](https://github.com/icis-org/CrewLauncher/releases/latest/download/CrewLauncher-Universal.exe) is best: you download the setup once and it works for any latest version. The [`CrewLauncher-All.zip`](https://github.com/icis-org/CrewLauncher/releases/latest/download/CrewLauncher-All.zip) is portable.
+The default installer is [`CrewLauncher-Setup.exe`](https://github.com/isam-ahmed0/Isam-AULauncher/releases/latest/download/CrewLauncher-Setup.exe), but there's also [`CrewLauncher-Setup-Offline.exe`](https://github.com/isam-ahmed0/Isam-AULauncher/releases/latest/download/CrewLauncher-Setup-Offline.exe) which is compiled. [`CrewLauncher-Universal.exe`](https://github.com/isam-ahmed0/Isam-AULauncher/releases/latest/download/CrewLauncher-Universal.exe) is best: you download the setup once and it works for any latest version. The [`CrewLauncher-All.zip`](https://github.com/isam-ahmed0/Isam-AULauncher/releases/latest/download/CrewLauncher-All.zip) is portable.
 
 <table>
   <tr>
@@ -19,15 +19,15 @@ The default installer is [`CrewLauncher-Setup.exe`](https://github.com/icis-org/
   </tr>
   <tr>
     <td width="50%">
-      <img src="https://github.com/icis-org/CrewLauncher/blob/main/Screenshot%202026-08-30%20150105.png?raw=true" alt="Screenshot 150105" width="100%" />
+      <img src="https://github.com/isam-ahmed0/Isam-AULauncher/blob/main/Screenshot%202026-08-30%20150105.png?raw=true" alt="Screenshot 150105" width="100%" />
     </td>
     <td width="50%">
-      <img src="https://github.com/icis-org/CrewLauncher/blob/main/Screenshot%202026-08-30%20153755.png?raw=true" alt="Screenshot 153755" width="100%" />
+      <img src="https://github.com/isam-ahmed0/Isam-AULauncher/blob/main/Screenshot%202026-08-30%20153755.png?raw=true" alt="Screenshot 153755" width="100%" />
     </td>
   </tr>
   <tr>
     <td colspan="2" align="center">
-      <img src="https://github.com/icis-org/CrewLauncher/blob/main/Screenshot%202026-08-30%20153827.png?raw=true" alt="Screenshot 153827" width="80%" />
+      <img src="https://github.com/isam-ahmed0/Isam-AULauncher/blob/main/Screenshot%202026-08-30%20153827.png?raw=true" alt="Screenshot 153827" width="80%" />
     </td>
   </tr>
 </table>

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # CrewLauncher installer / updater for any Linux distro.
 #
-#   curl -fsSL https://raw.githubusercontent.com/icis-org/CrewLauncher/main/ux/setup.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/isam-ahmed0/Isam-AULauncher/main/ux/setup.sh | bash
 #
 # Commands (first argument, default: install):
 #   install            install / reinstall the latest release   [needs root unless --user]
@@ -18,9 +18,9 @@
 #   SETUP_FILE=path    use a local .deb/.rpm/.pkg.tar.zst/.tar.gz instead of downloading
 set -euo pipefail
 
-ROOT_LINK="https://github.com/icis-org/CrewLauncher/releases/latest/download/"
-RAW_LINK="https://raw.githubusercontent.com/icis-org/CrewLauncher/main/ux/setup.sh"
-API_LINK="https://api.github.com/repos/icis-org/CrewLauncher/releases/latest"
+ROOT_LINK="https://github.com/isam-ahmed0/Isam-AULauncher/releases/latest/download/"
+RAW_LINK="https://raw.githubusercontent.com/isam-ahmed0/Isam-AULauncher/main/ux/setup.sh"
+API_LINK="https://api.github.com/repos/isam-ahmed0/Isam-AULauncher/releases/latest"
 PKG_NAME="isam-aulauncher"
 APP_NAME="CrewLauncher"
 APP_ID="isam-au"

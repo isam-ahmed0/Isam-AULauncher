@@ -28,7 +28,7 @@
 !define SRC_ICON      "${ROOT}\src\launcher\resources\icon.ico"
 !define SIDEBAR_BMP   "${ROOT}\installer\sidebar.bmp"
 
-!define DOWNLOAD_URL  "https://github.com/icis-org/CrewLauncher/releases/download/${VERSION}/CrewLauncher-All.zip"
+!define DOWNLOAD_URL  "https://github.com/isam-ahmed0/Isam-AULauncher/releases/download/${VERSION}/CrewLauncher-All.zip"
 
 Name    "${APP_NAME}"
 OutFile "${ROOT}\dist\CrewLauncher-Setup.exe"

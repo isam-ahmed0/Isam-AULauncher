@@ -98,7 +98,7 @@ class UpdaterMixin:
             def go():
                 import tempfile
                 try:
-                    setup_url = f"https://github.com/icis-org/CrewLauncher/releases/download/{new_version}/CrewLauncher-Setup.exe"
+                    setup_url = f"https://github.com/isam-ahmed0/Isam-AULauncher/releases/download/{new_version}/CrewLauncher-Setup.exe"
                     setup_path = Path(tempfile.gettempdir()) / "CrewLauncher-Setup.exe"
                     ok = self.network.download_file(setup_url, setup_path)
                     if not ok:

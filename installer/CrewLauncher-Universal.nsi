@@ -28,7 +28,7 @@
 !define SIDEBAR_BMP   "${ROOT}\installer\sidebar.bmp"
 
 ; Universal Latest Release Download Endpoint
-!define DOWNLOAD_URL  "https://github.com/icis-org/CrewLauncher/releases/latest/download/CrewLauncher-All.zip"
+!define DOWNLOAD_URL  "https://github.com/isam-ahmed0/Isam-AULauncher/releases/latest/download/CrewLauncher-All.zip"
 
 Name    "${APP_NAME}"
 OutFile "${ROOT}\dist\CrewLauncher-Universal.exe"
