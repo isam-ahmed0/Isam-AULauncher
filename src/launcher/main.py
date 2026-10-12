@@ -1,17 +1,31 @@
 """
 CrewLauncher — main entry point.
 Default: PySide6 (Qt) GUI with splash screen. Use --gui-2 for legacy Dear PyGui GUI.
+Pass -lite / --lite / -tk / --tk to open the lightweight tkinter (lite) GUI instead.
 """
 import sys
 import argparse
 import logging
 
-from PySide6.QtWidgets import QApplication, QMessageBox
-from PySide6.QtCore import QTimer, QSharedMemory
 from config import APP_NAME
+
+_LITE_FLAGS = ("-lite", "--lite", "-tk", "--tk")
+
+
+def _has_lite_flag(argv):
+    """True if the command line asks for the lightweight tkinter GUI."""
+    return any(arg in _LITE_FLAGS for arg in argv[1:])
 
 
 if __name__ == "__main__":
+    if _has_lite_flag(sys.argv):
+        from main_lite import main as lite_main
+        lite_argv = [arg for arg in sys.argv[1:] if arg not in _LITE_FLAGS]
+        raise SystemExit(lite_main(lite_argv))
+
+    from PySide6.QtWidgets import QApplication, QMessageBox
+    from PySide6.QtCore import QTimer, QSharedMemory
+
     parser = argparse.ArgumentParser(description="CrewLauncher")
     parser.add_argument("--gui-2", action="store_true",
                         help="Use legacy Dear PyGui GUI")
