@@ -19,15 +19,15 @@ The default installer is [`CrewLauncher-Setup.exe`](https://github.com/isam-ahme
   </tr>
   <tr>
     <td width="50%">
-      <img src="https://github.com/isam-ahmed0/Isam-AULauncher/blob/main/Screenshot%202026-08-30%20150105.png?raw=true" alt="Screenshot 150105" width="100%" />
+      <img src="https://github.com/isam-ahmed0/Isam-AULauncher/blob/crew/Screenshot%202026-08-30%20150105.png?raw=true" alt="Screenshot 150105" width="100%" />
     </td>
     <td width="50%">
-      <img src="https://github.com/isam-ahmed0/Isam-AULauncher/blob/main/Screenshot%202026-08-30%20153755.png?raw=true" alt="Screenshot 153755" width="100%" />
+      <img src="https://github.com/isam-ahmed0/Isam-AULauncher/blob/crew/Screenshot%202026-08-30%20153755.png?raw=true" alt="Screenshot 153755" width="100%" />
     </td>
   </tr>
   <tr>
     <td colspan="2" align="center">
-      <img src="https://github.com/isam-ahmed0/Isam-AULauncher/blob/main/Screenshot%202026-08-30%20153827.png?raw=true" alt="Screenshot 153827" width="80%" />
+      <img src="https://github.com/isam-ahmed0/Isam-AULauncher/blob/crew/Screenshot%202026-08-30%20153827.png?raw=true" alt="Screenshot 153827" width="80%" />
     </td>
   </tr>
 </table>
