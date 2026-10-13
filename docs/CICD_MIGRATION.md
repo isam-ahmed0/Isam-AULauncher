@@ -21,31 +21,49 @@ default branch is `crew`.
   So only tags matching `1.0`, `1.0-beta.2`, `0.7.3`, … trigger a pipeline.
   No branch push (including `crew`) consumes minutes.
 
-* **AppVeyor** (`appveyor.yml`): `skip_non_tags: true` makes it build tags only.
+* **AppVeyor** (`appveyor.yml`):
+
+  ```yaml
+  branches:
+    only:
+      - /^\d+\.\d+.*/     # applied to tag names too
+  skip_non_tags: true
+  ```
+
+  `branches.only` filters **tag names as well as branches** in AppVeyor, so only
+  version tags build (and then auto-deploy). Regular commits, including pushes
+  to `crew`, start no Windows build.
 
 `v`-prefixed tags trigger nothing. If you ever want them, change the regex to
 `/^v?\d+\.\d+.*/`.
 
+> **Config is read from the built ref's commit.** CircleCI and AppVeyor both
+> compile the config from the commit that the triggering tag/branch points at.
+> Editing the file locally does nothing until it is committed + pushed **and**
+> the pipeline/build runs from a ref containing it. For an existing tag that
+> predates a fix, move/recreate the tag on the new commit.
+
 ## Manual triggers
 
-* **CircleCI** — trigger a pipeline against a version tag, or pass the optional
-  `version` parameter:
+* **CircleCI** — the `manual` workflow is gated on the `build_manually` boolean
+  parameter (default `false`), so pushes to `crew` never run it. Trigger it from
+  the web UI (**Trigger Pipeline** -> add parameters) or the API:
 
   ```bash
   curl -X POST \
     -H "Circle-Token: $CIRCLECI_TOKEN" \
     -H "Content-Type: application/json" \
-    -d '{"tag":"1.0"}' \
+    -d '{"branch":"crew","parameters":{"build_manually":true,"version":"1.0-beta.4"}}' \
     https://circleci.com/api/v2/project/gh/isam-ahmed0/Isam-AULauncher/pipeline
   ```
 
-  A pipeline triggered with `{"branch":"crew","parameters":{"version":"1.0"}}`
-  works too, but note the workflow filters above only run jobs for tags, so a
-  pure branch trigger with a `version` parameter will not start jobs. Prefer
-  triggering against a tag.
+  `version` is optional (blank falls back to `src/launcher/config.py`). Because
+  the pipeline runs on `crew`, it uses the current branch HEAD config.
 
-* **AppVeyor** — Project -> **New build** -> select the tag. (`skip_non_tags`
-  skips branch builds; a tag build always runs.)
+  You can also trigger against a tag with `{"tag":"1.0"}`; that runs the
+  automatic `build-and-release` workflow.
+
+* **AppVeyor** — Project -> **New build** -> select the tag.
 
 ## 1. CircleCI setup
 
@@ -81,6 +99,9 @@ git tag 1.0 && git push origin 1.0
 4. (Optional) Set the token as a project environment variable instead and use
    `auth_token: $(GITHUB_TOKEN)`; the `secure:` approach above is the built-in
    one.
+5. On the AppVeyor project **General** tab, confirm **"Do not build tags" is
+   unchecked** and that the project uses `appveyor.yml` from the repository.
+   Otherwise tag builds (and therefore releases) never start.
 
 AppVeyor and CircleCI both attach assets to the **same** GitHub release for a
 tag. `force_update: true` lets AppVeyor upload even if CircleCI created the
@@ -91,7 +112,7 @@ release first (and vice versa).
 | GitHub Actions | Replacement |
 | --- | --- |
 | `build-linux.yml` / `arch` | CircleCI `build-arch` (machine + `docker run archlinux`) |
-| `build-linux.yml` / `ubuntu` | CircleCI `build-ubuntu` (`ubuntu:22.04`) |
+| `build-linux.yml` / `ubuntu` | CircleCI `build-ubuntu` (`python:3.11`) |
 | `build-linux.yml` / `fedora` | CircleCI `build-fedora` (machine + `docker run fedora`) |
 | `build-windows.yml` | AppVeyor `build_script` |
 | `release.yml` (`softprops/action-gh-release`) | CircleCI `release` job + AppVeyor GitHub deploy |

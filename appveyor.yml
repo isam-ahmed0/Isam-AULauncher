@@ -5,8 +5,7 @@
 # On version tags (1.0, 1.0-beta.2, 0.7.3, ...) the binaries are published to
 # the matching GitHub release.
 #
-# Only tag builds run (skip_non_tags). To allow branch builds for testing,
-# set skip_non_tags: false and update the `on:` condition below.
+# Only version tags build; see `branches.only` and `skip_non_tags` below.
 
 version: 1.0.{build}
 
@@ -14,7 +13,14 @@ image: Visual Studio 2022
 
 shallow_clone: true
 
-# Start builds on tags only (saves free build minutes).
+# Only version tags build (branches.only applies to tag names too, and
+# skip_non_tags blocks regular commits). Pushing to `crew` starts no build.
+# Do NOT add a `branch:` key to the deploy `on:` below: for annotated tags
+# `branch` and APPVEYOR_REPO_TAG are mutually exclusive.
+branches:
+  only:
+    - /^\d+\.\d+.*/     # 1.0, 1.0-beta.2, 0.7.3, ...
+
 skip_non_tags: true
 
 # Disable MSBuild / test phases; everything is done in build_script.

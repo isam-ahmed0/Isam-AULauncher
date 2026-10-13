@@ -1,15 +1,21 @@
 version: 2.1
 
-# Manual runs: trigger a pipeline against a tag, or pass the `version`
-# parameter, e.g.
-#   circleci pipeline trigger ... --parameter version=1.0
 # Automatic runs: push a version tag (1.0, 1.0-beta.2, 0.7.3, ...).
+# Manual runs: trigger a pipeline on a branch with build_manually=true, e.g.
+#   curl -X POST -H "Circle-Token: $CIRCLECI_TOKEN" -H "Content-Type: application/json" \
+#     -d '{"branch":"crew","parameters":{"build_manually":true,"version":"1.0-beta.4"}}' \
+#     https://circleci.com/api/v2/project/gh/isam-ahmed0/Isam-AULauncher/pipeline
+# (The web UI "Trigger Pipeline" button also works.)
 
 parameters:
   version:
     type: string
     default: ""
     description: "Optional version to embed (blank = use CIRCLE_TAG or src/launcher/config.py)."
+  build_manually:
+    type: boolean
+    default: false
+    description: "Set true to run the manual workflow (used for non-tag builds/releases)."
 
 executors:
   ubuntu:
@@ -200,3 +206,17 @@ workflows:
             - build-arch
             - build-fedora
           filters: *tag-only
+
+  # Runs only when manually triggered with build_manually=true, so pushes to
+  # the default branch cost no build minutes. Uses the branch HEAD config.
+  manual:
+    when: << pipeline.parameters.build_manually >>
+    jobs:
+      - build-ubuntu
+      - build-arch
+      - build-fedora
+      - release:
+          requires:
+            - build-ubuntu
+            - build-arch
+            - build-fedora
