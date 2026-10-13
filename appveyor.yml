@@ -112,9 +112,14 @@ deploy:
       # Account -> Encrypt YAML, paste the result here (never a plain token).
       secure: REPLACE_WITH_ENCRYPTED_GITHUB_TOKEN
     description: "CrewLauncher $(APPVEYOR_REPO_TAG_NAME)"
+    # Publish into the release for the pushed tag (prevents AppVeyor from
+    # creating a new tag + re-triggering itself).
+    tag: $(APPVEYOR_REPO_TAG_NAME)
     artifact: CrewLauncher-Setup.exe,CrewLauncher-Setup-Offline.exe,CrewLauncher-Universal.exe,CrewLauncher-All.zip
     draft: false
     prerelease: false
     force_update: true
-    on:
-      APPVEYOR_REPO_TAG: true
+    # Intentionally no `on:` condition: `branches.only` already restricts this
+    # project to version tags, so every build here is a tag build. Relying on
+    # `on: APPVEYOR_REPO_TAG: true` was unreliable because this project reports
+    # the tag name (e.g. "1.0-beta.4") in that variable instead of "true".
