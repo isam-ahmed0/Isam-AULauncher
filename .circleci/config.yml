@@ -165,6 +165,7 @@ jobs:
               exit 1
             fi
             API="https://api.github.com/repos/isam-ahmed0/Isam-AULauncher"
+            UPLOADS="https://uploads.github.com/repos/isam-ahmed0/Isam-AULauncher"
             AUTH="Authorization: Bearer ${GITHUB_TOKEN}"
 
             REL_ID="$(curl -fsS -H "$AUTH" "$API/releases/tags/$TAG" 2>/dev/null \
@@ -176,14 +177,23 @@ jobs:
             fi
             echo "Release id: $REL_ID"
 
+            EXISTING="$(curl -fsS -H "$AUTH" "$API/releases/$REL_ID/assets" 2>/dev/null || echo '[]')"
             for f in /tmp/packages/*; do
               [ -f "$f" ] || continue
               name="$(basename "$f")"
+              # Delete any same-named asset so re-runs of the job are idempotent.
+              aid="$(printf '%s' "$EXISTING" | grep -oP '\{[^{}]*\}' \
+                | grep -F "\"name\": \"$name\"" | grep -oP '"id":\s*\K[0-9]+' | head -1 || true)"
+              if [ -n "$aid" ]; then
+                echo "Replacing existing asset $name (id $aid)"
+                curl -fsS -X DELETE -H "$AUTH" "$API/releases/assets/$aid" > /dev/null
+              fi
               echo "Uploading $name"
+              # Asset uploads must go to uploads.github.com, not api.github.com.
               curl -fsS -X POST -H "$AUTH" \
                 -H "Content-Type: application/octet-stream" \
                 --data-binary @"$f" \
-                "$API/releases/$REL_ID/assets?name=$name" > /dev/null
+                "$UPLOADS/releases/$REL_ID/assets?name=$name" > /dev/null
             done
             echo "Done."
 
