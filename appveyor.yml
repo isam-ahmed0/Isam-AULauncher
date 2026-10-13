@@ -1,0 +1,114 @@
+# AppVeyor configuration for CrewLauncher (Windows)
+#
+# Builds the PyInstaller onedir bundles for CrewLauncher and Itch_Login_Fixer,
+# packages dist/CrewLauncher-All.zip, then compiles the three NSIS installers.
+# On version tags (1.0, 1.0-beta.2, 0.7.3, ...) the binaries are published to
+# the matching GitHub release.
+#
+# Only tag builds run (skip_non_tags). To allow branch builds for testing,
+# set skip_non_tags: false and update the `on:` condition below.
+
+version: 1.0.{build}
+
+image: Visual Studio 2022
+
+shallow_clone: true
+
+# Start builds on tags only (saves free build minutes).
+skip_non_tags: true
+
+# Disable MSBuild / test phases; everything is done in build_script.
+build: off
+test: off
+
+environment:
+  PYTHON: "C:\\Python314-x64"
+  MAKENSIS: "C:\\Program Files (x86)\\NSIS\\makensis.exe"
+
+install:
+  # Ensure a usable Python (image ships 3.14 at C:\Python314-x64).
+  - ps: |
+      if (-not (Test-Path $env:PYTHON)) {
+        $candidate = Get-ChildItem -Path 'C:\' -Directory -Filter 'Python3*-x64' -ErrorAction SilentlyContinue |
+          Where-Object { $_.Name -match '^Python3\d+-x64$' } |
+          Sort-Object Name -Descending | Select-Object -First 1
+        if ($candidate) {
+          $env:PYTHON = $candidate.FullName
+        } else {
+          choco install python -y --no-progress
+          $env:PYTHON = 'C:\Python314-x64'
+        }
+      }
+      $env:PATH = "$env:PYTHON;$env:PYTHON\Scripts;$env:PATH"
+      Write-Host "Using Python: $env:PYTHON"
+      & "$env:PYTHON\python.exe" --version
+  - python -m pip install --upgrade pip
+  - python -m pip install -r src\launcher\requirements.txt pyinstaller customtkinter pillow
+  # NSIS is preinstalled on the image; fall back to Chocolatey if missing.
+  - ps: |
+      if (-not (Test-Path $env:MAKENSIS)) {
+        choco install nsis -y --no-progress
+        $env:MAKENSIS = 'C:\Program Files (x86)\NSIS\makensis.exe'
+      }
+      Write-Host "Using makensis: $env:MAKENSIS"
+
+build_script:
+  # Resolve VERSION (from tag or config.py) and a numeric 4-part FILE_VERSION.
+  - ps: |
+      $v = $env:APPVEYOR_REPO_TAG_NAME
+      if ([string]::IsNullOrWhiteSpace($v)) {
+        $m = Select-String -Path src\launcher\config.py -Pattern '^LAUNCHER_VERSION\s*=\s*"([^"]+)"'
+        if (-not $m) { throw "Could not find LAUNCHER_VERSION in src\launcher\config.py" }
+        $v = $m.Matches[0].Groups[1].Value
+      }
+      $v = $v -replace '^v', ''
+      $base = ($v -split '[-+]')[0]
+      $parts = @($base -split '\.' | Where-Object { $_ -match '^\d+$' })
+      while ($parts.Count -lt 4) { $parts += '0' }
+      $env:VERSION = $v
+      $env:FILE_VERSION = ($parts[0..3] -join '.')
+      Write-Host "Version: $($env:VERSION) (file $($env:FILE_VERSION))"
+      & "$env:PYTHON\python.exe" build\set_version.py $env:VERSION
+      if ($LASTEXITCODE -ne 0) { throw "set_version.py failed" }
+
+  - pyinstaller --noconfirm --onedir --windowed --noupx --name CrewLauncher --icon src\launcher\resources\icon.ico --add-data "src\launcher\resources\icon.ico;resources" --add-data "src\launcher\resources\splash.png;resources" --add-data "src\launcher\resources\phosphor-icons;resources\phosphor-icons" --add-data "src\launcher\resources\login;resources\login" --add-data "DOC;DOC" --add-data "release\bepmods.zip;." --exclude-module PySide6.QtWebEngineCore --exclude-module PySide6.QtWebEngineWidgets --exclude-module PySide6.QtWebEngineQuick --exclude-module PySide6.QtQuick --exclude-module PySide6.QtQuickWidgets --exclude-module PySide6.QtQml --exclude-module PySide6.Qt3DCore --exclude-module PySide6.Qt3DRender --exclude-module PySide6.Qt3DAnimation --exclude-module PySide6.Qt3DExtras --exclude-module PySide6.Qt3DInput --exclude-module PySide6.Qt3DLogic --exclude-module PySide6.QtCharts --exclude-module PySide6.QtDataVisualization --exclude-module PySide6.QtPdf --exclude-module PySide6.QtPdfWidgets --exclude-module PySide6.QtDesigner --exclude-module PySide6.QtTest --exclude-module PySide6.QtSql --exclude-module PySide6.QtBluetooth --exclude-module PySide6.QtNfc --exclude-module PySide6.QtPositioning --exclude-module PySide6.QtSerialPort --exclude-module PySide6.QtSensors --exclude-module PySide6.QtHelp --exclude-module PySide6.QtWebSockets --exclude-module PySide6.QtWebChannel --exclude-module dearpygui src\launcher\main.py
+
+  - pyinstaller --noconfirm --onedir --windowed --noupx --name Itch_Login_Fixer --icon src\fixer\assets\icon.ico --hidden-import customtkinter --collect-submodules customtkinter src\fixer\Itch_Login_Fixer.py
+
+  - python build\package_all_zip.py
+
+  # Compile the NSIS installers with the repo root + version defines.
+  - ps: |
+      $root = (Get-Location).Path
+      foreach ($nsi in @(
+        "installer\CrewLauncher.nsi",
+        "installer\CrewLauncher-Online.nsi",
+        "installer\CrewLauncher-Universal.nsi"
+      )) {
+        Write-Host "makensis $nsi"
+        & $env:MAKENSIS "/DROOT=$root" "/DVERSION=$env:VERSION" "/DFILE_VERSION=$env:FILE_VERSION" $nsi
+        if ($LASTEXITCODE -ne 0) { throw "makensis failed for $nsi" }
+      }
+
+artifacts:
+  - path: dist\CrewLauncher-Setup.exe
+    name: CrewLauncher-Setup.exe
+  - path: dist\CrewLauncher-Setup-Offline.exe
+    name: CrewLauncher-Setup-Offline.exe
+  - path: dist\CrewLauncher-Universal.exe
+    name: CrewLauncher-Universal.exe
+  - path: dist\CrewLauncher-All.zip
+    name: CrewLauncher-All.zip
+
+deploy:
+  - provider: GitHub
+    auth_token:
+      # Account -> Encrypt YAML, paste the result here (never a plain token).
+      secure: REPLACE_WITH_ENCRYPTED_GITHUB_TOKEN
+    description: "CrewLauncher $(APPVEYOR_REPO_TAG_NAME)"
+    artifact: CrewLauncher-Setup.exe,CrewLauncher-Setup-Offline.exe,CrewLauncher-Universal.exe,CrewLauncher-All.zip
+    draft: false
+    prerelease: false
+    force_update: true
+    on:
+      APPVEYOR_REPO_TAG: true
