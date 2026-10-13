@@ -108,9 +108,9 @@ artifacts:
 
 deploy:
   - provider: GitHub
-    auth_token:
-      # Account -> Encrypt YAML, paste the result here (never a plain token).
-      secure: REPLACE_WITH_ENCRYPTED_GITHUB_TOKEN
+    # Set GITHUB_TOKEN as a secure environment variable in
+    # AppVeyor Project Settings -> Environment (never commit the token itself).
+    auth_token: $(GITHUB_TOKEN)
     description: "CrewLauncher $(APPVEYOR_REPO_TAG_NAME)"
     # Publish into the release for the pushed tag (prevents AppVeyor from
     # creating a new tag + re-triggering itself).

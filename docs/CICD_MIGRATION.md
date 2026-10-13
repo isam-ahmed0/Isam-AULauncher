@@ -87,18 +87,22 @@ git tag 1.0 && git push origin 1.0
 
 1. Go to <https://ci.appveyor.com> -> **New Project** -> select
    `isam-ahmed0/Isam-AULauncher`. AppVeyor auto-detects `appveyor.yml`.
-2. Create a GitHub token (classic, scope `public_repo` / `repo`) and encrypt it:
-   **Account menu -> Encrypt YAML** (or `appveyor encrypt <token>`).
-3. Paste the encrypted value into `appveyor.yml`:
+2. Create a GitHub token (classic, scope `public_repo` / `repo`; or fine-grained
+   with **Contents: Read and write**).
+3. Store it as a secure project environment variable: **Project Settings ->
+   Environment -> Add variable**, name `GITHUB_TOKEN`, mark it **secure/locked**.
+   `appveyor.yml` already references it:
 
    ```yaml
-   auth_token:
-     secure: <paste encrypted value here>
+   auth_token: $(GITHUB_TOKEN)
    ```
 
-4. (Optional) Set the token as a project environment variable instead and use
-   `auth_token: $(GITHUB_TOKEN)`; the `secure:` approach above is the built-in
-   one.
+   Nothing credential-like is committed, so GitHub push protection will not
+   reject the file.
+
+   Alternative: **Account menu -> Encrypt YAML**, then commit the *encrypted*
+   blob under `auth_token.secure: <blob>`. The blob is safe to commit (it is not
+   the raw token); never commit the raw token.
 5. On the AppVeyor project **General** tab, confirm **"Do not build tags" is
    unchecked** and that the project uses `appveyor.yml` from the repository.
    Otherwise tag builds (and therefore releases) never start.
