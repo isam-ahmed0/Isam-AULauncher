@@ -8,8 +8,11 @@ import argparse
 import logging
 
 from config import APP_NAME
+from functions.splash import *
+from functions.worker import *
+from functions.help import *
 
-_LITE_FLAGS = ("-lite", "--lite", "-tk", "--tk")
+_LITE_FLAGS = ("-lite", "--lite", "-tk", "--tk", "--tkinter", "--tkinter-gui", "--tkinter-gui-only", "--tkinter-only", "--its-lite-for-win7-too")
 
 
 def _has_lite_flag(argv):
@@ -27,21 +30,13 @@ if __name__ == "__main__":
     from PySide6.QtCore import QTimer, QSharedMemory
 
     parser = argparse.ArgumentParser(description="CrewLauncher")
-    parser.add_argument("--gui-2", action="store_true",
-                        help="Use legacy Dear PyGui GUI")
+    parser.add_argument("-tk, --tk, -lite", action="store_true",
+                        help="Use Lite GUI (Tkinter) instead of default PySide6 GUI")
     parser.add_argument("--no-splash", action="store_true",
                         help="Skip splash screen")
     parser.add_argument("--splash-2", action="store_true",
                         help="Use animated WebM video splash")
-    args, _ = parser.parse_known_args()
-
-    if args.gui_2:
-        QMessageBox.information(
-            None, APP_NAME,
-            "Dear PyGui is no longer supported.\nPlease use the default PySide6 interface.",
-        )
-        sys.exit(0)
-
+    args, _ = parser.parse_known_args()                       
     qapp = QApplication(sys.argv)
 
     # Single instance lock
@@ -83,30 +78,10 @@ if __name__ == "__main__":
                 def on_video_done():
                     splash = SplashScreen()
 
-                    def on_splash_done():
-                        token = launcher._read_itch_token()
-                        if token:
-                            launcher.window.show()
-                        else:
-                            from gui_qt.login import LoginWindow
-                            launcher._login_window = LoginWindow(prefix=launcher.config.get_wine_prefix())
-                            launcher._login_window.show()
-
-                    splash.finished.connect(on_splash_done)
-
-                    def boot():
-                        splash.update_status("Loading profile...")
-                        qapp.processEvents()
-                        launcher._load_itch_profile_sync()
-                        splash.update_status("Checking updates...")
-                        qapp.processEvents()
-                        launcher._load_initial_data_sync()
-                        splash.update_status("Ready")
-                        qapp.processEvents()
-                        splash.finish()
+                    splash.finished.connect(lambda: on_splash_done(launcher))
 
                     splash.show()
-                    QTimer.singleShot(50, boot)
+                    QTimer.singleShot(50, lambda: boot(splash, launcher, qapp))
 
                 vsplash = VideoSplash()
                 vsplash.finished.connect(on_video_done)
@@ -119,16 +94,7 @@ if __name__ == "__main__":
 
             splash = SplashScreen()
 
-            def on_splash_done():
-                token = launcher._read_itch_token()
-                if token:
-                    launcher.window.show()
-                else:
-                    from gui_qt.login import LoginWindow
-                    launcher._login_window = LoginWindow(prefix=launcher.config.get_wine_prefix())
-                    launcher._login_window.show()
-
-            splash.finished.connect(on_splash_done)
+            splash.finished.connect(lambda: on_splash_done(launcher))
 
             _done = {"profile": False, "version": False}
 
@@ -145,32 +111,13 @@ if __name__ == "__main__":
             def version_done():
                 _done["version"] = True
                 check_done()
-
-            def profile_worker():
-                try:
-                    launcher._load_itch_profile_sync()
-                except Exception:
-                    pass
-                launcher._invoke_main(profile_done)
-
-            def version_worker():
-                try:
-                    launcher._load_initial_data_sync()
-                except Exception:
-                    pass
-                launcher._invoke_main(version_done)
+            
+            launcher._run(lambda: profile_worker(launcher, profile_done))
+            launcher._run(lambda: version_worker(launcher, version_done))
 
             splash.show()
 
-            def boot():
-                splash.update_status("Loading profile...")
-                qapp.processEvents()
-                launcher._run(profile_worker)
-                splash.update_status("Checking updates...")
-                qapp.processEvents()
-                launcher._run(version_worker)
-
-            QTimer.singleShot(50, boot)
+            QTimer.singleShot(50, lambda: boot(splash, launcher, qapp))
 
             qapp.exec()
             launcher.shutdown()

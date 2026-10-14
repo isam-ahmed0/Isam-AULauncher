@@ -9,35 +9,14 @@ import sys
 import argparse
 import logging
 
+from functions.lite import *
 
-def _ensure_import_path():
-    """Make the launcher modules importable when run as a script."""
-    here = os.path.dirname(os.path.abspath(__file__))
-    if here not in sys.path:
-        sys.path.insert(0, here)
+ensure_import_path(os, sys)
 
-
-_ensure_import_path()
 
 from config import APP_NAME, Config, LAUNCHER_VERSION  # noqa: E402
 from network import NetworkManager, DiscordRPC  # noqa: E402
 from platform_utils import IS_WINDOWS  # noqa: E402
-
-
-def _acquire_single_instance(config):
-    """Cross-platform advisory lock. Returns the open file or None."""
-    path = config.appdata_dir / "launcher.lock"
-    try:
-        f = open(str(path), "w")
-        if IS_WINDOWS:
-            import msvcrt
-            msvcrt.locking(f.fileno(), msvcrt.LK_NBLCK, 1)
-        else:
-            import fcntl
-            fcntl.flock(f.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-        return f
-    except OSError:
-        return None
 
 
 def _already_running_message():
@@ -65,7 +44,7 @@ def main(argv=None):
         return 0
 
     config = Config()
-    lock = _acquire_single_instance(config)
+    lock = acquire_single_instance(config, IS_WINDOWS)
     if lock is None:
         _already_running_message()
         return 0

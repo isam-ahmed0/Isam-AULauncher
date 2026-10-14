@@ -13,10 +13,7 @@ import tkinter as tk
 from pathlib import Path
 from tkinter import ttk, filedialog, messagebox
 
-from config import (
-    APP_NAME, BRAND_SHORT, MAKER, LAUNCHER_VERSION,
-    DEFAULT_GAME_DIR, VERSION_URL, LAUNCHER_UPDATE_URL, SOURCE_CODE_URL,
-)
+from config import *
 from file_manager import FileManager
 from platform_utils import IS_LINUX, IS_WINDOWS, open_local_path
 from itch_oauth import fetch_itch_profile, fetch_itch_username, read_itch_token
@@ -62,7 +59,7 @@ class LauncherLiteApp:
 
         self.root.protocol("WM_DELETE_WINDOW", self.shutdown)
         self.root.minsize(560, 460)
-        self._center(640, 520)
+        self._center(630, 520)
 
         self.root.after(80, self._check_login_gate)
         self.root.after(120, self._initial_load)

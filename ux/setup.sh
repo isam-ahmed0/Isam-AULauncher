@@ -15,7 +15,7 @@
 set -e
 
 ROOT="${SETUP_MIRROR:-https://github.com/isam-ahmed0/Isam-AULauncher/releases/latest/download}"
-SRC_URL="https://codeload.github.com/isam-ahmed0/Isam-AULauncher/tar.gz/refs/heads/main"
+SRC_URL="https://codeload.github.com/isam-ahmed0/Isam-AULauncher/tar.gz/refs/heads/crew"
 PKG_NAME="isam-aulauncher"
 APP_ID="isam-au"
 APP_BIN="CrewLauncher"
