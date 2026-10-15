@@ -23,6 +23,20 @@ if __name__ == "__main__":
         lite_argv = [arg for arg in sys.argv[1:] if arg not in _LITE_FLAGS]
         raise SystemExit(lite_main(lite_argv))
 
+_CTK_FLAGS = ("-ctk", "--ctk")
+
+
+def _has_ctk_flag(argv):
+    """True if the command line asks for the CustomTkinter GUI."""
+    return any(arg in _CTK_FLAGS for arg in argv[1:])
+
+
+if __name__ == "__main__":
+    if _has_ctk_flag(sys.argv):
+        from main_ctk import main as ctk_main
+        ctk_argv = [arg for arg in sys.argv[1:] if arg not in _CTK_FLAGS]
+        raise SystemExit(ctk_main(ctk_argv))
+
     from PySide6.QtWidgets import QApplication, QMessageBox
     from PySide6.QtCore import QTimer, QSharedMemory
 
