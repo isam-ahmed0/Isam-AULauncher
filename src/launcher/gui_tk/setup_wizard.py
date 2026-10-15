@@ -4,7 +4,7 @@ Mirrors the Qt SetupWizard: picks GPU and Wine build, saves choices.
 """
 import subprocess
 import tkinter as tk
-from tkinter import ttk, filedialog, messagebox
+from tkinter import ttk, messagebox
 
 import graphics
 import gui_tk.theme as theme
@@ -96,12 +96,9 @@ class SetupWizard:
     def _build_wine(self):
         page = ttk.Frame(self.stack, padding=6)
         ttk.Label(page, text="Wine build", style="CardMuted.TLabel").pack(anchor="w")
-        row = ttk.Frame(page)
-        row.pack(fill="x", pady=(2, 6))
-        self.wine_var = tk.StringVar(value=self.config.get_wine_binary())
-        self.wine_combo = ttk.Combobox(row, state="readonly", width=30,
+        self.wine_combo = ttk.Combobox(page, state="readonly", width=42,
             values=["Auto-detect"] + [f"{w['name']} — {w['path']}" for w in self._wines])
-        self.wine_combo.pack(side="left", fill="x", expand=True)
+        self.wine_combo.pack(fill="x", pady=(2, 6))
         cur = self.config.get_wine_binary()
         idx = 0
         for i, w in enumerate(self._wines):
@@ -109,12 +106,9 @@ class SetupWizard:
                 idx = i + 1
                 break
         self.wine_combo.current(idx)
-        browse = ttk.Button(row, text="Browse…", command=self._browse_wine, style="Secondary.TButton")
-        browse.pack(side="left", padx=(6, 0))
         if not self._wines:
             ttk.Label(page,
-                text="Wine was not found on this system. Install Wine, or browse to "
-                     "a Wine / Proton-GE build.",
+                text="Wine was not found on this system. Install Wine or a Proton build.",
                 style="CardMuted.TLabel", wraplength=400, justify="left").pack(anchor="w")
         ttk.Label(page, text=f"Prefix: {self.config.get_wine_prefix()}",
             style="CardMuted.TLabel", wraplength=400).pack(anchor="w")

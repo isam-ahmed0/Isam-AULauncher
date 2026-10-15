@@ -4,7 +4,7 @@ Saves directly through the shared ``Config`` (same config.json as the Qt GUI),
 so both front-ends see identical settings.
 """
 import tkinter as tk
-from tkinter import ttk, filedialog
+from tkinter import ttk
 
 from file_manager import FileManager
 from platform_utils import IS_LINUX
@@ -102,8 +102,6 @@ class SettingsDialog:
                     break
             self.wine_combo.current(idx)
             self.wine_combo.bind("<<ComboboxSelected>>", lambda _e: self._save_wine())
-            browse = ttk.Button(wrow, text="Browse…", command=self._browse_wine, style="Secondary.TButton")
-            browse.pack(side="left", padx=(6, 0))
 
             ttk.Label(body, text=f"Wine prefix: {self.config.get_wine_prefix()}",
                 style="CardMuted.TLabel", wraplength=380).pack(anchor="w", pady=(8, 0))
@@ -171,14 +169,6 @@ class SettingsDialog:
             self._save("wine_binary", "")
         else:
             self._save("wine_binary", self._wines[idx - 1]["path"])
-
-    def _browse_wine(self):
-        start = "/usr/bin" if __import__("pathlib").Path("/usr/bin").is_dir() else str(__import__("pathlib").Path.home())
-        path = filedialog.askopenfilename(
-            title="Select the Wine executable", initialdir=start, parent=self.win)
-        if path:
-            self._save("wine_binary", path)
-            self.wine_combo.set(path)
 
     def _open_setup_wizard(self):
         from gui_tk.setup_wizard import SetupWizard

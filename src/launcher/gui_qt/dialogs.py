@@ -232,7 +232,6 @@ class SettingsPage(QWidget):
             wine_lbl.setFixedWidth(140)
             wrow.addWidget(wine_lbl)
             self.wine_combo = QComboBox()
-            self.wine_combo.setEditable(True)
             self.wine_combo.addItem("Auto-detect", "")
             for w in self._wines:
                 self.wine_combo.addItem(f"{w['name']} — {w['path']}", w["path"])
@@ -245,10 +244,6 @@ class SettingsPage(QWidget):
                     self.wine_combo.setEditText(cur)
             self.wine_combo.currentIndexChanged.connect(self._save_wine)
             wrow.addWidget(self.wine_combo, 1)
-            wine_browse = QPushButton("Browse\u2026")
-            wine_browse.setObjectName("smallBtn")
-            wine_browse.clicked.connect(self._browse_wine)
-            wrow.addWidget(wine_browse)
             layout.addLayout(wrow)
 
             pf_lbl = QLabel(f"Wine prefix: {self.config.get_wine_prefix()}")
@@ -406,16 +401,6 @@ class SettingsPage(QWidget):
         if text == "Auto-detect":
             text = ""
         self._save_setting("wine_binary", text)
-
-    def _browse_wine(self):
-        start = "/usr/bin" if Path("/usr/bin").is_dir() else str(Path.home())
-        path, _ = QFileDialog.getOpenFileName(
-            self, "Select the Wine executable", start, "Executables (*)")
-        if not path:
-            return
-        self.wine_combo.setCurrentIndex(-1)
-        self.wine_combo.setEditText(path)
-        self._save_setting("wine_binary", path)
 
     def _open_setup_wizard(self):
         from gui_qt.setup_wizard import SetupWizard

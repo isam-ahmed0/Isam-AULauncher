@@ -160,14 +160,106 @@ def describe_gpu(gpu_id, gpus=None):
 _WINE_NAMES = ("wine-staging", "wine", "wine64", "wine-stable", "wine-devel")
 
 _WINE_GLOBS = (
+    # Lutris (native + Flatpak)
     "~/.local/share/lutris/runners/wine/*/bin/wine",
     "~/.var/app/net.lutris.Lutris/data/lutris/runners/wine/*/bin/wine",
+    # Steam compatibilitytools.d (GE-Proton, etc.)
     "~/.steam/root/compatibilitytools.d/*/files/bin/wine",
     "~/.steam/steam/compatibilitytools.d/*/files/bin/wine",
     "~/.local/share/Steam/compatibilitytools.d/*/files/bin/wine",
+    # Official Steam Proton (steamapps/common/Proton *)
+    "~/.steam/root/steamapps/common/Proton */files/bin/wine",
+    "~/.steam/steam/steamapps/common/Proton */files/bin/wine",
+    "~/.local/share/Steam/steamapps/common/Proton */files/bin/wine",
+    "~/.steam/root/steamapps/common/Proton */dist/bin/wine",
+    "~/.steam/steam/steamapps/common/Proton */dist/bin/wine",
+    "~/.local/share/Steam/steamapps/common/Proton */dist/bin/wine",
+    # PortProton (standalone + Flatpak)
+    "~/PortProton/data/wine/*/bin/wine",
+    "~/PortProton-Enhanced/data/wine/*/bin/wine",
+    "~/.var/app/ru.linux_gaming.PortProton/data/PortProton/data/wine/*/bin/wine",
+    "~/.local/share/flatpak/app/ru.linux_gaming.PortProton/current/active/files/PortProton/data/wine/*/bin/wine",
+    # Bottles (native + Flatpak)
+    "~/.local/share/bottles/runners/*/bin/wine",
+    "~/.var/app/com.usebottles.bottles/data/bottles/runners/*/bin/wine",
+    # Heroic Games Launcher
+    "~/.config/heroic/wine/*/bin/wine",
+    "~/.local/share/heroic/wine/*/bin/wine",
+    "~/.var/app/com.heroicgameslauncher.hgl/data/heroic/wine/*/bin/wine",
+    # Wine-GE standalone downloads
+    "~/wine-ge-*/bin/wine",
+    "~/Downloads/wine-ge-*/bin/wine",
+    "~/.local/share/wine-ge-*/bin/wine",
+    # Wine-TKG / custom builds
+    "~/wine-tkg-*/bin/wine",
+    "~/Downloads/wine-tkg-*/bin/wine",
 )
 
 _WINE_EXTRA_DIRS = ("/usr/bin", "/usr/local/bin", "/bin", "/opt/wine/bin")
+
+
+def _extract_wine_name(path):
+    """Extract a meaningful name from a wine binary path."""
+    rp = str(Path(path).expanduser().resolve())
+    parts = Path(rp).parts
+    # Lutris runners
+    if "lutris" in rp and "runners" in rp and "wine" in parts:
+        idx = parts.index("wine")
+        if idx + 1 < len(parts):
+            return f"Lutris {parts[idx + 1]}"
+    # Steam compatibilitytools.d
+    if "compatibilitytools.d" in parts:
+        idx = parts.index("compatibilitytools.d")
+        if idx + 1 < len(parts):
+            return parts[idx + 1]
+    # Steam Proton (steamapps/common/Proton */files|dist)
+    if "steamapps" in parts and "common" in parts:
+        idx = parts.index("common")
+        if idx + 1 < len(parts) and parts[idx + 1].startswith("Proton"):
+            proton_name = parts[idx + 1]
+            # Determine files vs dist
+            if "files" in parts:
+                return f"{proton_name} (files)"
+            if "dist" in parts:
+                return f"{proton_name} (dist)"
+            return proton_name
+    # PortProton
+    if "PortProton" in parts:
+        idx = parts.index("PortProton")
+        if idx + 1 < len(parts) and "wine" in parts:
+            wine_idx = parts.index("wine")
+            if wine_idx + 1 < len(parts):
+                return f"PortProton {parts[wine_idx + 1]}"
+        return "PortProton"
+    # PortProton Flatpak
+    if "ru.linux_gaming.PortProton" in rp:
+        return "PortProton (Flatpak)"
+    # Bottles
+    if "bottles" in parts and "runners" in parts:
+        idx = parts.index("runners")
+        if idx + 1 < len(parts):
+            return f"Bottles {parts[idx + 1]}"
+    # Heroic
+    if "heroic" in parts and "wine" in parts:
+        idx = parts.index("wine")
+        if idx + 1 < len(parts):
+            return f"Heroic {parts[idx + 1]}"
+    # Wine-GE standalone
+    if "wine-ge" in rp:
+        for p in parts:
+            if p.startswith("wine-ge"):
+                return f"GE-Proton {p.replace('wine-ge-', '')}"
+    # Wine-TKG
+    if "wine-tkg" in rp:
+        for p in parts:
+            if p.startswith("wine-tkg"):
+                return f"Wine-TKG {p.replace('wine-tkg-', '')}"
+    # Fallback: parent dir name
+    name = Path(rp).parent.parent.name if len(Path(rp).parents) >= 2 else Path(rp).name
+    # Clean up generic names
+    if name in ("usr", "bin", "local", "opt", "home"):
+        return "System wine"
+    return name
 
 
 def detect_wine_binaries():
@@ -183,9 +275,7 @@ def detect_wine_binaries():
         if rp in seen or not os.path.isfile(rp) or not os.access(rp, os.X_OK):
             return
         seen.add(rp)
-        found.append({"name": Path(rp).parent.parent.name
-                      if "runners" in rp or "compatibilitytools" in rp
-                      else Path(rp).name, "path": rp})
+        found.append({"name": _extract_wine_name(rp), "path": rp})
 
     for name in _WINE_NAMES:
         p = shutil.which(name)

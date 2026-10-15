@@ -9,7 +9,7 @@ from pathlib import Path
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QComboBox,
-    QPushButton, QStackedWidget, QWidget, QFileDialog, QMessageBox,
+    QPushButton, QStackedWidget, QWidget, QMessageBox,
 )
 
 import gui_qt.theme as theme
@@ -127,9 +127,7 @@ class SetupWizard(QDialog):
         lbl = QLabel("Wine build")
         lbl.setObjectName("mutedText")
         lay.addWidget(lbl)
-        row = QHBoxLayout()
         self.wine_combo = QComboBox()
-        self.wine_combo.setEditable(True)
         self.wine_combo.addItem("Auto-detect", "")
         for w in self._wines:
             self.wine_combo.addItem(f"{w['name']} — {w['path']}", w["path"])
@@ -138,18 +136,10 @@ class SetupWizard(QDialog):
             idx = self.wine_combo.findData(cur)
             if idx >= 0:
                 self.wine_combo.setCurrentIndex(idx)
-            else:
-                self.wine_combo.setEditText(cur)
-        row.addWidget(self.wine_combo, 1)
-        browse = QPushButton("Browse\u2026")
-        browse.setObjectName("smallBtn")
-        browse.clicked.connect(self._browse_wine)
-        row.addWidget(browse)
-        lay.addLayout(row)
+        lay.addWidget(self.wine_combo)
         if not self._wines:
             warn = QLabel(
-                "Wine was not found on this system. Install Wine, or browse to "
-                "a Wine / Proton-GE build.")
+                "Wine was not found on this system. Install Wine or a Proton build.")
             warn.setObjectName("mutedText")
             warn.setWordWrap(True)
             lay.addWidget(warn)
@@ -210,23 +200,12 @@ class SetupWizard(QDialog):
         data = self.wine_combo.currentData()
         if data:
             return data
-        text = self.wine_combo.currentText().strip()
-        if not text or text == "Auto-detect":
-            return ""
-        return text
+        return ""
 
     def _summary_text(self):
         gpu = graphics.describe_gpu(self._selected_gpu_id(), self._gpus)
         wine = self._selected_wine() or graphics.resolve_wine() or "Not found"
         return f"GPU: {gpu}\nWine: {wine}\nPrefix: {self.config.get_wine_prefix()}"
-
-    def _browse_wine(self):
-        start = "/usr/bin" if Path("/usr/bin").is_dir() else str(Path.home())
-        path, _ = QFileDialog.getOpenFileName(
-            self, "Select the Wine executable", start, "Executables (*)")
-        if path:
-            self.wine_combo.setCurrentIndex(-1)
-            self.wine_combo.setEditText(path)
 
     def _test_wine(self):
         wine = self._selected_wine() or graphics.resolve_wine()
