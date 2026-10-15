@@ -84,6 +84,7 @@ class Config:
             "launch_method": "ask", "warn_plain_wine": True,
             "wine_prefix": "", "lutris_game_ids": {}, "lutris_entries": {},
             "lutris_cmd_override": None,
+            "gpu_id": "", "wine_binary": "", "linux_setup_complete": False,
             "home_image_path": "", "home_note": "",
         }
         try:
@@ -148,6 +149,29 @@ class Config:
         from platform_utils import wine_prefix
         val = (self.settings.get("wine_prefix") or "").strip()
         return Path(val) if val else wine_prefix()
+
+    def get_gpu(self) -> str:
+        """Selected GPU id (PCI slot) or \"\" for system default."""
+        return (self.settings.get("gpu_id") or "").strip()
+
+    def set_gpu(self, gpu_id: str):
+        self.settings["gpu_id"] = (gpu_id or "").strip()
+        self.save_settings()
+
+    def get_wine_binary(self) -> str:
+        """Preferred wine executable path, or \"\" to auto-detect."""
+        return (self.settings.get("wine_binary") or "").strip()
+
+    def set_wine_binary(self, path: str):
+        self.settings["wine_binary"] = (path or "").strip()
+        self.save_settings()
+
+    def is_linux_setup_complete(self) -> bool:
+        return bool(self.settings.get("linux_setup_complete", False))
+
+    def set_linux_setup_complete(self, done: bool):
+        self.settings["linux_setup_complete"] = bool(done)
+        self.save_settings()
 
     def get_lutris_id(self, game_path):
         """Cached Lutris numeric game id for a given install path."""

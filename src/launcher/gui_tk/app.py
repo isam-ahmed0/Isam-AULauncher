@@ -66,7 +66,16 @@ class LauncherLiteApp:
 
         self.root.after(80, self._check_login_gate)
         self.root.after(120, self._initial_load)
+        self.root.after(200, self._maybe_show_setup_wizard)
         self.root.after(2000, self._poll_game)
+
+    def _maybe_show_setup_wizard(self):
+        if not IS_LINUX:
+            return
+        if self.config.is_linux_setup_complete():
+            return
+        from gui_tk.setup_wizard import SetupWizard
+        SetupWizard(self.config, self.root)
 
     # ------------------------------------------------------------------ setup
     def _set_icon(self):
@@ -392,89 +401,36 @@ class LauncherLiteApp:
         self.root.after(300, self._refresh_state)
 
     def _launch_linux(self):
-        from platform_utils import find_lutris
+        import graphics
         gp = self._game_path()
         if gp is None:
             self._set_status("Game not installed!", "danger")
             return
-        method = self.config.settings.get("launch_method", "ask")
         try:
-            lutris_cmd = find_lutris()
-            entry = None
-            if lutris_cmd:
-                entry = self._resolve_lutris_entry(gp, lutris_cmd)
-                self._cache_lutris_entry(gp, entry)
-
-            if method == "wine":
-                self._launch_wine_warning(gp)
-            elif method == "lutris":
-                if lutris_cmd and entry and entry.get("id") is not None:
-                    self.game.launch_lutris(entry["id"])
-                else:
-                    self._launch_wine_warning(gp)
-            else:
-                self._prompt_launch_choice(gp, entry, lutris_cmd)
+            wine = graphics.resolve_wine(self.config.get_wine_binary())
+            if not wine or not self.config.is_linux_setup_complete():
+                if self._offer_setup():
+                    wine = graphics.resolve_wine(self.config.get_wine_binary())
+            if not wine:
+                messagebox.showwarning(
+                    "Wine not found",
+                    "No Wine build is configured.\n\nRun the setup wizard (Settings → Graphics) or install Wine.",
+                    parent=self.root)
+                return
+            self.game.launch_wine(gp, gp / "Among Us.exe")
         except Exception as e:
             logging.exception("Linux launch failed")
             messagebox.showerror("Launch failed", str(e), parent=self.root)
 
-    def _resolve_lutris_entry(self, gp, lutris_cmd):
-        from platform_utils import (
-            lutris_find_entry, lutris_find_existing_install, lutris_entry_by_configpath,
-        )
-        cached_id = self.config.get_lutris_id(gp)
-        if cached_id is not None:
-            entry = lutris_find_entry(gp, cached_id, lutris_cmd)
-            if entry:
-                return entry
-        configpath = lutris_find_existing_install(
-            gp, gp / "Among Us.exe", prefix="among-us-isam")
-        if configpath:
-            entry = lutris_entry_by_configpath(configpath)
-            if entry and entry.get("id") is not None:
-                return entry
-        return None
-
-    def _cache_lutris_entry(self, gp, entry):
-        if entry:
-            self.config.set_lutris_entry(gp, entry)
-            if entry.get("id") is not None:
-                self.config.set_lutris_id(gp, entry.get("id"))
-        else:
-            self.config.clear_lutris_entry(gp)
-
-    def _launch_wine_warning(self, gp):
-        from platform_utils import find_wine
-        if not find_wine():
-            messagebox.showwarning(
-                "Wine not found",
-                "Wine is not installed. Install Wine or use Lutris.", parent=self.root)
-            return
-        if self.config.settings.get("warn_plain_wine", True):
-            if not messagebox.askyesno(
-                "Launch with Wine",
-                "Running Among Us directly with Wine is not recommended.\n"
-                "Lutris lets you choose your GPU. Launch anyway?",
-                parent=self.root, default="no"):
-                return
-        self.game.launch_wine(gp, gp / "Among Us.exe")
-
-    def _prompt_launch_choice(self, gp, entry, lutris_cmd):
-        options = []
-        if lutris_cmd:
-            if entry and entry.get("id") is not None:
-                options.append(("lutris", "Launch with Lutris", "Success.TButton"))
-            options.append(("wine", "Launch with Wine", "TButton"))
-        else:
-            options.append(("wine", "Launch with Wine", "Success.TButton"))
-        choice = self._choose(
-            "Launch Among Us",
-            "How do you want to launch Among Us?",
-            options)
-        if choice == "lutris" and entry and entry.get("id") is not None:
-            self.game.launch_lutris(entry["id"])
-        elif choice == "wine":
-            self._launch_wine_warning(gp)
+    def _offer_setup(self):
+        if messagebox.askyesno(
+            "Setup needed",
+            "CrewLauncher is not set up yet (GPU / Wine).\n\nRun setup now?",
+            parent=self.root):
+            from gui_tk.setup_wizard import SetupWizard
+            SetupWizard(self.config, self.root)
+            return True
+        return False
 
     def _choose(self, title, message, options):
         """Small modal chooser returning the picked key or None."""

@@ -4,10 +4,11 @@ Saves directly through the shared ``Config`` (same config.json as the Qt GUI),
 so both front-ends see identical settings.
 """
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, filedialog
 
 from file_manager import FileManager
-from platform_utils import IS_LINUX, find_lutris
+from platform_utils import IS_LINUX
+import graphics
 import gui_tk.theme as theme
 
 
@@ -51,39 +52,61 @@ class SettingsDialog:
 
         # --- Linux ---
         if IS_LINUX:
+            self._gpus = graphics.detect_gpus()
+            self._wines = graphics.detect_wine_binaries()
+
             ttk.Separator(body, orient="horizontal").pack(fill="x", pady=10)
-            ttk.Label(body, text="Linux", style="Heading.TLabel").pack(anchor="w")
+            ttk.Label(body, text="Graphics", style="Heading.TLabel").pack(anchor="w")
 
             row = ttk.Frame(body, style="Card.TFrame")
             row.pack(fill="x", pady=(6, 0))
-            ttk.Label(row, text="Launch method", style="CardMuted.TLabel").pack(side="left")
-            self.var_method = tk.StringVar(value=self.settings.get("launch_method", "ask"))
-            combo = ttk.Combobox(
-                row, state="readonly", width=18, values=[
-                    "Ask every time", "Always use Lutris", "Always use Wine",
-                ],
-            )
-            labels = {"ask": "Ask every time", "lutris": "Always use Lutris",
-                      "wine": "Always use Wine"}
-            combo.set(labels.get(self.var_method.get(), "Ask every time"))
-            combo.pack(side="right")
-            combo.bind("<<ComboboxSelected>>", lambda _e: self._save_method(combo.get()))
+            ttk.Label(row, text="GPU", style="CardMuted.TLabel").pack(side="left")
+            self.gpu_var = tk.StringVar(value=self.config.get_gpu())
+            self.gpu_combo = ttk.Combobox(
+                row, state="readonly", width=30,
+                values=[("System default", "")] + [(f"{g['name']}  ({'discrete' if g.get('discrete') else 'integrated'})", g['id']) for g in self._gpus])
+            self.gpu_combo.pack(side="right")
+            idx = 0
+            for i, g in enumerate(self._gpus):
+                if g["id"] == self.config.get_gpu():
+                    idx = i + 1
+                    break
+            self.gpu_combo.current(idx)
+            self.gpu_combo.bind("<<ComboboxSelected>>", lambda _e: self._save("gpu_id", self.gpu_var.get()))
 
-            self.var_warn = tk.BooleanVar(value=bool(self.settings.get("warn_plain_wine", True)))
-            ttk.Checkbutton(
-                body, text="Warn before launching with plain Wine",
-                variable=self.var_warn,
-                command=lambda: self._save("warn_plain_wine", self.var_warn.get()),
-            ).pack(anchor="w", pady=(8, 0))
+            ttk.Label(body,
+                text="The launcher sets PRIME / render-offload variables so the game "
+                     "runs on the selected GPU.",
+                style="CardMuted.TLabel", wraplength=380, justify="left").pack(anchor="w", pady=(2, 8))
 
-            pf = self.config.get_wine_prefix()
-            ttk.Label(body, text=f"Wine prefix: {pf}",
-                      style="CardMuted.TLabel", wraplength=380).pack(anchor="w", pady=(8, 0))
+            setup_row = ttk.Frame(body, style="Card.TFrame")
+            setup_row.pack(fill="x")
+            ttk.Button(setup_row, text="Re-run setup wizard", command=self._open_setup_wizard,
+                style="Secondary.TButton").pack(side="left")
 
-            detected = self.config.get_lutris_cmd_override() or find_lutris()
-            lutris_txt = " ".join(detected) if detected else "Not found (auto)"
-            ttk.Label(body, text=f"Lutris: {lutris_txt}",
-                      style="CardMuted.TLabel", wraplength=380).pack(anchor="w")
+            ttk.Separator(body, orient="horizontal").pack(fill="x", pady=10)
+            ttk.Label(body, text="Wine", style="Heading.TLabel").pack(anchor="w")
+
+            wrow = ttk.Frame(body, style="Card.TFrame")
+            wrow.pack(fill="x", pady=(6, 0))
+            ttk.Label(wrow, text="Wine build", style="CardMuted.TLabel").pack(side="left")
+            self.wine_combo = ttk.Combobox(
+                wrow, state="readonly", width=30,
+                values=["Auto-detect"] + [f"{w['name']} — {w['path']}" for w in self._wines])
+            self.wine_combo.pack(side="left", fill="x", expand=True)
+            cur = self.config.get_wine_binary()
+            idx = 0
+            for i, w in enumerate(self._wines):
+                if w["path"] == cur:
+                    idx = i + 1
+                    break
+            self.wine_combo.current(idx)
+            self.wine_combo.bind("<<ComboboxSelected>>", lambda _e: self._save_wine())
+            browse = ttk.Button(wrow, text="Browse…", command=self._browse_wine, style="Secondary.TButton")
+            browse.pack(side="left", padx=(6, 0))
+
+            ttk.Label(body, text=f"Wine prefix: {self.config.get_wine_prefix()}",
+                style="CardMuted.TLabel", wraplength=380).pack(anchor="w", pady=(8, 0))
 
         # --- Account ---
         ttk.Separator(body, orient="horizontal").pack(fill="x", pady=10)
@@ -130,9 +153,10 @@ class SettingsDialog:
             ("Disk Usage:", size),
         ]
         if IS_LINUX:
-            from platform_utils import format_lutris_entry
-            entry = self.config.get_lutris_entry(gp) if gp else None
-            rows.append(("Lutris:", format_lutris_entry(entry) if gp else "Not added"))
+            gpu = graphics.describe_gpu(self.config.get_gpu())
+            wine = self.config.get_wine_binary() or graphics.resolve_wine() or "Not found"
+            rows.append(("GPU:", gpu))
+            rows.append(("Wine:", wine))
         return rows
 
     def _save(self, key, value):
@@ -141,13 +165,26 @@ class SettingsDialog:
         if key == "discord_rpc":
             self.app.apply_discord_rpc()
 
-    def _save_method(self, label):
-        mapping = {
-            "Ask every time": "ask",
-            "Always use Lutris": "lutris",
-            "Always use Wine": "wine",
-        }
-        self._save("launch_method", mapping.get(label, "ask"))
+    def _save_wine(self):
+        idx = self.wine_combo.current()
+        if idx <= 0:
+            self._save("wine_binary", "")
+        else:
+            self._save("wine_binary", self._wines[idx - 1]["path"])
+
+    def _browse_wine(self):
+        start = "/usr/bin" if __import__("pathlib").Path("/usr/bin").is_dir() else str(__import__("pathlib").Path.home())
+        path = filedialog.askopenfilename(
+            title="Select the Wine executable", initialdir=start, parent=self.win)
+        if path:
+            self._save("wine_binary", path)
+            self.wine_combo.set(path)
+
+    def _open_setup_wizard(self):
+        from gui_tk.setup_wizard import SetupWizard
+        dlg = SetupWizard(self.config, self.win)
+        self._gpus = graphics.detect_gpus()
+        self._wines = graphics.detect_wine_binaries()
 
     def _sign_in(self):
         from gui_tk.login import LoginDialog

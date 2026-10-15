@@ -288,9 +288,9 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         self.ver_latest.setObjectName("infoText")
         self.status_bar.addPermanentWidget(self.ver_latest)
 
-        self.lutris_text = QLabel("")
-        self.lutris_text.setObjectName("mutedText")
-        self.status_bar.addPermanentWidget(self.lutris_text)
+        self.gfx_text = QLabel("")
+        self.gfx_text.setObjectName("mutedText")
+        self.status_bar.addPermanentWidget(self.gfx_text)
 
         self.choose_version_btn = QPushButton("Versions")
         self.choose_version_btn.setObjectName("statusBtn")
@@ -627,16 +627,11 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         if IS_LINUX:
             row_linux = QHBoxLayout()
             row_linux.setSpacing(10)
-            for label, cb in [
-                ("Add to Lutris", self._cb_add_to_lutris),
-                ("Check Lutris", self._cb_check_lutris),
-                ("Fix Lutris", self._cb_fix_lutris),
-            ]:
-                btn = QPushButton(label)
-                btn.setObjectName("toolBtn")
-                btn.setFixedHeight(38)
-                btn.clicked.connect(cb)
-                row_linux.addWidget(btn)
+            btn = QPushButton("Run Setup")
+            btn.setObjectName("toolBtn")
+            btn.setFixedHeight(38)
+            btn.clicked.connect(self._run_setup_wizard)
+            row_linux.addWidget(btn)
             layout.addLayout(row_linux)
 
         sep1 = QFrame()
@@ -1033,28 +1028,22 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         self.ver_latest.setText(f"Latest: {self.latest_version}")
         self._update_game_size()
 
-    def _update_lutris_info(self):
-        """Show whether the current install has a Lutris entry (Linux only)."""
-        if not hasattr(self, "lutris_text"):
+    def _update_gfx_info(self):
+        """Show GPU / Wine status in the status bar (Linux only)."""
+        if not hasattr(self, "gfx_text"):
             return
         from platform_utils import IS_LINUX
         if not IS_LINUX:
-            self.lutris_text.hide()
+            self.gfx_text.hide()
             return
-        self.lutris_text.show()
-        gp = self.config.get_game_path()
-        if not gp or not (gp / "Among Us.exe").exists():
-            self.lutris_text.setText("")
-            return
-        entry = self.config.get_lutris_entry(gp)
-        if entry and entry.get("id") is not None:
-            from platform_utils import format_lutris_entry
-            self.lutris_text.setText(f"Lutris: {format_lutris_entry(entry)}")
-        else:
-            self.lutris_text.setText("Lutris: not added")
+        self.gfx_text.show()
+        import graphics
+        gpu = graphics.describe_gpu(self.config.get_gpu())
+        wine = self.config.get_wine_binary() or graphics.resolve_wine() or "Not found"
+        self.gfx_text.setText(f"GPU: {gpu}  |  Wine: {wine}")
 
     def _update_main_btn(self):
-        self._update_lutris_info()
+        self._update_gfx_info()
         if self.game.is_running:
             self.main_action_btn.setText("PLAYING")
             self.main_action_btn.setObjectName("homeDangerBtn")
@@ -1096,6 +1085,25 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
     def run(self):
         self.window.show()
         self._load_itch_profile()
+        self._maybe_show_setup_wizard()
+
+    def _maybe_show_setup_wizard(self):
+        """Show the setup wizard on first Linux run."""
+        from platform_utils import IS_LINUX
+        if not IS_LINUX:
+            return
+        if self.config.is_linux_setup_complete():
+            return
+        from gui_qt.setup_wizard import SetupWizard
+        dlg = SetupWizard(self.config, self.window)
+        dlg.exec()
+
+    def _run_setup_wizard(self):
+        """Tools button: re-run the setup wizard."""
+        from gui_qt.setup_wizard import SetupWizard
+        dlg = SetupWizard(self.config, self.window)
+        if dlg.exec():
+            self._update_gfx_info()
 
     # ------------------------------------------------------------------ shutdown
     def _close_event(self, event):

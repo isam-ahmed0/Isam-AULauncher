@@ -169,77 +169,92 @@ class SettingsPage(QWidget):
 
         from platform_utils import IS_LINUX
         if IS_LINUX:
+            import graphics
             layout.addWidget(QFrame(frameShape=QFrame.Shape.HLine))
             layout.addSpacing(8)
-            linux_title = QLabel("Linux")
-            linux_title.setObjectName("sectionTitle")
-            layout.addWidget(linux_title)
+            gfx_title = QLabel("Graphics")
+            gfx_title.setObjectName("sectionTitle")
+            layout.addWidget(gfx_title)
             layout.addSpacing(6)
 
+            self._gpus = graphics.detect_gpus()
             row = QHBoxLayout()
             row.setContentsMargins(8, 0, 8, 0)
-            lm_lbl = QLabel("Launch method")
-            lm_lbl.setObjectName("mutedText")
-            lm_lbl.setFixedWidth(140)
-            row.addWidget(lm_lbl)
-            combo = QComboBox()
-            combo.addItem("Ask every time", "ask")
-            combo.addItem("Always use Lutris", "lutris")
-            combo.addItem("Always use Wine", "wine")
-            idx = combo.findData(settings.get("launch_method", "ask"))
+            gpu_lbl = QLabel("GPU")
+            gpu_lbl.setObjectName("mutedText")
+            gpu_lbl.setFixedWidth(140)
+            row.addWidget(gpu_lbl)
+            self.gpu_combo = QComboBox()
+            self.gpu_combo.addItem("System default", "")
+            for g in self._gpus:
+                tag = "discrete" if g.get("discrete") else "integrated"
+                self.gpu_combo.addItem(f"{g['name']}  ({tag})", g["id"])
+            idx = self.gpu_combo.findData(self.config.get_gpu())
             if idx >= 0:
-                combo.setCurrentIndex(idx)
-            combo.currentIndexChanged.connect(
-                lambda: self._save_setting("launch_method", combo.currentData()))
-            row.addWidget(combo)
-            row.addStretch()
+                self.gpu_combo.setCurrentIndex(idx)
+            self.gpu_combo.currentIndexChanged.connect(
+                lambda: self._save_setting("gpu_id", self.gpu_combo.currentData() or ""))
+            row.addWidget(self.gpu_combo, 1)
+            gpu_refresh = QPushButton("Refresh")
+            gpu_refresh.setObjectName("smallBtn")
+            gpu_refresh.clicked.connect(self._refresh_gpus)
+            row.addWidget(gpu_refresh)
             layout.addLayout(row)
 
-            lm_desc = QLabel(
-                "\"Ask every time\" shows a Lutris/Wine popup at launch so you "
-                "can pick your GPU")
-            lm_desc.setObjectName("mutedText")
-            lm_desc.setWordWrap(True)
-            lm_desc.setContentsMargins(148, 0, 0, 0)
-            layout.addWidget(lm_desc)
-            layout.addSpacing(10)
+            gpu_desc = QLabel(
+                "The launcher sets PRIME / render-offload variables so the game "
+                "runs on the selected GPU.")
+            gpu_desc.setObjectName("mutedText")
+            gpu_desc.setWordWrap(True)
+            gpu_desc.setContentsMargins(148, 0, 0, 0)
+            layout.addWidget(gpu_desc)
 
-            cb_warn = QCheckBox("Warn before launching with plain Wine")
-            cb_warn.setChecked(settings.get("warn_plain_wine", True))
-            cb_warn.stateChanged.connect(
-                lambda: self._save_setting("warn_plain_wine", cb_warn.isChecked()))
-            layout.addWidget(cb_warn)
-            layout.addSpacing(10)
+            setup_row = QHBoxLayout()
+            setup_row.setContentsMargins(148, 4, 0, 0)
+            setup_btn = QPushButton("Re-run setup wizard")
+            setup_btn.setObjectName("smallBtn")
+            setup_btn.clicked.connect(self._open_setup_wizard)
+            setup_row.addWidget(setup_btn)
+            setup_row.addStretch()
+            layout.addLayout(setup_row)
+            layout.addSpacing(12)
+
+            wine_title = QLabel("Wine")
+            wine_title.setObjectName("sectionTitle")
+            layout.addWidget(wine_title)
+            layout.addSpacing(6)
+
+            self._wines = graphics.detect_wine_binaries()
+            wrow = QHBoxLayout()
+            wrow.setContentsMargins(8, 0, 8, 0)
+            wine_lbl = QLabel("Wine build")
+            wine_lbl.setObjectName("mutedText")
+            wine_lbl.setFixedWidth(140)
+            wrow.addWidget(wine_lbl)
+            self.wine_combo = QComboBox()
+            self.wine_combo.setEditable(True)
+            self.wine_combo.addItem("Auto-detect", "")
+            for w in self._wines:
+                self.wine_combo.addItem(f"{w['name']} — {w['path']}", w["path"])
+            cur = self.config.get_wine_binary()
+            if cur:
+                idx = self.wine_combo.findData(cur)
+                if idx >= 0:
+                    self.wine_combo.setCurrentIndex(idx)
+                else:
+                    self.wine_combo.setEditText(cur)
+            self.wine_combo.currentIndexChanged.connect(self._save_wine)
+            wrow.addWidget(self.wine_combo, 1)
+            wine_browse = QPushButton("Browse\u2026")
+            wine_browse.setObjectName("smallBtn")
+            wine_browse.clicked.connect(self._browse_wine)
+            wrow.addWidget(wine_browse)
+            layout.addLayout(wrow)
 
             pf_lbl = QLabel(f"Wine prefix: {self.config.get_wine_prefix()}")
             pf_lbl.setObjectName("mutedText")
             pf_lbl.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
             layout.addWidget(pf_lbl)
-            layout.addSpacing(8)
-
-            lp_row = QHBoxLayout()
-            lp_row.setContentsMargins(8, 0, 8, 0)
-            lp_lbl = QLabel("Lutris path")
-            lp_lbl.setObjectName("mutedText")
-            lp_lbl.setFixedWidth(140)
-            lp_row.addWidget(lp_lbl)
-            from platform_utils import find_lutris
-            detected = self.config.get_lutris_cmd_override() or find_lutris()
-            self._lutris_path_label = QLabel(
-                " ".join(detected) if detected else "Not found (auto)")
-            self._lutris_path_label.setObjectName("mutedText")
-            self._lutris_path_label.setTextInteractionFlags(
-                Qt.TextInteractionFlag.TextSelectableByMouse)
-            lp_row.addWidget(self._lutris_path_label, 1)
-            lp_auto = QPushButton("Auto-detect")
-            lp_auto.setObjectName("smallBtn")
-            lp_auto.clicked.connect(self._reset_lutris_path)
-            lp_row.addWidget(lp_auto)
-            lp_browse = QPushButton("Browse\u2026")
-            lp_browse.setObjectName("smallBtn")
-            lp_browse.clicked.connect(self._browse_lutris_path)
-            lp_row.addWidget(lp_browse)
-            layout.addLayout(lp_row)
             layout.addSpacing(12)
 
         layout.addWidget(QFrame(frameShape=QFrame.Shape.HLine))
@@ -326,12 +341,14 @@ class SettingsPage(QWidget):
             ("Disk Usage:", disk_usage or "N/A", "gameInfoLabel"),
         ]
 
-        from platform_utils import IS_LINUX, format_lutris_entry
+        from platform_utils import IS_LINUX
         if IS_LINUX:
-            lutris_val = "Not added"
-            if gp:
-                lutris_val = format_lutris_entry(self.config.get_lutris_entry(gp))
-            fields.append(("Lutris:", lutris_val, "gameInfoLabel"))
+            import graphics
+            gpu_val = graphics.describe_gpu(self.config.get_gpu(), self._gpus)
+            wine_val = self.config.get_wine_binary() \
+                or graphics.resolve_wine() or "Not found"
+            fields.append(("GPU:", gpu_val, "gameInfoLabel"))
+            fields.append(("Wine:", wine_val, "gameInfoLabel"))
 
         for row, (label, value, obj_name) in enumerate(fields):
             row_layout = QHBoxLayout()
@@ -365,30 +382,46 @@ class SettingsPage(QWidget):
             elif not value and self.discord.connected:
                 self.discord.disconnect()
 
-    def _refresh_lutris_path_label(self):
-        lbl = getattr(self, "_lutris_path_label", None)
-        if lbl is None:
-            return
-        from platform_utils import find_lutris
-        detected = self.config.get_lutris_cmd_override() or find_lutris(refresh=True)
-        lbl.setText(" ".join(detected) if detected else "Not found (auto)")
+    def _refresh_gpus(self):
+        import graphics
+        self._gpus = graphics.detect_gpus()
+        self.gpu_combo.blockSignals(True)
+        current = self.config.get_gpu()
+        self.gpu_combo.clear()
+        self.gpu_combo.addItem("System default", "")
+        for g in self._gpus:
+            tag = "discrete" if g.get("discrete") else "integrated"
+            self.gpu_combo.addItem(f"{g['name']}  ({tag})", g["id"])
+        idx = self.gpu_combo.findData(current)
+        if idx >= 0:
+            self.gpu_combo.setCurrentIndex(idx)
+        self.gpu_combo.blockSignals(False)
 
-    def _browse_lutris_path(self):
+    def _save_wine(self):
+        data = self.wine_combo.currentData()
+        if data:
+            self._save_setting("wine_binary", data)
+            return
+        text = self.wine_combo.currentText().strip()
+        if text == "Auto-detect":
+            text = ""
+        self._save_setting("wine_binary", text)
+
+    def _browse_wine(self):
         start = "/usr/bin" if Path("/usr/bin").is_dir() else str(Path.home())
         path, _ = QFileDialog.getOpenFileName(
-            self, "Select the Lutris executable", start, "Executables (*)")
+            self, "Select the Wine executable", start, "Executables (*)")
         if not path:
             return
-        from platform_utils import set_lutris_override
-        set_lutris_override([path])
-        self.config.set_lutris_cmd_override([path])
-        self._refresh_lutris_path_label()
+        self.wine_combo.setCurrentIndex(-1)
+        self.wine_combo.setEditText(path)
+        self._save_setting("wine_binary", path)
 
-    def _reset_lutris_path(self):
-        from platform_utils import clear_lutris_override
-        clear_lutris_override()
-        self.config.clear_lutris_cmd_override()
-        self._refresh_lutris_path_label()
+    def _open_setup_wizard(self):
+        from gui_qt.setup_wizard import SetupWizard
+        dlg = SetupWizard(self.config, self)
+        if dlg.exec():
+            self._refresh_gpus()
 
     def _select_theme(self, name: str):
         self._selected_theme = name

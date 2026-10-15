@@ -92,18 +92,20 @@ class GameCore:
             return False
 
     def launch_wine(self, gp: Path, exe: Path) -> bool:
-        """Launch the Windows game with native Wine (Linux). Returns True on success."""
-        from platform_utils import find_wine, wine_env
-        wine = find_wine()
+        """Launch the Windows game with Wine on the configured GPU (Linux)."""
+        from platform_utils import wine_env
+        import graphics
+        wine = graphics.resolve_wine(self.config.get_wine_binary())
         if not wine:
-            self._status("Wine not found", "danger")
+            self._status("Wine not found — run setup", "danger")
             return False
         prefix = self.config.get_wine_prefix()
+        gpu = self.config.get_gpu()
         try:
             self._process = subprocess.Popen(
-                [wine, exe.name], cwd=str(gp), env=wine_env(prefix)
-            )
-            self._status("Game launched (Wine)!", "success")
+                [wine, exe.name], cwd=str(gp),
+                env=wine_env(prefix, gpu=gpu))
+            self._status("Game launched!", "success")
             self._started()
             return True
         except OSError as e:

@@ -1,24 +1,46 @@
 # CrewLauncher on Linux
 
-The launcher now runs natively on Linux, with the Itch Login Fixer's flow built
+The launcher runs natively on Linux, with the Itch Login Fixer's flow built
 in (same OAuth client, same callback, same token file). Linux support is
 **non-destructive**: the launcher only reads and writes the itch.io token that
 the game already uses.
 
-> The launcher **never** creates, deletes or reconfigures your Wine prefix or
-> your Lutris configuration. If you already tuned Wine for other games, nothing
-> here will change that.
+> The launcher **never** creates, deletes or reconfigures your Wine prefix. If you
+> already tuned Wine for other games, nothing here will change that.
 
 ## Requirements
 
 - **Wine is required** on Linux. It is needed to run Among Us, and **itch.io**
   sign-in is gated on it: if `wine` isn't detected, sign-in is blocked with an
-  "install Wine" popup (there is an **"I have Wine — Continue anyway"** button
-  for cases where Wine exists but wasn't auto-detected, e.g. Lutris bundles).
-- Optionally **Lutris** to install and launch Among Us.
+  "install Wine" popup.
+- **No Lutris required.** The launcher launches Wine directly and injects the
+  right GPU environment variables (PRIME / render-offload) so the game runs on
+  the graphics card you choose.
 
 The launcher shows a popup with [WINE.md](WINE.md) links if its detection of
 Wine fails. It will **not** install Wine for you.
+
+## First-run setup (GPU + Wine)
+
+On first Linux launch, a setup wizard appears:
+
+1. **GPU selection** — the launcher auto-detects your GPUs via `lspci`. Pick
+   "System default" (auto), or a specific card (e.g. "NVIDIA RTX 4070 (discrete)",
+   "AMD Radeon 780M (integrated)"). The launcher sets the right variables:
+   - NVIDIA discrete: `__NV_PRIME_RENDER_OFFLOAD=1`,
+     `__GLX_VENDOR_LIBRARY_NAME=nvidia`, `__VK_LAYER_NV_optimus=NVIDIA_only`,
+     `DRI_PRIME=1`
+   - AMD / Intel discrete: `DRI_PRIME=pci-...`
+   - System default: no variables (let the system decide)
+
+2. **Wine build** — auto-detects `wine`, `wine-staging`, Lutris runners, Proton-GE
+   builds in `~/.steam`, etc. Pick one or browse for a custom path (e.g.
+   `/home/you/.local/share/lutris/runners/wine/ge-proton9-x86_64/bin/wine`).
+
+3. **Test** — optional "Test Wine" button runs `wine --version` to confirm it works.
+
+Settings are saved to `config.json` and are re-editable in **Settings → Graphics / Wine**.
+Click **Re-run setup wizard** any time to change them.
 
 ## How it works
 
@@ -28,68 +50,43 @@ Wine fails. It will **not** install Wine for you.
    needs no special setup.
 3. When you click **Sign in with itch.io**, the launcher opens the itch.io login
    page in your browser and, once you authorize, stores the token into the Wine
-   prefix (see below) — the same file the Itch Login Fixer wrote.
+   prefix — the same file the Itch Login Fixer wrote.
 4. The launcher reads that token from
    `<prefix>/drive_c/users/<user>/AppData/LocalLow/Innersloth/Among Us/itch`.
-5. When you click **LAUNCH**, the launcher starts the game through Lutris (see
-   below). Among Us reads the same token file, so you are signed in.
+5. When you click **LAUNCH**, the launcher runs `wine "Among Us.exe"` in the
+   chosen Wine build with the selected GPU env vars. Among Us reads the same
+   token file, so you are signed in.
 
 The Wine prefix is `$WINEPREFIX` if set, otherwise `~/.wine`. You can override it
-in **Settings → Linux → Wine prefix**.
+in **Settings → Wine → Wine prefix** (shown for info).
 
 Mod and asset profiles are switched with **symlinks** on Linux (Windows uses
 directory junctions), so switching does not duplicate files. Removing a profile
 link never deletes the profile's contents.
 
-## Installing and launching the game
+## Settings → Graphics
 
-Installation runs inside the launcher (download + unzip). Launching uses
-whichever method you choose in **Settings → Linux → Launch method**:
+- **GPU** dropdown — list of detected GPUs with vendor/type tags. "System default"
+  means no env vars are injected.
+- **Re-run setup wizard** — reopens the full first-run flow.
 
-- **Ask every time** (default) — a popup lets you pick **Launch with Lutris**
-  or **Launch with Wine** on each launch. Choose Lutris to control which GPU the
-  game uses (Lutris → Configure → System options); Wine runs directly with your
-  global prefix and may use a different GPU.
-- **Always use Lutris** — launches through Lutris, adding the install first if
-  needed.
-- **Always use Wine** — runs the game directly with `wine`.
+## Settings → Wine
 
-When you choose **Add to Lutris**, the launcher registers the existing install
-directly in your Lutris library. It does **not** run an installer or download
-anything: Lutris's own API is used to add exactly one library entry (a row in
-`pga.db` and a config in `games/`) using the prefix above. Your Lutris settings
-and other games are left untouched. Close Lutris before adding so it cannot
-overwrite the new entry on exit; the launcher then launches the game through
-Lutris.
+- **Wine build** dropdown — auto-detected Wine binaries plus a "Browse…" button.
+- **Wine prefix** — read-only display of the active prefix.
 
-Running directly with **Wine** is allowed but not recommended; the launcher
-shows a warning first (disable it in Settings).
+## Desktop shortcut
 
-Multiple installs are supported: each install you add gets its **own** Lutris
-entry (`Among Us (CREW AU) …`, suffixed if the name is taken), and you switch
-between them with **Change Location** / **Locate Game**. The launcher only ever
-reuses entries it created — an unrelated Lutris entry that happens to point at
-the same executable is left alone.
+**Create Shortcut** writes a freedesktop `.desktop` launcher to
+`~/.local/share/applications/isam-au.desktop` (and your Desktop folder if it
+exists). The `Exec` line embeds the selected GPU env vars and Wine path so the
+shortcut launches with the same settings.
 
-### Tools → Add to Lutris / Check Lutris / Fix Lutris
+## Lutris (legacy)
 
-For an install that has files but no Lutris entry yet, use **Add to Lutris** in
-the Tools page: it checks your library first and, if the game is missing,
-registers it directly (no installer). **Check Lutris** verifies the current
-install and shows the matching entry's name, numeric id and slug (or offers to
-add it). The main page also shows a `Lutris:` status line, and
-**Settings → Game Info** lists the same entry.
-
-**Fix Lutris** force-detects Lutris in one click. Use it if the launcher says
-Lutris wasn't found even though you have it. It scans every common install
-(native package, **Flatpak** `net.lutris.Lutris`, **Snap**, **Nix**, AppImage),
-verifies the command, and remembers it. If nothing is found automatically it
-lets you **Browse** for the executable, **Retry**, or **Auto-detect** again. You
-can also set the path manually in **Settings → Linux → Lutris path**.
-
-Lutris detection works across distributions and honours the forced path above.
-If `lutris -l --json` isn't supported by your Lutris version, the launcher reads
-your `~/.local/share/lutris/pga.db` **read-only** to find the entry instead.
+Lutris code remains in the codebase for reference but is **no longer used** by
+the launcher. If you previously added this install to Lutris, you can still
+launch it manually from Lutris, but the launcher ignores Lutris entries.
 
 ## Installing on Linux
 
@@ -118,29 +115,17 @@ bash build/build_packages_linux.sh     # -> dist/packages/
 
 All installs place files under `/opt/isam-aulauncher` (or
 `~/.local/share/IsamAULauncher` for the per-user `.run`), add an `isam-au`
-command, a `Game` menu entry and an icon. Wine and Lutris stay optional
-dependencies (the app detects them).
-
-Publishing to package repositories (AUR for `paru`/`yay`, Fedora COPR, a hosted
-APT repo) is a separate step; the packages above can also simply be attached to
-a GitHub release.
-
-## Desktop shortcut
-
-**Create Shortcut** writes a freedesktop `.desktop` launcher to
-`~/.local/share/applications/isam-au.desktop` (and your Desktop folder if it
-exists). It launches through Lutris when an entry exists, otherwise with Wine.
+command, a `Game` menu entry and an icon. Wine is an optional dependency
+(the app detects it).
 
 ## Troubleshooting
 
 - **"Wine Not Found"** — install Wine for your distribution and make sure the
-  `wine` command works in a terminal, then try again.
+  `wine` command works in a terminal, then try again. Or browse to a Wine build
+  in Settings → Wine.
 - **Login times out** — the login callback waits up to 5 minutes for your
   browser to return the token. Authorize the itch.io page and keep it open.
 - **Token is not detected** — confirm your game runs in the same Wine prefix the
   launcher used (`$WINEPREFIX` or `~/.wine`).
-- **"Lutris entry not detected"** — close Lutris completely (it rewrites its
-  library on exit), then use **Tools → Add to Lutris** again.
-- **"Lutris was not found"** — use **Tools → Fix Lutris**. It detects native,
-  Flatpak, Snap and Nix installs; if it still fails, Browse for the executable.
-  Logs are at `~/.local/share/IsamAULauncher/logs/launcher.log`.
+- **Wrong GPU** — open Settings → Graphics, pick the correct GPU, re-launch.
+- **Logs** — `~/.local/share/IsamAULauncher/logs/launcher.log`.

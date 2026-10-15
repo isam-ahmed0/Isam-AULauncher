@@ -80,8 +80,16 @@ def open_local_path(path):
         subprocess.Popen(["xdg-open", p], env=external_env())
 
 
-def find_wine():
-    """Return the path to the wine executable, or None. Never installs wine."""
+def find_wine(override=None):
+    """Return the path to the wine executable, or None.
+
+    Honours an explicit ``override`` (the user-selected wine binary) before
+    falling back to whatever ``wine`` is on PATH. Never installs wine.
+    """
+    if override:
+        p = Path(override).expanduser()
+        if p.is_file() and os.access(str(p), os.X_OK):
+            return str(p)
     return shutil.which("wine")
 
 
@@ -133,10 +141,19 @@ def default_game_dir() -> Path:
     return Path.home() / "Games" / "Isam-AULauncher" / "Among-Us"
 
 
-def wine_env(prefix=None):
-    """Environment for running Wine, pinned to the given (or global) prefix."""
+def wine_env(prefix=None, gpu=None):
+    """Environment for running Wine, pinned to the given (or global) prefix.
+
+    ``gpu`` is a GPU id from :mod:`graphics`; when set, the matching PRIME /
+    render-offload variables are injected so the game runs on the chosen GPU.
+    """
     env = external_env()
     env["WINEPREFIX"] = str(prefix) if prefix else str(wine_prefix())
+    try:
+        import graphics
+        env.update(graphics.gpu_env(gpu))
+    except Exception:
+        logging.exception("Failed to build GPU environment")
     return env
 
 
@@ -711,23 +728,30 @@ def lutris_unique_name_slug(base_name, base_slug, existing_names):
 
 
 def create_desktop_shortcut(name, exe_path, working_dir, prefix=None,
-                            lutris_id=None, icon_source=None):
+                            gpu=None, wine=None, icon_source=None):
     """Write a freedesktop .desktop launcher. Returns the .desktop path.
 
-    Prefers launching through Lutris when an entry id is provided; otherwise
-    runs the game with Wine in the given (or global) prefix.
+    Launches the game with Wine in the given (or global) prefix, injecting the
+    environment variables for the selected GPU.
     """
     apps_dir = Path.home() / ".local" / "share" / "applications"
     apps_dir.mkdir(parents=True, exist_ok=True)
     slug_name = "isam-au"
     desktop_path = apps_dir / f"{slug_name}.desktop"
 
-    lutris_cmd = find_lutris() if lutris_id else None
-    if lutris_id and lutris_cmd:
-        exec_line = " ".join(lutris_cmd) + f" lutris:rungameid/{lutris_id}"
-    else:
-        pfx = prefix or wine_prefix()
-        exec_line = f'env WINEPREFIX="{pfx}" wine "{exe_path}"'
+    wine_bin = find_wine(wine)
+    if not wine_bin:
+        wine_bin = "wine"
+    pfx = prefix or wine_prefix()
+
+    env_parts = [f'WINEPREFIX="{pfx}"']
+    try:
+        import graphics
+        for key, val in graphics.gpu_env(gpu).items():
+            env_parts.append(f'{key}="{val}"')
+    except Exception:
+        logging.exception("Failed to build GPU env for shortcut")
+    exec_line = "env " + " ".join(env_parts) + f' "{wine_bin}" "{exe_path}"'
 
     icon_path = _ensure_icon(icon_source)
     lines = [
