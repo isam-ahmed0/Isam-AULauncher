@@ -35,7 +35,7 @@ logging.basicConfig(
 APP_NAME = "CrewLauncher"
 BRAND_SHORT = "CREW AU"
 MAKER = "Isam"
-LAUNCHER_VERSION = "1.0-beta.2+1"
+LAUNCHER_VERSION = "1.0-beta.4"
 
 VERSION_URL = "https://raw.githubusercontent.com/jogamerforgames2021/BootstrapperTEST/main/Version.txt"
 MESSAGE_URL = "https://raw.githubusercontent.com/jogamerforgames2021/AmongUsLauncherNew/refs/heads/main/message.txt"
