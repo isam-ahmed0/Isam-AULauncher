@@ -68,6 +68,26 @@ class LauncherLiteApp:
         self.root.after(120, self._initial_load)
         self.root.after(200, self._maybe_show_setup_wizard)
         self.root.after(2000, self._poll_game)
+        if os.environ.get("ISAM_QT_FALLBACK") == "1":
+            self.root.after(600, self._show_qt_fallback_notice)
+
+    def _show_qt_fallback_notice(self):
+        if self._closing:
+            return
+        self._set_status("Qt interface unavailable - using Lite interface.", "warning")
+        try:
+            from qt_platform import distro_hint
+            hint = distro_hint()
+        except Exception:
+            hint = ('Install the "xcb-util-cursor" / "libxcb-cursor0" package '
+                    'for your distribution.')
+        messagebox.showwarning(
+            "Lite interface",
+            "The full Qt interface could not start on this system,\n"
+            "so the Lite interface was opened instead.\n\n"
+            "This is usually caused by a missing system library.\n"
+            f"{hint}",
+            parent=self.root)
 
     def _maybe_show_setup_wizard(self):
         if not IS_LINUX:

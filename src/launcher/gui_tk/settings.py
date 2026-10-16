@@ -4,11 +4,12 @@ Saves directly through the shared ``Config`` (same config.json as the Qt GUI),
 so both front-ends see identical settings.
 """
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox, simpledialog
 
 from file_manager import FileManager
-from platform_utils import IS_LINUX
+from platform_utils import IS_LINUX, open_local_path
 import graphics
+import ui_registry
 import gui_tk.theme as theme
 
 
@@ -49,6 +50,45 @@ class SettingsDialog:
         ).pack(anchor="w", pady=(8, 0))
         ttk.Label(body, text="Download game updates automatically",
                   style="CardMuted.TLabel").pack(anchor="w", padx=(22, 0))
+
+        # --- Interface ---
+        ttk.Separator(body, orient="horizontal").pack(fill="x", pady=10)
+        ttk.Label(body, text="Interface", style="Heading.TLabel").pack(anchor="w")
+
+        self._guis = ui_registry.list_guis(self.config)
+        irow = ttk.Frame(body, style="Card.TFrame")
+        irow.pack(fill="x", pady=(6, 0))
+        ttk.Label(irow, text="User interface", style="CardMuted.TLabel").pack(side="left")
+        self.ui_combo = ttk.Combobox(
+            irow, state="readonly", width=30, values=self._gui_labels())
+        self.ui_combo.pack(side="right")
+        self.ui_combo.current(self._gui_index(self.config.get_ui_mode()))
+        self.ui_combo.bind("<<ComboboxSelected>>", lambda _e: self._save_ui_mode())
+
+        if IS_LINUX:
+            drow = ttk.Frame(body, style="Card.TFrame")
+            drow.pack(fill="x", pady=(6, 0))
+            ttk.Label(drow, text="Display backend", style="CardMuted.TLabel").pack(side="left")
+            self.disp_combo = ttk.Combobox(
+                drow, state="readonly", width=30,
+                values=["Auto (recommended)", "X11 (xcb)", "Wayland"])
+            self.disp_combo.pack(side="right")
+            self.disp_combo.current(self._display_index(self.config.get_display_backend()))
+            self.disp_combo.bind("<<ComboboxSelected>>", lambda _e: self._save_display_backend())
+
+        ttk.Label(body, text="Changing the interface or display backend needs a restart.",
+                  style="CardMuted.TLabel").pack(anchor="w", pady=(2, 6))
+
+        uirow = ttk.Frame(body, style="Card.TFrame")
+        uirow.pack(fill="x")
+        ttk.Button(uirow, text="Open GUI folder", style="Secondary.TButton",
+                   command=self._open_guis_folder).pack(side="left")
+        ttk.Button(uirow, text="Create Custom GUI...", style="Secondary.TButton",
+                   command=self._create_custom_gui).pack(side="left", padx=(6, 0))
+        ttk.Button(uirow, text="Edit Custom GUI", style="Secondary.TButton",
+                   command=self._edit_custom_gui).pack(side="left", padx=(6, 0))
+        ttk.Button(uirow, text="Restart now", style="Secondary.TButton",
+                   command=self._restart_now).pack(side="right")
 
         # --- Linux ---
         if IS_LINUX:
@@ -162,6 +202,108 @@ class SettingsDialog:
         self.config.save_settings()
         if key == "discord_rpc":
             self.app.apply_discord_rpc()
+
+    # ------------------------------------------------------------------ interface
+    def _gui_labels(self):
+        labels = []
+        for g in self._guis:
+            label = g["name"]
+            if not g.get("available", True):
+                label += "  (unavailable)"
+            labels.append(label)
+        return labels
+
+    def _gui_index(self, mode):
+        for i, g in enumerate(self._guis):
+            if g["id"] == mode:
+                return i
+        return 0
+
+    def _save_ui_mode(self):
+        idx = self.ui_combo.current()
+        if 0 <= idx < len(self._guis):
+            self.config.set_ui_mode(self._guis[idx]["id"])
+
+    def _display_index(self, value):
+        return {"": 0, "x11": 1, "wayland": 2}.get(value, 0)
+
+    def _save_display_backend(self):
+        values = ["", "x11", "wayland"]
+        idx = self.disp_combo.current()
+        self.config.set_display_backend(values[idx] if 0 <= idx < len(values) else "")
+
+    def _refresh_guis(self):
+        self._guis = ui_registry.list_guis(self.config)
+        self.ui_combo.configure(values=self._gui_labels())
+        self.ui_combo.current(self._gui_index(self.config.get_ui_mode()))
+
+    def _open_guis_folder(self):
+        try:
+            open_local_path(self.config.guis_dir)
+        except Exception as e:
+            messagebox.showerror("Error", str(e), parent=self.win)
+
+    def _create_custom_gui(self):
+        templates = ui_registry.custom_gui_templates()
+        options = [(t["id"], f"{t['name']} — {t['description']}", "Secondary.TButton")
+                   for t in templates]
+        chooser = getattr(self.app, "_choose", None)
+        template_id = "launcher"
+        if chooser:
+            picked = chooser("Create Custom GUI", "Pick a starter template:", options)
+            if not picked:
+                return
+            template_id = picked
+        name = simpledialog.askstring(
+            "Create Custom GUI", "Name for your GUI:", parent=self.win)
+        if not name:
+            return
+        try:
+            path = ui_registry.create_custom_gui(self.config, name, template_id)
+        except FileExistsError:
+            messagebox.showwarning(
+                "Create Custom GUI", "A GUI with that name already exists.",
+                parent=self.win)
+            return
+        except Exception as e:
+            messagebox.showerror("Create Custom GUI", str(e), parent=self.win)
+            return
+        self._refresh_guis()
+        messagebox.showinfo(
+            "Create Custom GUI",
+            f"Created:\n{path}\n\n"
+            "Use \"Edit Custom GUI\" to open it, then select it above.\n"
+            "Restart the launcher to apply.",
+            parent=self.win)
+
+    def _edit_custom_gui(self):
+        mode = self.config.get_ui_mode()
+        path = None
+        if mode.startswith("custom:"):
+            path = ui_registry.custom_gui_path(self.config, mode.split(":", 1)[1])
+        if not path:
+            messagebox.showinfo(
+                "Edit Custom GUI",
+                "Select one of your custom GUIs in the dropdown first,\n"
+                "or create a new one.",
+                parent=self.win)
+            return
+        try:
+            open_local_path(path)
+        except Exception as e:
+            messagebox.showerror("Edit Custom GUI", str(e), parent=self.win)
+
+    def _restart_now(self):
+        if not messagebox.askyesno(
+                "Restart Launcher",
+                "Close and restart the launcher now to apply the changes?",
+                parent=self.win, default="yes"):
+            return
+        import app_restart
+        try:
+            app_restart.restart()
+        except Exception as e:
+            messagebox.showerror("Restart Launcher", str(e), parent=self.win)
 
     def _save_wine(self):
         idx = self.wine_combo.current()

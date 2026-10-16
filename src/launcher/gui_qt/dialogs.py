@@ -7,7 +7,7 @@ from PySide6.QtGui import QFontMetrics, QColor, QPainter, QLinearGradient, QBrus
 from PySide6.QtWidgets import (
     QVBoxLayout, QHBoxLayout, QLabel, QFrame, QCheckBox,
     QPushButton, QMessageBox, QGridLayout, QWidget, QScrollArea, QComboBox,
-    QFileDialog,
+    QFileDialog, QInputDialog,
 )
 
 from config import (
@@ -17,6 +17,7 @@ from config import (
 from file_manager import FileManager
 import gui_qt.theme as theme
 from gui_qt.themes import THEMES, is_custom_theme, delete_custom_theme
+import ui_registry
 
 
 _THEME_ORDER = ["Forest", "Violet", "Coral", "Slate", "Ember", "Plum", "Mono"]
@@ -167,7 +168,78 @@ class SettingsPage(QWidget):
         layout.addWidget(desc2)
         layout.addSpacing(12)
 
+        # --- Interface section ---
+        layout.addWidget(QFrame(frameShape=QFrame.Shape.HLine))
+        layout.addSpacing(8)
+        ui_title = QLabel("Interface")
+        ui_title.setObjectName("sectionTitle")
+        layout.addWidget(ui_title)
+        layout.addSpacing(6)
+
+        self._ui_guis = ui_registry.list_guis(self.config)
+        ui_row = QHBoxLayout()
+        ui_row.setContentsMargins(8, 0, 8, 0)
+        ui_lbl = QLabel("User interface")
+        ui_lbl.setObjectName("mutedText")
+        ui_lbl.setFixedWidth(140)
+        ui_row.addWidget(ui_lbl)
+        self.ui_combo = QComboBox()
+        self._fill_ui_combo()
+        self.ui_combo.currentIndexChanged.connect(self._save_ui_mode)
+        ui_row.addWidget(self.ui_combo, 1)
+        layout.addLayout(ui_row)
+
         from platform_utils import IS_LINUX
+        if IS_LINUX:
+            disp_row = QHBoxLayout()
+            disp_row.setContentsMargins(8, 0, 8, 0)
+            disp_lbl = QLabel("Display backend")
+            disp_lbl.setObjectName("mutedText")
+            disp_lbl.setFixedWidth(140)
+            disp_row.addWidget(disp_lbl)
+            self.display_combo = QComboBox()
+            self.display_combo.addItem("Auto (recommended)", "")
+            self.display_combo.addItem("X11 (xcb)", "x11")
+            self.display_combo.addItem("Wayland", "wayland")
+            didx = self.display_combo.findData(self.config.get_display_backend())
+            if didx >= 0:
+                self.display_combo.setCurrentIndex(didx)
+            self.display_combo.currentIndexChanged.connect(self._save_display_backend)
+            disp_row.addWidget(self.display_combo, 1)
+            layout.addLayout(disp_row)
+
+            disp_desc = QLabel("X11 is the safest choice for most users.")
+            disp_desc.setObjectName("mutedText")
+            disp_desc.setContentsMargins(148, 0, 0, 0)
+            layout.addWidget(disp_desc)
+
+        ui_desc = QLabel("Changing the interface or display backend needs a restart.")
+        ui_desc.setObjectName("mutedText")
+        ui_desc.setContentsMargins(148, 0, 0, 0)
+        layout.addWidget(ui_desc)
+
+        ui_btns = QHBoxLayout()
+        ui_btns.setContentsMargins(148, 4, 0, 0)
+        open_guis_btn = QPushButton("Open GUI folder")
+        open_guis_btn.setObjectName("smallBtn")
+        open_guis_btn.clicked.connect(self._open_guis_folder)
+        ui_btns.addWidget(open_guis_btn)
+        create_gui_btn = QPushButton("Create Custom GUI")
+        create_gui_btn.setObjectName("smallBtn")
+        create_gui_btn.clicked.connect(self._create_custom_gui)
+        ui_btns.addWidget(create_gui_btn)
+        edit_gui_btn = QPushButton("Edit Custom GUI")
+        edit_gui_btn.setObjectName("smallBtn")
+        edit_gui_btn.clicked.connect(self._edit_custom_gui)
+        ui_btns.addWidget(edit_gui_btn)
+        ui_btns.addStretch()
+        restart_btn = QPushButton("Restart now")
+        restart_btn.setObjectName("smallBtn")
+        restart_btn.clicked.connect(self._restart_now)
+        ui_btns.addWidget(restart_btn)
+        layout.addLayout(ui_btns)
+        layout.addSpacing(12)
+
         if IS_LINUX:
             import graphics
             layout.addWidget(QFrame(frameShape=QFrame.Shape.HLine))
@@ -376,6 +448,99 @@ class SettingsPage(QWidget):
                 self.discord.connect()
             elif not value and self.discord.connected:
                 self.discord.disconnect()
+
+    # ------------------------------------------------------------------ interface
+    def _fill_ui_combo(self):
+        self.ui_combo.blockSignals(True)
+        self.ui_combo.clear()
+        for g in self._ui_guis:
+            label = g["name"]
+            if not g.get("available", True):
+                label += "  (unavailable)"
+            self.ui_combo.addItem(label, g["id"])
+        idx = self.ui_combo.findData(self.config.get_ui_mode())
+        if idx >= 0:
+            self.ui_combo.setCurrentIndex(idx)
+        self.ui_combo.blockSignals(False)
+
+    def _save_ui_mode(self):
+        mode = self.ui_combo.currentData()
+        if mode:
+            self.config.set_ui_mode(mode)
+
+    def _save_display_backend(self):
+        self.config.set_display_backend(self.display_combo.currentData() or "")
+
+    def _refresh_ui_combo(self):
+        self._ui_guis = ui_registry.list_guis(self.config)
+        self._fill_ui_combo()
+
+    def _edit_custom_gui(self):
+        mode = self.config.get_ui_mode()
+        path = None
+        if mode.startswith("custom:"):
+            path = ui_registry.custom_gui_path(self.config, mode.split(":", 1)[1])
+        if not path:
+            QMessageBox.information(
+                self, "Edit Custom GUI",
+                "Select one of your custom GUIs in the dropdown first,\n"
+                "or create a new one.")
+            return
+        from platform_utils import open_local_path
+        try:
+            open_local_path(path)
+        except Exception as e:
+            QMessageBox.warning(self, "Edit Custom GUI", str(e))
+
+    def _restart_now(self):
+        reply = QMessageBox.question(
+            self, "Restart Launcher",
+            "Close and restart the launcher now to apply the changes?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+        import app_restart
+        try:
+            app_restart.restart()
+        except Exception as e:
+            QMessageBox.warning(self, "Restart Launcher", str(e))
+
+    def _open_guis_folder(self):
+        from platform_utils import open_local_path
+        try:
+            open_local_path(self.config.guis_dir)
+        except Exception as e:
+            QMessageBox.warning(self, "Open GUI folder", str(e))
+
+    def _create_custom_gui(self):
+        templates = ui_registry.custom_gui_templates()
+        labels = [f"{t['name']} — {t['description']}" for t in templates]
+        choice, ok = QInputDialog.getItem(
+            self, "Create Custom GUI", "Starter template:", labels, 0, False)
+        if not ok:
+            return
+        template_id = "launcher"
+        if choice in labels:
+            template_id = templates[labels.index(choice)]["id"]
+        name, ok = QInputDialog.getText(
+            self, "Create Custom GUI", "Name for your GUI:")
+        if not ok or not name.strip():
+            return
+        try:
+            path = ui_registry.create_custom_gui(self.config, name, template_id)
+        except FileExistsError:
+            QMessageBox.warning(self, "Create Custom GUI",
+                                "A GUI with that name already exists.")
+            return
+        except Exception as e:
+            QMessageBox.warning(self, "Create Custom GUI", str(e))
+            return
+        self._refresh_ui_combo()
+        QMessageBox.information(
+            self, "Create Custom GUI",
+            f"Created:\n{path}\n\n"
+            "Use \"Edit Custom GUI\" to open it, then select it above.\n"
+            "Restart the launcher to apply.")
 
     def _refresh_gpus(self):
         import graphics

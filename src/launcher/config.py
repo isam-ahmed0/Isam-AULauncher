@@ -69,6 +69,8 @@ class Config:
         self.appdata_dir = config_data_dir()
         self.profiles_dir = self.appdata_dir / "Profiles"
         self.profiles_dir.mkdir(parents=True, exist_ok=True)
+        self.guis_dir = self.appdata_dir / "guis"
+        self.guis_dir.mkdir(parents=True, exist_ok=True)
         self.cache_dir = self.appdata_dir / "cache"
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.version_file = self.appdata_dir / "current_version.txt"
@@ -79,7 +81,7 @@ class Config:
     def _load_settings(self) -> Dict:
         defaults = {
             "auto_update": True, "create_shortcuts": True,
-            "discord_rpc": True, "ui_mode": "gui",
+            "discord_rpc": True, "ui_mode": "qt", "display_backend": "",
             "active_profile": "Default", "theme": "Forest",
             "launch_method": "ask", "warn_plain_wine": True,
             "wine_prefix": "", "lutris_game_ids": {}, "lutris_entries": {},
@@ -135,6 +137,27 @@ class Config:
             self.game_path_file.write_text(str(path))
         except Exception as e:
             logging.error(f"Failed to write game path: {e}")
+
+    def get_ui_mode(self) -> str:
+        """Selected user interface: "qt", "tk" or "custom:<name>"."""
+        mode = (self.settings.get("ui_mode") or "").strip()
+        if not mode or mode in ("gui", "ctk"):
+            return "qt"
+        return mode
+
+    def set_ui_mode(self, mode: str):
+        self.settings["ui_mode"] = (mode or "").strip() or "qt"
+        self.save_settings()
+
+    def get_display_backend(self) -> str:
+        """Preferred Qt display backend: "" (auto), "x11" or "wayland"."""
+        val = (self.settings.get("display_backend") or "").strip().lower()
+        return val if val in ("x11", "wayland") else ""
+
+    def set_display_backend(self, value: str):
+        val = (value or "").strip().lower()
+        self.settings["display_backend"] = val if val in ("x11", "wayland") else ""
+        self.save_settings()
 
     def get_active_profile(self) -> str:
         return self.settings.get("active_profile", "Default")

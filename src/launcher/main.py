@@ -1,206 +1,145 @@
+"""CrewLauncher - main entry point.
+
+Interface selection (first match wins):
+
+- ``--ui qt|tk|custom:<name>``  explicit choice
+- ``--qt`` / ``--tk`` (``--lite``)  shortcuts
+- config ``ui_mode``            saved preference (Settings > Interface)
+- default                      Qt
+
+On Linux the Qt interface automatically picks a working platform (X11 first,
+then Wayland) and falls back to the Lite interface when Qt cannot start at
+all, so users never need manual platform flags. Custom GUIs are plain Python
+files in ``<appdata>/IsamAULauncher/guis/`` - see ``DOC/CUSTOM_GUI.md``.
 """
-CrewLauncher — main entry point.
-Default: PySide6 (Qt) GUI with splash screen. Use --gui-2 for legacy Dear PyGui GUI.
-Pass -lite / --lite / -tk / --tk to open the lightweight tkinter (lite) GUI instead.
-"""
+import os
 import sys
 import argparse
 import logging
 
-from config import APP_NAME
 
-_LITE_FLAGS = ("-lite", "--lite", "-tk", "--tk")
-
-
-def _has_lite_flag(argv):
-    """True if the command line asks for the lightweight tkinter GUI."""
-    return any(arg in _LITE_FLAGS for arg in argv[1:])
+def _ensure_import_path():
+    """Make the launcher modules importable when run as a script."""
+    here = os.path.dirname(os.path.abspath(__file__))
+    if here not in sys.path:
+        sys.path.insert(0, here)
 
 
-if __name__ == "__main__":
-    if _has_lite_flag(sys.argv):
-        from main_lite import main as lite_main
-        lite_argv = [arg for arg in sys.argv[1:] if arg not in _LITE_FLAGS]
-        raise SystemExit(lite_main(lite_argv))
+_ensure_import_path()
 
-_CTK_FLAGS = ("-ctk", "--ctk")
+from config import APP_NAME, LAUNCHER_VERSION  # noqa: E402
 
 
-def _has_ctk_flag(argv):
-    """True if the command line asks for the CustomTkinter GUI."""
-    return any(arg in _CTK_FLAGS for arg in argv[1:])
+def _notice(title, text):
+    """Best-effort graphical notice; falls back to stderr."""
+    try:
+        import tkinter as tk
+        from tkinter import messagebox
+        root = tk.Tk()
+        root.withdraw()
+        messagebox.showinfo(title, text)
+        root.destroy()
+    except Exception:
+        print(f"{title}: {text}", file=sys.stderr)
 
 
-if __name__ == "__main__":
-    if _has_ctk_flag(sys.argv):
-        from main_ctk import main as ctk_main
-        ctk_argv = [arg for arg in sys.argv[1:] if arg not in _CTK_FLAGS]
-        raise SystemExit(ctk_main(ctk_argv))
-
-    from PySide6.QtWidgets import QApplication, QMessageBox
-    from PySide6.QtCore import QTimer, QSharedMemory
-
-    parser = argparse.ArgumentParser(description="CrewLauncher")
-    parser.add_argument("--gui-2", action="store_true",
-                        help="Use legacy Dear PyGui GUI")
-    parser.add_argument("--no-splash", action="store_true",
-                        help="Skip splash screen")
+def _parse_args(argv):
+    parser = argparse.ArgumentParser(prog="CrewLauncher", description=APP_NAME)
+    parser.add_argument("--ui", default=None,
+                        help="Interface to start: qt, tk or custom:<name>")
+    parser.add_argument("--qt", action="store_true",
+                        help="Use the Qt interface")
+    parser.add_argument("--tk", "--lite", "-tk", "-lite", dest="tk",
+                        action="store_true", help="Use the Lite (tkinter) interface")
+    parser.add_argument("--ctk", "-ctk", dest="ctk", action="store_true",
+                        help=argparse.SUPPRESS)
+    parser.add_argument("--gui-2", action="store_true", help=argparse.SUPPRESS)
+    parser.add_argument("--no-splash", action="store_true", help="Skip splash screen")
     parser.add_argument("--splash-2", action="store_true",
                         help="Use animated WebM video splash")
-    args, _ = parser.parse_known_args()
+    parser.add_argument("--version", action="store_true",
+                        help="Print version and exit")
+    args, rest = parser.parse_known_args(argv)
+    args.rest = rest
+    return args
+
+
+def _run_custom(mode, config):
+    from ui_registry import run_custom_gui
+    try:
+        return run_custom_gui(mode, config)
+    except Exception:
+        logging.exception("Custom GUI failed to start")
+        return False
+
+
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv[1:]
+    args = _parse_args(argv)
+
+    if args.version:
+        print(f"{APP_NAME} {LAUNCHER_VERSION}")
+        return 0
 
     if args.gui_2:
-        QMessageBox.information(
-            None, APP_NAME,
-            "Dear PyGui is no longer supported.\nPlease use the default PySide6 interface.",
-        )
-        sys.exit(0)
+        _notice(APP_NAME, "Dear PyGui is no longer supported.\n"
+                          "Please use the default Qt interface.")
+        return 0
 
-    qapp = QApplication(sys.argv)
+    from config import Config
+    from single_instance import ensure_single_instance
+    config = Config()
+    lock = ensure_single_instance(config)  # keep alive for the whole process
+    if lock is None:
+        return 0
 
-    # Single instance lock
-    _shared_mem = QSharedMemory("IsamAULauncher_SingleInstance")
-    if not _shared_mem.create(1):
-        QMessageBox.warning(
-            None, APP_NAME,
-            "Launcher is already running.\nPlease close the existing instance first.",
-        )
-        sys.exit(0)
+    cli_mode = (args.ui or "").strip()
+    if not cli_mode:
+        if args.tk:
+            cli_mode = "tk"
+        elif args.qt:
+            cli_mode = "qt"
+        elif args.ctk:
+            _notice(APP_NAME, "The CustomTkinter interface is not available yet.\n"
+                              "Starting the Qt interface.")
+            cli_mode = "qt"
 
-    while True:
-        try:
-            from gui_qt.window import LauncherApp
-            from gui_qt.splash import SplashScreen
-            from gui_qt.theme import apply_theme
+    from ui_registry import resolve_mode
+    mode = resolve_mode(cli_mode, config)
 
-            apply_theme(qapp)
-            launcher = LauncherApp(qapp)
+    if mode == "tk":
+        from main_lite import main as lite_main
+        return lite_main(args.rest, lock_held=True)
 
-            if args.no_splash:
-                launcher._load_initial_data()
-                launcher._load_itch_profile()
-                token = launcher._read_itch_token()
-                if token:
-                    launcher.window.show()
-                else:
-                    from gui_qt.login import LoginWindow
-                    launcher._login_window = LoginWindow(prefix=launcher.config.get_wine_prefix())
-                    launcher._login_window.show()
-                qapp.exec()
-                launcher.shutdown()
-                break
+    if mode.startswith("custom:"):
+        if _run_custom(mode, config):
+            return 0
+        _notice(APP_NAME, "The custom GUI could not be started (see the launcher log).\n"
+                          "Starting the Qt interface.")
+        mode = "qt"
 
-            if args.splash_2:
-                from gui_qt.video_splash import VideoSplash
-                from gui_qt.splash import SplashScreen
+    from qt_platform import prepare_qt_platform, distro_hint
+    if not prepare_qt_platform(config.get_display_backend()):
+        hint = distro_hint()
+        logging.warning("No working Qt platform; falling back to Lite. %s", hint)
+        os.environ["ISAM_QT_FALLBACK"] = "1"
+        _notice(APP_NAME,
+                "The Qt interface could not start on this system.\n"
+                "This usually means a system library is missing.\n\n"
+                f"{hint}\n\n"
+                "Starting the lightweight Lite interface instead.")
+        from main_lite import main as lite_main
+        return lite_main(args.rest, lock_held=True)
 
-                def on_video_done():
-                    splash = SplashScreen()
+    from main_qt import main as qt_main
+    qt_argv = list(args.rest)
+    if args.no_splash:
+        qt_argv.append("--no-splash")
+    if args.splash_2:
+        qt_argv.append("--splash-2")
+    return qt_main(qt_argv, lock_held=True)
 
-                    def on_splash_done():
-                        token = launcher._read_itch_token()
-                        if token:
-                            launcher.window.show()
-                        else:
-                            from gui_qt.login import LoginWindow
-                            launcher._login_window = LoginWindow(prefix=launcher.config.get_wine_prefix())
-                            launcher._login_window.show()
 
-                    splash.finished.connect(on_splash_done)
-
-                    def boot():
-                        splash.update_status("Loading profile...")
-                        qapp.processEvents()
-                        launcher._load_itch_profile_sync()
-                        splash.update_status("Checking updates...")
-                        qapp.processEvents()
-                        launcher._load_initial_data_sync()
-                        splash.update_status("Ready")
-                        qapp.processEvents()
-                        splash.finish()
-
-                    splash.show()
-                    QTimer.singleShot(50, boot)
-
-                vsplash = VideoSplash()
-                vsplash.finished.connect(on_video_done)
-                vsplash.show()
-                vsplash.play()
-
-                qapp.exec()
-                launcher.shutdown()
-                break
-
-            splash = SplashScreen()
-
-            def on_splash_done():
-                token = launcher._read_itch_token()
-                if token:
-                    launcher.window.show()
-                else:
-                    from gui_qt.login import LoginWindow
-                    launcher._login_window = LoginWindow(prefix=launcher.config.get_wine_prefix())
-                    launcher._login_window.show()
-
-            splash.finished.connect(on_splash_done)
-
-            _done = {"profile": False, "version": False}
-
-            def check_done():
-                if _done["profile"] and _done["version"]:
-                    splash.update_status("Ready")
-                    qapp.processEvents()
-                    splash.finish()
-
-            def profile_done():
-                _done["profile"] = True
-                check_done()
-
-            def version_done():
-                _done["version"] = True
-                check_done()
-
-            def profile_worker():
-                try:
-                    launcher._load_itch_profile_sync()
-                except Exception:
-                    pass
-                launcher._invoke_main(profile_done)
-
-            def version_worker():
-                try:
-                    launcher._load_initial_data_sync()
-                except Exception:
-                    pass
-                launcher._invoke_main(version_done)
-
-            splash.show()
-
-            def boot():
-                splash.update_status("Loading profile...")
-                qapp.processEvents()
-                launcher._run(profile_worker)
-                splash.update_status("Checking updates...")
-                qapp.processEvents()
-                launcher._run(version_worker)
-
-            QTimer.singleShot(50, boot)
-
-            qapp.exec()
-            launcher.shutdown()
-            break
-        except KeyboardInterrupt:
-            try:
-                launcher.shutdown()
-            except Exception:
-                pass
-            break
-        except Exception as e:
-            logging.critical(e, exc_info=True)
-            print(f"Error: {e}")
-            try:
-                r = input("Enter to restart, 'exit' to quit: ").strip().lower()
-            except (EOFError, OSError):
-                break
-            if r == "exit":
-                break
+if __name__ == "__main__":
+    raise SystemExit(main())
