@@ -514,7 +514,8 @@ class SettingsPage(QWidget):
 
     def _create_custom_gui(self):
         templates = ui_registry.custom_gui_templates()
-        labels = [f"{t['name']} — {t['description']}" for t in templates]
+        labels = [f"[{t.get('kind', 'gui').upper()}] {t['name']} — {t['description']}"
+                  for t in templates]
         choice, ok = QInputDialog.getItem(
             self, "Create Custom GUI", "Starter template:", labels, 0, False)
         if not ok:

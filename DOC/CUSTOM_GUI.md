@@ -77,19 +77,27 @@ example for you and you edit it in any text editor (Notepad, gedit,
 VS Code, ...). No GUI framework knowledge is needed to begin.
 
 1. Open **Settings > Interface** and press **Create Custom GUI**.
-2. Pick a starter template:
-   - **Minimal Starter** - one window and one button. Perfect first file.
-   - **Python Playground** - a runnable worksheet with numbered exercises:
-     change text, count with a variable, make decisions with `if/else`,
-     write a loop. Each exercise is a comment telling you exactly what to
-     change.
-   - **Launcher Controls** - a full example that installs, launches and
-     stops the game.
+2. Pick a starter template (the list shows `[GUI]` or `[CLI]`):
+   - `[GUI]` **Quick Launch** - one window, one big Launch button. The best
+     first file.
+   - `[GUI]` **Status Board** - a small dashboard with numbered exercises:
+     change colors, rename buttons, check for updates.
+   - `[GUI]` **Launcher Controls** - install, launch and stop the game with
+     a progress bar.
+   - `[GUI]` **Modern Panel** - a rounded dark window made with
+     customtkinter (included in official builds).
+   - `[CLI]` **Terminal Menu** - the whole launcher as a text menu in your
+     terminal. Uses no GUI toolkit at all, so it runs everywhere.
+   - `[CLI]` **Auto-Update & Launch** - hands-free: report, update, launch.
 3. Give it a name and press OK.
 4. Press **Edit Custom GUI** - your file opens in your text editor.
    Change a piece of text, for example the `text="..."` of a label, and
    save the file.
 5. Pick your GUI in the dropdown and press **Restart now**.
+
+CLI templates must be started from a terminal
+(`CrewLauncher --ui custom:my_gui`); from a menu launcher they print a
+note and exit, because there is no terminal to type into.
 
 Your GUI replaces the builtin interface until you switch back. If the
 launcher opens the builtin interface instead, your file has an error:
@@ -153,5 +161,7 @@ def main(context):
 
 Full annotated templates are created by **Settings > Interface > Create
 Custom GUI**, or see the originals in `src/launcher/resources/`:
-`custom_gui_minimal.py`, `custom_gui_playground.py` and
-`custom_gui_template.py`.
+`custom_gui_minimal.py` (Quick Launch), `custom_gui_playground.py`
+(Status Board), `custom_gui_template.py` (Launcher Controls),
+`custom_gui_ctk.py` (Modern Panel), `custom_cli_menu.py` (Terminal Menu)
+and `custom_cli_autolaunch.py` (Auto-Update & Launch).

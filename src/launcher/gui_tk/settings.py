@@ -245,7 +245,9 @@ class SettingsDialog:
 
     def _create_custom_gui(self):
         templates = ui_registry.custom_gui_templates()
-        options = [(t["id"], f"{t['name']} — {t['description']}", "Secondary.TButton")
+        options = [(t["id"],
+                    f"[{t.get('kind', 'gui').upper()}] {t['name']} — {t['description']}",
+                    "Secondary.TButton")
                    for t in templates]
         chooser = getattr(self.app, "_choose", None)
         template_id = "launcher"

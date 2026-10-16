@@ -1,80 +1,92 @@
-"""Python Playground - learn Python by editing this file!
+"""Status Board - a beginner dashboard built from real launcher data.
 
-Everything here runs for real. Edit the file, save it, pick this GUI in
-Settings > Interface and press "Restart now" to see your changes.
+Every value on this board comes from the "context" object the launcher
+hands to ``main()``. Edit the file, save it, pick this GUI in Settings >
+Interface and press "Restart now" to see your changes.
 
-Do the exercises in order, one small change at a time:
+Exercises (do them one at a time!):
 
-1. Change the greeting text below.
-2. Press the "+1" button a few times and find where the number is stored.
-3. Make the counter start at 10 instead of 0.
-4. Make the "+1" button add 5 instead of 1.
-5. Type your name in the box and press "Hello!".
-6. Uncomment the LOOP EXAMPLE near the bottom to draw many labels at once.
+1. Change the big title text.
+2. Change the color of the square dot (see STATUS_COLOR below).
+3. Make the version show a "v" in front: f"v{context.version()}".
+4. Rename the "Stop game" button to "Quit game".
+5. Slow the automatic refresh down: REFRESH_MS = 5000.
+6. Add a label under the buttons showing the game folder:
+   tk.Label(root, text=f"Folder: {context.game_path()}").pack()
 
 If the launcher opens the builtin interface instead of yours after a
 restart, your file has an error - open logs/launcher.log in the launcher
 data folder to read the message.
 """
+import threading
 import tkinter as tk
 
-GUI_NAME = "My Custom GUI"   # <- your name here, it shows up in Settings
+GUI_NAME = "My Custom GUI"
+
+STATUS_COLOR = "#26a269"   # exercise 2: try "#c01c28" (red) or "#1c71d8" (blue)
+REFRESH_MS = 2000          # exercise 5: how often the board updates (ms)
 
 
 def main(context):
     root = tk.Tk()
     root.title(GUI_NAME)
+    root.minsize(360, 270)
 
-    # ---------------------------------------------------------------------
-    # Ex. 1: a "label" shows text. Try changing these words:
-    greeting = tk.Label(root, text="Hello, Python explorer!", font=("sans", 15))
-    greeting.pack(padx=25, pady=(20, 10))
+    version_text = tk.StringVar()
+    installed_text = tk.StringVar()
+    running_text = tk.StringVar()
+    latest_text = tk.StringVar(value="Press the button to check for updates")
 
-    # ---------------------------------------------------------------------
-    # Ex. 2-4: a "variable" remembers a value. This one remembers a number.
-    # Change 0 to 10 to start counting from ten:
-    count = 0
+    def refresh():
+        version_text.set(f"Version:    {context.version()}")
+        installed_text.set(f"Installed:  {'yes' if context.is_installed() else 'no'}")
+        running_text.set("Playing right now" if context.is_running else "Idle")
+        root.after(REFRESH_MS, refresh)
 
-    # A "StringVar" is a special variable that labels can watch:
-    counter_text = tk.StringVar(value=f"Count: {count}")
+    def check_latest():
+        latest_text.set("Checking the update server...")
 
-    def add_one():
-        # "global" lets us change the "count" variable from inside a function
-        global count
-        count = count + 1              # <- Ex. 4: change 1 to 5
-        counter_text.set(f"Count: {count}")
+        def work():
+            from config import VERSION_URL     # the launcher's version file
+            newest = context.network.fetch_text(VERSION_URL)
+            root.after(0, lambda: on_reply(newest))
 
-    tk.Label(root, textvariable=counter_text).pack()
-    tk.Button(root, text="+1", width=10, command=add_one).pack(pady=4)
+        def on_reply(newest):
+            if not newest:
+                latest_text.set("Could not reach the update server")
+            elif newest.strip() == context.version():
+                latest_text.set(f"Up to date ({newest.strip()})")
+            else:
+                latest_text.set(f"New version available: {newest.strip()}")
 
-    # ---------------------------------------------------------------------
-    # Ex. 5: an "entry" is a text box. "if / else" makes decisions:
-    name_box = tk.Entry(root, width=24)
-    name_box.pack(pady=(14, 2))
+        # Network calls can be slow, so they run in a background thread.
+        # root.after() brings the result safely back to the window.
+        threading.Thread(target=work, daemon=True).start()
 
-    answer_text = tk.StringVar(value="")
+    def stop_game():
+        context.stop()
+        refresh()
 
-    def say_hello():
-        name = name_box.get().strip()
-        if name == "":
-            answer_text.set("Please type a name first!")
-        else:
-            answer_text.set(f"Nice to meet you, {name}!")
+    # exercise 1: change this text
+    tk.Label(root, text="CrewLauncher Status Board",
+             font=("sans", 16, "bold")).pack(pady=(18, 10))
 
-    tk.Button(root, text="Hello!", width=10, command=say_hello).pack()
-    tk.Label(root, textvariable=answer_text, fg="#26a269").pack(pady=(4, 10))
+    tk.Label(root, textvariable=version_text).pack(anchor="w", padx=30)
+    tk.Label(root, textvariable=installed_text).pack(anchor="w", padx=30)
 
-    # ---------------------------------------------------------------------
-    # Bonus: the launcher hands you information through "context". This
-    # label shows which game version your launcher manages right now:
-    tk.Label(root, text=f"Game version: {context.version()}").pack()
+    row = tk.Frame(root)
+    row.pack(anchor="w", padx=30, pady=(2, 0))
+    tk.Label(row, text="Status:     ").pack(side="left")
+    tk.Frame(row, width=10, height=10, bg=STATUS_COLOR).pack(side="left", padx=(0, 6))
+    tk.Label(row, textvariable=running_text).pack(side="left")
 
-    # ---------------------------------------------------------------------
-    # Ex. 6: LOOP EXAMPLE - uncomment (remove the "# ") these two lines:
-    # for i in range(5):
-    #     tk.Label(root, text=f"Row number {i}").pack()
+    tk.Label(root, textvariable=latest_text, fg="#777777").pack(pady=(14, 0))
 
-    # Always leave a way to close your GUI:
-    tk.Button(root, text="Close", command=root.destroy).pack(pady=(14, 20))
+    buttons = tk.Frame(root)
+    buttons.pack(pady=14)
+    tk.Button(buttons, text="Check latest version",
+              command=check_latest).pack(side="left", padx=4)
+    tk.Button(buttons, text="Stop game", command=stop_game).pack(side="left", padx=4)
 
+    refresh()
     root.mainloop()

@@ -44,22 +44,46 @@ _TEMPLATE_PATH = _RESOURCES_DIR / "custom_gui_template.py"
 
 CUSTOM_TEMPLATES = [
     {
-        "id": "launcher",
-        "name": "Launcher Controls",
-        "description": "Install, launch and stop the game with status updates",
-        "file": "custom_gui_template.py",
-    },
-    {
-        "id": "minimal",
-        "name": "Minimal Starter",
-        "description": "One window and one button - the very first step",
+        "id": "quicklaunch",
+        "name": "Quick Launch",
+        "kind": "gui",
+        "description": "One big Launch button with version and status",
         "file": "custom_gui_minimal.py",
     },
     {
-        "id": "playground",
-        "name": "Python Playground",
-        "description": "Commented exercises to practice Python basics",
+        "id": "statusboard",
+        "name": "Status Board",
+        "kind": "gui",
+        "description": "Dashboard + exercises with real launcher data",
         "file": "custom_gui_playground.py",
+    },
+    {
+        "id": "launcher",
+        "name": "Launcher Controls",
+        "kind": "gui",
+        "description": "Install, launch and stop the game with progress",
+        "file": "custom_gui_template.py",
+    },
+    {
+        "id": "ctk",
+        "name": "Modern Panel",
+        "kind": "gui",
+        "description": "Rounded dark panel (needs official build / customtkinter)",
+        "file": "custom_gui_ctk.py",
+    },
+    {
+        "id": "cli-menu",
+        "name": "Terminal Menu",
+        "kind": "cli",
+        "description": "Install, launch and check status from a text menu",
+        "file": "custom_cli_menu.py",
+    },
+    {
+        "id": "cli-auto",
+        "name": "Auto-Update & Launch",
+        "kind": "cli",
+        "description": "Headless: report, update and launch in one go",
+        "file": "custom_cli_autolaunch.py",
     },
 ]
 
