@@ -107,6 +107,23 @@ def gui_display_name(path):
     return None
 
 
+def _import_roots(path):
+    """Top-level module names imported anywhere in a custom GUI file (AST, no exec)."""
+    try:
+        tree = ast.parse(path.read_text(encoding="utf-8", errors="replace"))
+    except Exception:
+        return []
+    roots = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                roots.add(alias.name.split(".")[0])
+        elif isinstance(node, ast.ImportFrom):
+            if node.level == 0 and node.module:
+                roots.add(node.module.split(".")[0])
+    return sorted(roots)
+
+
 def custom_gui_path(config, name):
     """Resolve a custom GUI name to its file, guarding against path tricks."""
     name = (name or "").strip()
@@ -132,13 +149,15 @@ def list_guis(config):
     for path in paths:
         if path.name.startswith("_"):
             continue
+        missing = [m for m in _import_roots(path) if not _module_available(m)]
         guis.append({
             "id": f"custom:{path.stem}",
             "name": gui_display_name(path) or path.stem,
             "description": str(path),
             "path": path,
             "builtin": False,
-            "available": True,
+            "available": not missing,
+            "reason": ("missing " + ", ".join(missing)) if missing else "",
         })
     return guis
 

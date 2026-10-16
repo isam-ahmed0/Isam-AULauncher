@@ -209,7 +209,7 @@ class SettingsDialog:
         for g in self._guis:
             label = g["name"]
             if not g.get("available", True):
-                label += "  (unavailable)"
+                label += f"  (unavailable: {g.get('reason') or 'missing modules'})"
             labels.append(label)
         return labels
 
@@ -269,11 +269,15 @@ class SettingsDialog:
             messagebox.showerror("Create Custom GUI", str(e), parent=self.win)
             return
         self._refresh_guis()
+        idx = self._gui_index(f"custom:{path.stem}")
+        if 0 <= idx < len(self._guis):
+            self.ui_combo.current(idx)
+            self._save_ui_mode()
         messagebox.showinfo(
             "Create Custom GUI",
             f"Created:\n{path}\n\n"
-            "Use \"Edit Custom GUI\" to open it, then select it above.\n"
-            "Restart the launcher to apply.",
+            "It is now selected. Use \"Edit Custom GUI\" to open it in your\n"
+            "editor, then press \"Restart now\" to apply.",
             parent=self.win)
 
     def _edit_custom_gui(self):

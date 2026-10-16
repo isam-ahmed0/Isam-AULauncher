@@ -78,7 +78,7 @@ jobs:
           name: Install Python dependencies
           command: |
             python -m pip install --upgrade pip
-            python -m pip install -r src/launcher/requirements.txt pyinstaller pillow
+            python -m pip install -r src/launcher/requirements.txt pyinstaller pillow customtkinter
 
       - save_cache:
           key: pip-ubuntu-v2-{{ checksum "src/launcher/requirements.txt" }}

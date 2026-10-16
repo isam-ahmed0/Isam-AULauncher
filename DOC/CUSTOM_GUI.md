@@ -3,7 +3,8 @@
 CrewLauncher lets you replace its interface with your own Python program.
 A custom GUI can be **anything**: a tkinter window, a terminal application, a
 web server, an overlay - the launcher never injects or requires a GUI
-toolkit. Only the Python standard library is guaranteed to exist.
+toolkit. Your file can only import packages that exist in the Python
+running the launcher (see [Available packages](#available-packages)).
 
 ## Where custom GUIs live
 
@@ -104,11 +105,25 @@ Suggested progression:
 4. Show launcher data: `context.version()`, `context.is_installed()`.
 5. Add install/launch buttons with `context.install()` / `context.launch()`.
 
+## Available packages
+
+Official CrewLauncher builds bundle a small runtime for custom GUIs:
+
+- Python standard library (including `tkinter`)
+- `customtkinter` (+ `darkdetect`, `packaging`)
+- `PySide6`, `requests`, `pypresence`, `Pillow`
+
+Anything else (`numpy`, `pygame`, ...) will not import inside the frozen
+app. When you run from source, the packages installed in that Python are
+available instead. The Settings dropdown marks a custom GUI with
+`(unavailable: missing ...)` when its imports cannot be found, and the
+launcher shows the real error in a dialog when it falls back to Qt.
+
 ## When things go wrong
 
 - If the file is missing or crashes during startup, the launcher logs the
-  traceback to `<appdata>/IsamAULauncher/logs/launcher.log` and opens the
-  builtin Qt interface instead.
+  traceback to `<appdata>/IsamAULauncher/logs/launcher.log`, shows a short
+  error dialog, and opens the builtin Qt interface instead.
 - Your GUI only counts as "finished" when `main()` returns; after that the
   launcher exits. If your interface has its own event loop (e.g.
   `root.mainloop()`), return only when the user closes it.

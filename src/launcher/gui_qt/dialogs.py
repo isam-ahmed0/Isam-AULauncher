@@ -456,7 +456,7 @@ class SettingsPage(QWidget):
         for g in self._ui_guis:
             label = g["name"]
             if not g.get("available", True):
-                label += "  (unavailable)"
+                label += f"  (unavailable: {g.get('reason') or 'missing modules'})"
             self.ui_combo.addItem(label, g["id"])
         idx = self.ui_combo.findData(self.config.get_ui_mode())
         if idx >= 0:
@@ -536,11 +536,15 @@ class SettingsPage(QWidget):
             QMessageBox.warning(self, "Create Custom GUI", str(e))
             return
         self._refresh_ui_combo()
+        idx = self.ui_combo.findData(f"custom:{path.stem}")
+        if idx >= 0:
+            self.ui_combo.setCurrentIndex(idx)
+            self._save_ui_mode()
         QMessageBox.information(
             self, "Create Custom GUI",
             f"Created:\n{path}\n\n"
-            "Use \"Edit Custom GUI\" to open it, then select it above.\n"
-            "Restart the launcher to apply.")
+            "It is now selected. Use \"Edit Custom GUI\" to open it in your\n"
+            "editor, then press \"Restart now\" to apply.")
 
     def _refresh_gpus(self):
         import graphics

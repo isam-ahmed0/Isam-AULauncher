@@ -43,6 +43,14 @@ EXCLUDES=(
   --exclude-module dearpygui
 )
 
+# Custom-GUI runtime: tiny on purpose (tkinter + customtkinter only).
+# Fails loudly so a release cannot ship without it.
+python - <<'PY'
+import tkinter
+import customtkinter  # noqa: F401
+print(f"[build] custom-GUI runtime OK (tk {tkinter.TkVersion})")
+PY
+
 pyinstaller --noconfirm --onedir --windowed --noupx \
   --name CrewLauncher \
   --distpath dist/linux \
@@ -55,6 +63,9 @@ pyinstaller --noconfirm --onedir --windowed --noupx \
   --add-data "$PWD/src/launcher/resources/login:resources/login" \
   --add-data "$PWD/DOC:DOC" \
   --add-data "$PWD/release/bepmods.zip:." \
+  --hidden-import tkinter \
+  --hidden-import customtkinter \
+  --collect-submodules customtkinter \
   "${EXCLUDES[@]}" \
   "$PWD/src/launcher/main.py"
 

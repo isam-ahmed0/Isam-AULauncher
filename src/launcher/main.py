@@ -30,6 +30,9 @@ _ensure_import_path()
 from config import APP_NAME, LAUNCHER_VERSION  # noqa: E402
 
 
+_QT_NOTICE_APP = None  # keep the fallback QApplication alive
+
+
 def _notice(title, text):
     """Best-effort graphical notice; falls back to stderr."""
     try:
@@ -39,8 +42,18 @@ def _notice(title, text):
         root.withdraw()
         messagebox.showinfo(title, text)
         root.destroy()
+        return
     except Exception:
-        print(f"{title}: {text}", file=sys.stderr)
+        pass
+    try:
+        from PySide6.QtWidgets import QApplication, QMessageBox
+        global _QT_NOTICE_APP
+        _QT_NOTICE_APP = QApplication.instance() or QApplication([])
+        QMessageBox.information(None, title, text)
+        return
+    except Exception:
+        pass
+    print(f"{title}: {text}", file=sys.stderr)
 
 
 def _parse_args(argv):
@@ -65,12 +78,14 @@ def _parse_args(argv):
 
 
 def _run_custom(mode, config):
+    """Run a custom GUI. Returns True on success, False if no entry point,
+    or the exception when loading/running failed."""
     from ui_registry import run_custom_gui
     try:
         return run_custom_gui(mode, config)
-    except Exception:
+    except Exception as e:
         logging.exception("Custom GUI failed to start")
-        return False
+        return e
 
 
 def main(argv=None):
@@ -113,10 +128,15 @@ def main(argv=None):
         return lite_main(args.rest, lock_held=True)
 
     if mode.startswith("custom:"):
-        if _run_custom(mode, config):
+        result = _run_custom(mode, config)
+        if result is True:
             return 0
-        _notice(APP_NAME, "The custom GUI could not be started (see the launcher log).\n"
-                          "Starting the Qt interface.")
+        detail = ""
+        if isinstance(result, BaseException):
+            detail = f"\n\nReason: {type(result).__name__}: {result}"
+        _notice(APP_NAME,
+                "The custom GUI could not be started (see the launcher log)."
+                f"{detail}\n\nStarting the Qt interface.")
         mode = "qt"
 
     from qt_platform import prepare_qt_platform, distro_hint
