@@ -111,10 +111,10 @@ deploy:
     # Set GITHUB_TOKEN as a secure environment variable in
     # AppVeyor Project Settings -> Environment (never commit the token itself).
     auth_token: $(GITHUB_TOKEN)
-    description: "CrewLauncher $(APPVEYOR_REPO_TAG_NAME)"
+    description: "CrewLauncher $CrewLauncher $(VERSION)"
     # Publish into the release for the pushed tag (prevents AppVeyor from
     # creating a new tag + re-triggering itself).
-    tag: $(APPVEYOR_REPO_TAG_NAME)
+    tag: $(VERSION)
     artifact: CrewLauncher-Setup.exe,CrewLauncher-Setup-Offline.exe,CrewLauncher-Universal.exe,CrewLauncher-All.zip
     draft: false
     prerelease: false
