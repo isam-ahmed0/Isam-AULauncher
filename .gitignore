@@ -35,5 +35,11 @@ scratch/
 # Prevent accidental commits with full Windows absolute paths
 C:/Users/
 
-# Bak
-src/launcher copy/
+# Tool caches
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
+
+# AI session dumps (accidentally committed once; keep them out)
+/session.json
+/s.json

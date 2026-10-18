@@ -1,5 +1,9 @@
 # CrewLauncher — GUI Reference for Animation Expert
 
+> **Note:** this document was written before `window.py` was split into the
+> `gui_qt/window/` mixins. Some file paths below (e.g. `window.py`) refer to
+> the older layout; see [ARCHITECTURE.md](ARCHITECTURE.md) for the current one.
+
 ## Overview
 
 PySide6 (Qt6) dark-theme launcher for Among Us. Steam/Epic-style sidebar layout with stacked pages. 7 color themes. Currently has almost no animations — needs premium feel.

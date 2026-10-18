@@ -1,0 +1,7 @@
+# Development dependencies (runtime deps + tooling used by build/ and CI).
+#   pip install -r requirements-dev.txt
+-r src/launcher/requirements.txt
+pyinstaller
+pillow
+customtkinter
+ruff
