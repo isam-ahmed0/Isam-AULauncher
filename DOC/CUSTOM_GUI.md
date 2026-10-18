@@ -14,9 +14,26 @@ running the launcher (see [Available packages](#available-packages)).
 | Windows | `%APPDATA%\IsamAULauncher\guis\` |
 | macOS | `~/Library/Application Support/IsamAULauncher/guis/` |
 
-Every `*.py` file in that folder (except names starting with `_`) is listed
-in **Settings > Interface**. You can open the folder from there, or press
-**Create Custom GUI** to drop a ready-to-edit template into it.
+Custom GUIs can be organized in two ways:
+
+**Directory-based (recommended):**
+```
+guis/
+  my_gui/
+    main.py          # entry point (required)
+    resources/       # optional: images, extra modules, etc.
+    __init__.py      # optional: makes it a proper Python package
+```
+
+**Legacy single-file:**
+```
+guis/
+  my_gui.py          # entry point
+```
+
+Every `main.py` in a subdirectory of `guis/` (except names starting with `_`) and every `*.py` file directly in `guis/` is listed in **Settings > Interface**. You can open the folder from there, or press **Create Custom GUI** to drop a ready-to-edit template into it.
+
+Directory-based GUIs take precedence over legacy single-file GUIs with the same name.
 
 ## Contract
 
@@ -65,7 +82,7 @@ Notes:
 - **Settings > Interface** > choose it from the dropdown, then press
   **Restart now** (or restart the launcher manually).
 - Or from a terminal: `CrewLauncher --ui custom:my_gui`
-  (the name is the file name without `.py`).
+  (the name is the directory name or file name without `.py`).
 
 The selection is stored as `ui_mode` in
 `<appdata>/IsamAULauncher/config.json` (e.g. `"custom:my_gui"`).
@@ -90,7 +107,8 @@ VS Code, ...). No GUI framework knowledge is needed to begin.
      terminal. Uses no GUI toolkit at all, so it runs everywhere.
    - `[CLI]` **Auto-Update & Launch** - hands-free: report, update, launch.
 3. Give it a name and press OK.
-4. Press **Edit Custom GUI** - your file opens in your text editor.
+   This creates a folder `guis/your_name/` with `main.py` inside.
+4. Press **Edit Custom GUI** - your `main.py` opens in your text editor.
    Change a piece of text, for example the `text="..."` of a label, and
    save the file.
 5. Pick your GUI in the dropdown and press **Restart now**.
@@ -137,6 +155,8 @@ launcher shows the real error in a dialog when it falls back to Qt.
   `root.mainloop()`), return only when the user closes it.
 
 ## Minimal example
+
+Create `guis/mini_launcher/main.py`:
 
 ```python
 import tkinter as tk

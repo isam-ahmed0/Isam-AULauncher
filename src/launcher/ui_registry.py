@@ -149,12 +149,19 @@ def _import_roots(path):
 
 
 def custom_gui_path(config, name):
-    """Resolve a custom GUI name to its file, guarding against path tricks."""
+    """Resolve a custom GUI name to its file, guarding against path tricks.
+
+    Supports both directory-based (guis/name/main.py) and legacy single-file (guis/name.py).
+    Directory-based takes precedence if both exist.
+    """
     name = (name or "").strip()
     if not name or "/" in name or "\\" in name or name.startswith("."):
         return None
-    path = config.guis_dir / f"{name}.py"
-    return path if path.is_file() else None
+    dir_path = config.guis_dir / name / "main.py"
+    if dir_path.is_file():
+        return dir_path
+    file_path = config.guis_dir / f"{name}.py"
+    return file_path if file_path.is_file() else None
 
 
 def list_guis(config):
@@ -166,23 +173,45 @@ def list_guis(config):
         item["available"] = _module_available(entry.get("module"))
         guis.append(item)
 
+    seen = set()
     try:
-        paths = sorted(config.guis_dir.glob("*.py"))
+        for entry in sorted(config.guis_dir.iterdir()):
+            if entry.name.startswith("_"):
+                continue
+            if entry.is_dir():
+                main_py = entry / "main.py"
+                if main_py.is_file():
+                    name = entry.name
+                    if name in seen:
+                        continue
+                    seen.add(name)
+                    missing = [m for m in _import_roots(main_py) if not _module_available(m)]
+                    guis.append({
+                        "id": f"custom:{name}",
+                        "name": gui_display_name(main_py) or name,
+                        "description": str(main_py),
+                        "path": main_py,
+                        "builtin": False,
+                        "available": not missing,
+                        "reason": ("missing " + ", ".join(missing)) if missing else "",
+                    })
+            elif entry.is_file() and entry.suffix == ".py":
+                name = entry.stem
+                if name in seen:
+                    continue
+                seen.add(name)
+                missing = [m for m in _import_roots(entry) if not _module_available(m)]
+                guis.append({
+                    "id": f"custom:{name}",
+                    "name": gui_display_name(entry) or name,
+                    "description": str(entry),
+                    "path": entry,
+                    "builtin": False,
+                    "available": not missing,
+                    "reason": ("missing " + ", ".join(missing)) if missing else "",
+                })
     except Exception:
-        paths = []
-    for path in paths:
-        if path.name.startswith("_"):
-            continue
-        missing = [m for m in _import_roots(path) if not _module_available(m)]
-        guis.append({
-            "id": f"custom:{path.stem}",
-            "name": gui_display_name(path) or path.stem,
-            "description": str(path),
-            "path": path,
-            "builtin": False,
-            "available": not missing,
-            "reason": ("missing " + ", ".join(missing)) if missing else "",
-        })
+        pass
     return guis
 
 
@@ -338,7 +367,7 @@ def run_custom_gui(mode, config, network=None, discord=None):
 
 
 def create_custom_gui(config, name, template_id="launcher"):
-    """Copy a starter template into the guis folder as ``<name>.py``.
+    """Copy a starter template into the guis folder as a directory with ``main.py``.
 
     Returns the created path; raises on invalid names or existing files.
     """
@@ -347,9 +376,11 @@ def create_custom_gui(config, name, template_id="launcher"):
     safe = safe.replace(" ", "_")
     if not safe:
         raise ValueError("Invalid GUI name")
-    dest = config.guis_dir / f"{safe}.py"
-    if dest.exists():
-        raise FileExistsError(str(dest))
+    dest_dir = config.guis_dir / safe
+    if dest_dir.exists():
+        raise FileExistsError(str(dest_dir))
+    dest_dir.mkdir(parents=True, exist_ok=False)
+    dest = dest_dir / "main.py"
     embed = display.replace("\\", "").replace('"', "'").replace("\n", " ").strip()
     template = _template_file(template_id)
     if not template.is_file():
