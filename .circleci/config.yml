@@ -258,8 +258,8 @@ workflows:
             - build-arch
             - build-fedora
 
-  # Separate workflow for Nuitka builds - manual only, doesn't block release
-  nuitka-build:
+  # Separate workflow for Nuitka builds ONLY - manual trigger, no other builds
+  nuitka-only:
     when: << pipeline.parameters.build_nuitka >>
     jobs:
       - build-arch-nuitka:
