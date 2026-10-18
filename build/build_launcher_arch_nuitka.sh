@@ -29,6 +29,18 @@ python -m nuitka --standalone \
   --jobs=$(nproc) \
   src/launcher/main.py
 
+# Nuitka standalone creates main.dist/CrewLauncher (single file)
+# Convert to onedir-like structure for packaging
+echo "[nuitka-arch] Creating onedir structure for packaging"
+mkdir -p dist/linux-nuitka/CrewLauncher
+mv dist/linux-nuitka/main.dist/CrewLauncher dist/linux-nuitka/CrewLauncher/
+# Copy data directories that Nuitka embeds internally - they're in the binary
+# The data files are embedded in the executable, so we just need the binary
+# but packaging expects resources/, DOC/, bepmods.zip in the app dir
+cp -r src/launcher/resources dist/linux-nuitka/CrewLauncher/
+cp -r DOC dist/linux-nuitka/CrewLauncher/
+cp release/bepmods.zip dist/linux-nuitka/CrewLauncher/
+
 echo "[nuitka-arch] Built: dist/linux-nuitka/CrewLauncher/"
 ls -lh dist/linux-nuitka/CrewLauncher/
 
@@ -46,6 +58,11 @@ python -m nuitka --standalone \
   --assume-yes-for-downloads \
   --jobs=$(nproc) \
   src/fixer/Itch_Login_Fixer.py
+
+# Convert Fixer to onedir structure
+mkdir -p dist/linux-nuitka/Itch_Login_Fixer
+mv dist/linux-nuitka/main.dist/Itch_Login_Fixer dist/linux-nuitka/Itch_Login_Fixer/
+cp -r src/fixer/assets dist/linux-nuitka/Itch_Login_Fixer/
 
 echo "[nuitka-arch] Built: dist/linux-nuitka/Itch_Login_Fixer/"
 ls -lh dist/linux-nuitka/Itch_Login_Fixer/

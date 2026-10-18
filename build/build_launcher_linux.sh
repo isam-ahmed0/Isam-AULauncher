@@ -45,7 +45,11 @@ EXCLUDES=(
 
 # Custom-GUI runtime: tiny on purpose (tkinter + customtkinter only).
 # Fails loudly so a release cannot ship without it.
-python - <<'PY'
+PYTHON_BIN="python"
+if ! command -v python >/dev/null 2>&1 && command -v python3 >/dev/null 2>&1; then
+    PYTHON_BIN="python3"
+fi
+$PYTHON_BIN - <<'PY'
 import tkinter
 import customtkinter  # noqa: F401
 print(f"[build] custom-GUI runtime OK (tk {tkinter.TkVersion})")
