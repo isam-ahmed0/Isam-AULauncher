@@ -153,7 +153,7 @@ jobs:
       - persist_to_workspace:
           root: dist/packages
           paths:
-            - CrewLauncher.pkg.tar.zst
+            - CrewLauncher-nuitka.pkg.tar.zst
 
   build-fedora:
     executor: linux-machine
@@ -240,12 +240,15 @@ workflows:
               ignore: /.*/
       - build-arch:
           filters: *tag-only
+      - build-arch-nuitka:
+          filters: *tag-only
       - build-fedora:
           filters: *tag-only
       - release:
           requires:
             - build-ubuntu
             - build-arch
+            - build-arch-nuitka
             - build-fedora
           filters: *tag-only
 
@@ -259,11 +262,13 @@ workflows:
     jobs:
       - build-ubuntu
       - build-arch
+      - build-arch-nuitka
       - build-fedora
       - release:
           requires:
             - build-ubuntu
             - build-arch
+            - build-arch-nuitka
             - build-fedora
 
   # Nuitka-only workflow: runs only when run_nuitka=true, run_release=false

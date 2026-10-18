@@ -42,7 +42,52 @@ runuser -u builder -- env HOME=/home/builder bash -c '
   # Temporarily replace dist/linux/CrewLauncher with Nuitka build for packaging
   mv dist/linux/CrewLauncher dist/linux/CrewLauncher.pyinstaller 2>/dev/null || true
   ln -sf linux-nuitka/CrewLauncher dist/linux/CrewLauncher
-  bash build/build_packages_linux.sh pacman
+  PKG_NAME_NUITKA="isam-aulauncher-nuitka"
+  PKGVER="${VERSION//-/.}"
+  WORK="/work/build/pkg-work"
+  STAGE="$WORK/stage"
+  rm -rf "$WORK"
+  mkdir -p "$STAGE"
+  cp -a "$APP_DIR" "$STAGE/app"
+  PYTHON_BIN="python"
+  if ! command -v python >/dev/null 2>&1 && command -v python3 >/dev/null 2>&1; then
+      PYTHON_BIN="python3"
+  fi
+  "$PYTHON_BIN" build/pkg/make_icon.py src/launcher/resources/icon.ico "$STAGE/icons"
+  cp build/pkg/isam-au.desktop "$STAGE/isam-au.desktop"
+  
+  if command -v makepkg >/dev/null 2>&1; then
+      echo "[pacman] building .pkg.tar.zst (Nuitka)"
+      local dir="$WORK/arch"
+      mkdir -p "$dir"
+      export STAGE
+      cat > "$dir/PKGBUILD" <<EOF
+pkgname=$PKG_NAME_NUITKA
+pkgver=$PKGVER
+pkgrel=1
+pkgdesc="Among Us launcher with mod support (Nuitka compiled)"
+arch=('"'"'x86_64'"'"')
+url="https://github.com/isam-ahmed0/Isam-AULauncher"
+license=('"'"'custom'"'"')
+options=('"'"'!strip'"'"' '"'"'!debug'"'"')
+depends=('"'"'glibc'"'"' '"'"'libglvnd'"'"' '"'"'fontconfig'"'"' '"'"'freetype2'"'"' '"'"'libxcb'"'"' '"'"'libxkbcommon'"'"' '"'"'dbus'"'"' '"'"'zlib'"'"')
+optdepends=('"'"'wine: run Among Us directly'"'"' '"'"'lutris: manage and launch the game'"'"' '"'"'xdg-utils: open folders and links'"'"')
+source=()
+package() {
+  install -d "\$pkgdir/opt/isam-aulauncher"
+  cp -a "\$STAGE/app/." "\$pkgdir/opt/isam-aulauncher/"
+  install -d "\$pkgdir/usr/bin"
+  ln -s /opt/isam-aulauncher/CrewLauncher "\$pkgdir/usr/bin/isam-au"
+  install -Dm644 "\$STAGE/isam-au.desktop" "\$pkgdir/usr/share/applications/isam-au.desktop"
+  for sz in 16 32 48 64 128 256; do
+    [ -f "\$STAGE/icons/\$sz.png" ] && install -Dm644 "\$STAGE/icons/\$sz.png" "\$pkgdir/usr/share/icons/hicolor/\${sz}x\${sz}/apps/isam-au.png"
+  done
+}
+EOF
+      ( cd "$dir" && PKGDEST="/work/dist/packages" makepkg -f --nodeps --noconfirm >/dev/null )
+      mv "/work/dist/packages"/${PKG_NAME_NUITKA}-${PKGVER}-1-*.pkg.tar.zst "/work/dist/packages/CrewLauncher-nuitka.pkg.tar.zst"
+      echo "  -> /work/dist/packages/CrewLauncher-nuitka.pkg.tar.zst"
+  fi
   # Restore
   rm -f dist/linux/CrewLauncher
   mv dist/linux/CrewLauncher.pyinstaller dist/linux/CrewLauncher 2>/dev/null || true
@@ -50,4 +95,4 @@ runuser -u builder -- env HOME=/home/builder bash -c '
 
 chmod -R a+rw /work/dist /work/build 2>/dev/null || true
 echo "[ci-arch-nuitka] done. Package:"
-ls -lh /work/dist/packages/CrewLauncher.pkg.tar.zst
+ls -lh /work/dist/packages/CrewLauncher-nuitka.pkg.tar.zst
