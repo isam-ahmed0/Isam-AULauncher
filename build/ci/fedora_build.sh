@@ -12,7 +12,7 @@ dnf install -y --setopt=install_weak_deps=False \
   mesa-libGL mesa-libEGL libglvnd-egl libglvnd-glx mesa-dri-drivers \
   fontconfig freetype libxkbcommon libxkbcommon-x11 \
   libxcb libX11 libXext libXrender libXi libSM libICE \
-  libXrandr libXcursor libXfixes libXdamage libxcomposite dbus-libs \
+  libXrandr libXcursor libXfixes libXdamage libXcomposite dbus-libs \
   python3-tkinter tk
 
 echo "[ci-fedora] installing Python packages"
