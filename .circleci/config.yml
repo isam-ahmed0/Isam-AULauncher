@@ -16,6 +16,10 @@ parameters:
     type: boolean
     default: false
     description: "Set true to run the manual workflow (used for non-tag builds/releases)."
+  build_nuitka:
+    type: boolean
+    default: false
+    description: "Set true to run the Nuitka build workflow (separate from release)."
 
 executors:
   ubuntu:
@@ -231,15 +235,12 @@ workflows:
               ignore: /.*/
       - build-arch:
           filters: *tag-only
-      - build-arch-nuitka:
-          filters: *tag-only
       - build-fedora:
           filters: *tag-only
       - release:
           requires:
             - build-ubuntu
             - build-arch
-            - build-arch-nuitka
             - build-fedora
           filters: *tag-only
 
@@ -250,10 +251,18 @@ workflows:
     jobs:
       - build-ubuntu
       - build-arch
-      - build-arch-nuitka
       - build-fedora
       - release:
           requires:
             - build-ubuntu
             - build-arch
             - build-fedora
+
+  # Separate workflow for Nuitka builds - manual only, doesn't block release
+  nuitka-build:
+    when: << pipeline.parameters.build_nuitka >>
+    jobs:
+      - build-arch-nuitka:
+          filters:
+            branches:
+              ignore: /.*/

@@ -14,7 +14,7 @@ VERSION="$(grep -m1 '^LAUNCHER_VERSION' src/launcher/config.py | sed -E 's/.*"([
 echo "[nuitka-arch] Building CrewLauncher $VERSION with Nuitka"
 
 python -m nuitka --standalone \
-  --name CrewLauncher \
+  --output-filename=CrewLauncher \
   --enable-plugin=pyside6 \
   --enable-plugin=tk-inter \
   --include-module=customtkinter \
@@ -35,7 +35,7 @@ ls -lh dist/linux-nuitka/CrewLauncher/
 # Build Itch Login Fixer with Nuitka
 echo "[nuitka-arch] Building Itch_Login_Fixer with Nuitka"
 python -m nuitka --standalone \
-  --name Itch_Login_Fixer \
+  --output-filename=Itch_Login_Fixer \
   --enable-plugin=tk-inter \
   --include-module=customtkinter \
   --include-package=customtkinter \
