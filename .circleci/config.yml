@@ -16,10 +16,14 @@ parameters:
     type: boolean
     default: false
     description: "Set true to run the manual workflow (used for non-tag builds/releases)."
-  build_nuitka:
+  run_release:
+    type: boolean
+    default: true
+    description: "Run release workflows (default true). Set false to skip release builds."
+  run_nuitka:
     type: boolean
     default: false
-    description: "Set true to run the Nuitka build workflow (separate from release)."
+    description: "Run Nuitka-only workflow (default false)."
 
 executors:
   ubuntu:
@@ -226,6 +230,7 @@ jobs:
 
 workflows:
   build-and-release:
+    when: << pipeline.parameters.run_release >>
     jobs:
       - build-ubuntu:
           filters: &tag-only
@@ -247,7 +252,10 @@ workflows:
   # Runs only when manually triggered with build_manually=true, so pushes to
   # the default branch cost no build minutes. Uses the branch HEAD config.
   manual:
-    when: << pipeline.parameters.build_manually >>
+    when:
+      and:
+        - << pipeline.parameters.build_manually >>
+        - << pipeline.parameters.run_release >>
     jobs:
       - build-ubuntu
       - build-arch
@@ -258,9 +266,12 @@ workflows:
             - build-arch
             - build-fedora
 
-  # Separate workflow for Nuitka builds ONLY - manual trigger, no other builds
+  # Nuitka-only workflow: runs only when run_nuitka=true, run_release=false
   nuitka-only:
-    when: << pipeline.parameters.build_nuitka >>
+    when:
+      and:
+        - << pipeline.parameters.run_nuitka >>
+        - not: << pipeline.parameters.run_release >>
     jobs:
       - build-arch-nuitka:
           filters:
