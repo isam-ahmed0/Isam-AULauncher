@@ -43,16 +43,16 @@ EXCLUDES=(
   --exclude-module dearpygui
 )
 
-# Custom-GUI runtime: tiny on purpose (tkinter + customtkinter only).
-# Fails loudly so a release cannot ship without it.
 PYTHON_BIN="python"
-if ! command -v python >/dev/null 2>&1 && command -v python3 >/dev/null 2>&1; then
+if [ -f ".venv/bin/python" ]; then
+    PYTHON_BIN=".venv/bin/python"
+elif command -v python3 >/dev/null 2>&1; then
     PYTHON_BIN="python3"
 fi
+
 $PYTHON_BIN - <<'PY'
 import tkinter
 import customtkinter  # noqa: F401
-print(f"[build] custom-GUI runtime OK (tk {tkinter.TkVersion})")
 PY
 
 pyinstaller --noconfirm --onedir --windowed --noupx \

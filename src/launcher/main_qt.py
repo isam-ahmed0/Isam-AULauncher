@@ -1,9 +1,4 @@
-"""CrewLauncher - PySide6 (Qt) front-end entry.
-
-Boots the full Qt interface with splash screen and the itch.io login gate.
-On Linux the Qt platform (X11 ``xcb`` preferred, ``wayland`` second) is picked
-automatically before PySide6 is imported, see :mod:`qt_platform`.
-"""
+"""CrewLauncher - PySide6 (Qt) front-end entry."""
 import sys
 import argparse
 import logging
@@ -35,10 +30,8 @@ def main(argv=None, lock_held=False):
         return 2
 
     parser = argparse.ArgumentParser(prog=APP_NAME, description=APP_NAME)
-    parser.add_argument("--no-splash", action="store_true",
-                        help="Skip splash screen")
-    parser.add_argument("--splash-2", action="store_true",
-                        help="Use animated WebM video splash")
+    parser.add_argument("--no-splash", action="store_true")
+    parser.add_argument("--splash-2", action="store_true")
     args, _ = parser.parse_known_args(argv)
 
     from PySide6.QtWidgets import QApplication

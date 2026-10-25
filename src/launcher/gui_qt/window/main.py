@@ -7,44 +7,22 @@ import sys
 import logging
 from pathlib import Path
 
-from PySide6.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
-    QPushButton, QStackedWidget, QLabel, QFrame, QProgressBar,
-    QStatusBar, QComboBox, QScrollArea, QSystemTrayIcon, QMenu,
-    QListWidget, QFileDialog, QInputDialog,
-)
-from PySide6.QtCore import Qt, QTimer, QPropertyAnimation, QEasingCurve, QSize
-from PySide6.QtGui import QIcon, QAction, QPixmap
-from PySide6.QtWidgets import QGraphicsOpacityEffect
-
-from gui_qt.worker import _UISignaler, Worker
-from ..widgets import (
-    HeroBanner, CoverLabel, _ICON_PATH, SIDEBAR_W,
-    enable_hover_glow, start_playing_pulse, stop_playing_pulse,
-)
-from gui_qt import icons
-from ..dialogs import SettingsPage, AboutPage
-
-from config import (
-    Config, APP_NAME, BRAND_SHORT, MAKER, LAUNCHER_VERSION,
-)
-from network import NetworkManager, DiscordRPC
-import gui_qt.theme as theme
-from gui_qt.theme import apply_theme
-from gui_qt.game import GameManager
-from gui_qt.regions import RegionManager
-from gui_qt.profiles import ProfileManager
-
-from .game_actions import GameActionsMixin
-from .region_editor import RegionEditorMixin
-from .mod_manager import ModManagerMixin
-from .itch_profile import ItchProfileMixin
-from .updater import UpdaterMixin
-from ..assets_manager import AssetsManagerMixin
+# Lazy imports for PySide6 and other heavy modules - will be imported as needed
 
 
 class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProfileMixin, UpdaterMixin, AssetsManagerMixin):
     def __init__(self, existing_app=None):
+        # Import heavy modules lazily
+        from PySide6.QtWidgets import QApplication
+        from config import Config
+        from network import NetworkManager, DiscordRPC
+        from gui_qt.game import GameManager
+        from gui_qt.regions import RegionManager
+        from gui_qt.profiles import ProfileManager
+        import gui_qt.theme as theme
+        from gui_qt.theme import apply_theme
+        from gui_qt.worker import _UISignaler
+        
         self.config = Config()
         try:
             from platform_utils import set_lutris_override

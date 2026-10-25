@@ -61,7 +61,7 @@ python -m nuitka --standalone \
 
 # Convert Fixer to onedir structure
 mkdir -p dist/linux-nuitka/Itch_Login_Fixer
-mv dist/linux-nuitka/main.dist/Itch_Login_Fixer dist/linux-nuitka/Itch_Login_Fixer/
+mv dist/linux-nuitka/Itch_Login_Fixer.dist/Itch_Login_Fixer dist/linux-nuitka/Itch_Login_Fixer/
 cp -r src/fixer/assets dist/linux-nuitka/Itch_Login_Fixer/
 
 echo "[nuitka-arch] Built: dist/linux-nuitka/Itch_Login_Fixer/"
