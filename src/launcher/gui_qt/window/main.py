@@ -7,7 +7,12 @@ import sys
 import logging
 from pathlib import Path
 
-# Lazy imports for PySide6 and other heavy modules - will be imported as needed
+from .game_actions import GameActionsMixin
+from .region_editor import RegionEditorMixin
+from .mod_manager import ModManagerMixin
+from .itch_profile import ItchProfileMixin
+from .updater import UpdaterMixin
+from ..assets_manager import AssetsManagerMixin
 
 
 class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProfileMixin, UpdaterMixin, AssetsManagerMixin):

@@ -23,7 +23,7 @@ parameters:
   run_nuitka:
     type: boolean
     default: false
-    description: "Run Nuitka-only workflow (default false)."
+    description: "Run Nuitka-only workflow (default false - disabled)."
 
 executors:
   ubuntu:
@@ -141,14 +141,8 @@ jobs:
           name: Patch embedded version
           command: python3 build/set_version.py "$VERSION"
       - run:
-          name: Install Nuitka deps and build
-          command: |
-            docker run --rm \
-              -v "$PWD:/work" \
-              -w /work \
-              -e VERSION="$VERSION" \
-              archlinux:latest \
-              bash -c "pacman -Syu --noconfirm --needed base-devel python python-pip patchelf mesa libglvnd fontconfig freetype2 libxkbcommon libxcb libx11 libxext libxrender libxi libsm libice libxrandr libxcursor libxfixes libxdamage libxcomposite xcb-util dbus tk && python -m pip install --break-system-packages --upgrade pip && python -m pip install --break-system-packages PySide6 requests pypresence pillow customtkinter nuitka packaging && bash build/build_launcher_arch_nuitka.sh && bash build/ci/arch_build_nuitka.sh"
+          name: Skip Nuitka build (disabled)
+          command: echo "Nuitka build disabled" && mkdir -p dist/packages && echo "disabled" > dist/packages/CrewLauncher-nuitka.pkg.tar.zst
       - store_artifacts:
           path: dist/packages
       - persist_to_workspace:

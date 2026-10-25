@@ -24,7 +24,8 @@ python -m nuitka --standalone \
   --output-dir=dist/linux-nuitka \
   --remove-output \
   --assume-yes-for-downloads \
-  --jobs=$(nproc 2>/dev/null || echo 4) \
+  --jobs=4 \
+  --lto=yes \
   src/launcher/main.py
 
 # Nuitka standalone creates main.dist/
@@ -65,7 +66,7 @@ python -m nuitka --standalone \
   --output-dir=dist/linux-nuitka \
   --remove-output \
   --assume-yes-for-downloads \
-  --jobs=$(nproc 2>/dev/null || echo 4) \
+  --jobs=4 \
   src/fixer/Itch_Login_Fixer.py
 
 rm -rf dist/linux-nuitka/Itch_Login_Fixer
