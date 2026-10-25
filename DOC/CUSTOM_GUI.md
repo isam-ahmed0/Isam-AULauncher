@@ -49,7 +49,7 @@ def main(context):           # required
 
 ## The context object
 
-`main()` receives an `AppContext` with the launcher backends and helpers:
+`main()` receives an `AppContext` with the launcher backends and helpers. The API is intentionally broad to let you build any kind of GUI/CLI:
 
 | Member | Description |
 |--------|-------------|
@@ -57,16 +57,40 @@ def main(context):           # required
 | `context.network` | `NetworkManager` - `fetch_text(url)`, `get_releases()`, `download_file(...)` |
 | `context.discord` | `DiscordRPC` - `connect()`, `update_status(state, details)`, `disconnect()` |
 | `context.game` | `GameCore` - the raw game backend |
-| `context.version()` | Installed game version (or `"Not Installed"`) |
-| `context.game_path()` | `Path` of the install folder or `None` |
+| `context.profiles` | `ProfileManager` (if available) |
+| `context.version()` / `context.get_version()` | Installed game version (or `"Not Installed"`) |
+| `context.game_path()` / `context.get_game_path()` | `Path` of the install folder or `None` |
+| `context.set_game_path(path)` | Set install path |
 | `context.is_installed()` | `True` when `Among Us.exe` exists |
 | `context.is_running` | `True` while the game process is alive |
-| `context.install(progress=None, status=None)` | Download/update the game; returns `True` on success |
-| `context.launch()` | Launch the game (uses your Wine/GPU setup on Linux); returns `True` on success |
-| `context.stop()` | Stop the game |
+| `context.pid` | Game process id |
+| `context.install(progress=None, status=None, version=None)` | Download/update the game; returns `True` on success |
+| `context.download_game(...)`, `context.update_game(...)` | Aliases for `install()` |
+| `context.launch(profile=None, method=None)` / `context.launch_game(...)` | Launch the game (uses your Wine/GPU setup on Linux); returns `True` on success |
+| `context.stop()` / `context.stop_game()` | Stop the game |
 | `context.poll()` | Refresh the running state (returns bool) |
-| `context.guis_dir` | The `guis/` folder as a `Path` |
+| `context.guis_dir`, `context.appdata_dir`, `context.profiles_dir`, `context.cache_dir` | Launcher data directories |
 | `context.log(message)` | Write to the launcher log |
+| `context.get_setting(key, default)` / `context.set_setting(key, value, save=True)` / `context.get_settings()` / `context.save_settings()` | Access launcher settings |
+| `context.fetch_text(url)`, `context.download_file(url, path, cb)`, `context.get_releases()` | Network helpers |
+| `context.list_profiles()`, `context.create_profile(name)`, `context.delete_profile(name)`, `context.rename_profile(old,new)`, `context.get_active_profile()`, `context.set_active_profile(name)`, `context.switch_profile(name)`, `context.get_profile_path(name=None)`, `context.import_mods(profile_name=None, dll_paths=[])`, `context.list_mods(profile_name=None)`, `context.remove_mod(profile_name=None, mod_path=None)` | Profile & mod management |
+| `context.run_thread(target, *args, **kwargs)`, `context.run_async(fn, callback=None)` | Threading helpers |
+| `context.extract_zip(zip_path, extract_to, cb)`, `context.delete(path)`, `context.format_size(b)`, `context.open_folder(path=None)` | File utilities |
+| `context.show_message(title, msg)`, `context.show_error(title, msg)` | Simple dialogs |
+| `context.itch_login(callback=None)`, `context.get_itch_profile(timeout=8.0)`, `context.get_itch_username(timeout=8.0)`, `context.get_itch_token()`, `context.save_itch_token(token)`, `context.clear_itch_token()` | itch.io auth/profile |
+| `context.APP_NAME`, `context.LAUNCHER_VERSION`, `context.IS_WINDOWS`, `context.IS_LINUX`, `context.get_platform()` | App info/platform |
+| `context.get_wine_prefix()`, `context.get_wine_binary()`, `context.get_gpu()`, `context.set_gpu(id)`, `context.set_wine_binary(path)`, `context.get_default_game_dir()` | Linux/Wine helpers |
+| `context.check_update(current_version=None)`, `context.get_latest_version()`, `context.restart_launcher()`, `context.get_launcher_log_path()` | Updates/system |
+| `context.launch_modded(...)`, `context.get_mod_status(...)`, `context.get_mod_count(...)`, `context.add_to_path(...)` | Extended game/mod helpers |
+
+Notes:
+
+- `progress(pct)` and `status(text, level)` callbacks may fire from worker
+  threads. With tkinter, marshal back with `root.after(0, ...)`.
+- `context.launch()` on Linux uses the Wine build and GPU configured in the
+  builtin interface's Settings. Run the setup wizard there first.
+- Discord RPC only connects if you call `context.discord.connect()`
+  (or the user enabled it and you leave it alone).
 
 Notes:
 
