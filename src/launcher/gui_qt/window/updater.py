@@ -90,7 +90,7 @@ class UpdaterMixin:
     def _prompt_news(self, item):
         if self._shutting_down or item is None:
             return
-        preview = news_feed.news_to_plain(item.text)
+        preview = news_feed.news_to_plain(news_feed.newest_post(item))
         if len(preview) > 600:
             preview = preview[:600].rstrip() + "..."
         box = QMessageBox(self.window)

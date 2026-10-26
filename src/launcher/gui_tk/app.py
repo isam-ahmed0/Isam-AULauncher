@@ -381,9 +381,13 @@ class LauncherLiteApp:
             return
         self._news_unseen = False
         news_feed.mark_seen(self.config, self.news_item)
+        preview = news_feed.news_to_plain(news_feed.newest_post(self.news_item))
+        if len(preview) > 300:
+            preview = preview[:300].rstrip() + "..."
         if messagebox.askyesno(
                 "News",
-                "A new message was posted on the News page.\n\nOpen it now?",
+                "A new message was posted on the News page.\n\n"
+                f"{preview}\n\nOpen the News page?",
                 parent=self.root):
             self._open_news()
 

@@ -80,6 +80,22 @@ def get_cached_news(config) -> Optional[NewsItem]:
     return parse_news(config.settings.get("news_cache") or "")
 
 
+def split_posts(text: str):
+    """Split the feed into posts. Posts are separated by a ``---`` line.
+
+    Posts are shown in file order, so put the newest one first.
+    """
+    parts = re.split(r"^\s*---\s*$", text or "", flags=re.MULTILINE)
+    return [p.strip() for p in parts if p.strip()]
+
+
+def newest_post(item: Optional[NewsItem]) -> str:
+    if item is None:
+        return ""
+    posts = split_posts(item.text)
+    return posts[0] if posts else ""
+
+
 def news_to_plain(text: str) -> str:
     """Lightweight Markdown → plain text for the Tk UI.
 
@@ -89,6 +105,7 @@ def news_to_plain(text: str) -> str:
     text = re.sub(r"!\[([^\]]*)\]\(([^)\s]+)\)", r"Image: \2", text)
     text = re.sub(r"\[([^\]]+)\]\(([^)\s]+)\)", r"\1 (\2)", text)
     text = re.sub(r"^#{1,6}\s*", "", text, flags=re.MULTILINE)
+    text = re.sub(r"^\s*---\s*$", "─" * 46, text, flags=re.MULTILINE)
     text = re.sub(r"^\s*[-*+]\s+", "  - ", text, flags=re.MULTILINE)
     text = text.replace("**", "").replace("__", "")
     text = re.sub(r"`([^`]*)`", r"\1", text)

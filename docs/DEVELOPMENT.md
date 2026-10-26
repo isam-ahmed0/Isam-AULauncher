@@ -77,6 +77,10 @@ served from `release/message.txt` at `MESSAGE_URL` (see `src/launcher/news.py`).
 
 - Edit `release/message.txt` in Markdown — links `[text](url)` and images
   `![alt](https://.../img.png)` are supported (host images on GitHub raw).
+- The file is a feed: separate posts with a `---` line and put the newest
+  post first. Start each post with a dated heading, e.g.
+  `## 2026-10-26 — Update 1.1` (the launcher shows posts in file order).
+- The "new message" prompt previews the newest post; the News page shows all.
 - Publish with `python scripts/sync_release.py` (same as other release files).
 - Users are notified only when the content changes. To force a re-notification
   for an unchanged file, change the marker on the first line:
