@@ -38,7 +38,7 @@ MAKER = "Isam"
 LAUNCHER_VERSION = "1.0-beta.6"
 
 VERSION_URL = "https://raw.githubusercontent.com/jogamerforgames2021/BootstrapperTEST/main/Version.txt"
-MESSAGE_URL = "https://raw.githubusercontent.com/jogamerforgames2021/AmongUsLauncherNew/refs/heads/main/message.txt"
+MESSAGE_URL = "https://raw.githubusercontent.com/isam-ahmed0/Isam-AULauncher/crew/release/message.txt"
 PATCHES_URL = "https://raw.githubusercontent.com/jogamerforgames2021/AmongUsLauncherNew/refs/heads/main/Patches.xml"
 SOURCE_CODE_URL = "https://github.com/isam-ahmed0/Isam-AULauncher"
 DOCS_BASE_URL = f"{SOURCE_CODE_URL}/blob/main/DOC"

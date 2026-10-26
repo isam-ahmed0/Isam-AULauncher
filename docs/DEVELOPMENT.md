@@ -73,7 +73,10 @@ raw-GitHub doc URLs and runtime downloads depend on those exact paths.
 ## News messages
 
 The News page (Qt sidebar / Lite News button) shows the remote announcement
-served from `release/message.txt` at `MESSAGE_URL` (see `src/launcher/news.py`).
+served from `release/message.txt` on the `crew` branch of
+`isam-ahmed0/Isam-AULauncher` (`MESSAGE_URL`; see `src/launcher/news.py`).
+The game-files repo (`jogamerforgames2021/AmongUsLauncherNew`) is not used for
+messages.
 
 - Edit `release/message.txt` in Markdown — links `[text](url)` and images
   `![alt](https://.../img.png)` are supported (host images on GitHub raw).
@@ -81,7 +84,8 @@ served from `release/message.txt` at `MESSAGE_URL` (see `src/launcher/news.py`).
   post first. Start each post with a dated heading, e.g.
   `## 2026-10-26 — Update 1.1` (the launcher shows posts in file order).
 - The "new message" prompt previews the newest post; the News page shows all.
-- Publish with `python scripts/sync_release.py` (same as other release files).
+- Publish by pushing `release/message.txt` to `crew` (or edit it directly on
+  GitHub in the `crew` branch). No release-hosting sync is involved.
 - Users are notified only when the content changes. To force a re-notification
   for an unchanged file, change the marker on the first line:
   `<!-- id: some-new-id -->`.
