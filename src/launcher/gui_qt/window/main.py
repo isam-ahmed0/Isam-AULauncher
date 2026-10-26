@@ -40,7 +40,10 @@ from .region_editor import RegionEditorMixin
 from .mod_manager import ModManagerMixin
 from .itch_profile import ItchProfileMixin
 from .updater import UpdaterMixin
+from .news import NewsBrowser
 from ..assets_manager import AssetsManagerMixin
+
+import news as news_feed
 
 
 class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProfileMixin, UpdaterMixin, AssetsManagerMixin):
@@ -69,6 +72,8 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         self._busy = False
         self._active_page = "game"
         self._workers = []
+        self.news_item = None
+        self._news_notice_pending = None
 
         self._locate_pending = False
         self._change_location_pending = False
@@ -206,6 +211,7 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         self.nav_icon_names = {}
         for label, idx, icon_name in [
             ("Home", 0, "game-controller"),
+            ("News", 7, "megaphone"),
             ("Assets", 6, "package"),
             ("Tools", 1, "wrench"),
             ("Profile", 2, "user-circle"),
@@ -242,6 +248,7 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         self.page_settings = SettingsPage(self.config, self.discord, self.profile_mgr)
         self.page_about = AboutPage()
         self.page_assets = self._build_assets_page()
+        self.page_news = self._build_news_page()
         self.pages.addWidget(self.page_game)
         self.pages.addWidget(self.page_tools)
         self.pages.addWidget(self.page_profile)
@@ -249,6 +256,7 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         self.pages.addWidget(self.page_settings)
         self.pages.addWidget(self.page_about)
         self.pages.addWidget(self.page_assets)
+        self.pages.addWidget(self.page_news)
 
         right_layout.addWidget(self.pages, 1)
 
@@ -578,6 +586,52 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         self.custom_media.set_text(
             "No custom image or note yet.\nUse Image / Note to add one."
         )
+
+    # ------------------------------------------------------------------ news page
+    def _build_news_page(self):
+        page = QWidget()
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+
+        content = QWidget()
+        layout = QVBoxLayout(content)
+        layout.setContentsMargins(32, 20, 32, 20)
+        layout.setSpacing(16)
+
+        title = QLabel("NEWS")
+        title.setObjectName("sectionTitle")
+        layout.addWidget(title)
+
+        desc = QLabel("Updates and messages from the developers.")
+        desc.setObjectName("mutedText")
+        layout.addWidget(desc)
+
+        row = QHBoxLayout()
+        row.setSpacing(10)
+        refresh_btn = QPushButton("Refresh")
+        refresh_btn.setObjectName("toolBtn")
+        refresh_btn.setFixedHeight(38)
+        refresh_btn.clicked.connect(self._cb_refresh_news)
+        row.addWidget(refresh_btn)
+        row.addStretch()
+        layout.addLayout(row)
+
+        self.news_browser = NewsBrowser(self.network)
+        self.news_browser.setMinimumHeight(300)
+        layout.addWidget(self.news_browser, 1)
+
+        if self.news_item and self.news_item.text:
+            self.news_browser.setMarkdown(self.news_item.text)
+
+        scroll.setWidget(content)
+        outer = QVBoxLayout(page)
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.addWidget(scroll)
+        return page
+
+    def _cb_refresh_news(self):
+        self._run(self._load_news)
 
     def _build_tools_page(self):
         page = QWidget()
@@ -960,6 +1014,9 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         return lbl
 
     def _switch_page(self, index, label):
+        if label == "News":
+            news_feed.mark_seen(self.config, self.news_item)
+            self._news_notice_pending = None
         if self.pages.currentIndex() == index:
             return
 

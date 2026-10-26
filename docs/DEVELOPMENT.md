@@ -70,6 +70,19 @@ workflows in `.github/workflows/` are the older pipeline. See
 Do not move or rename `DOC/`, `isam-client.zip` or `release/` contents: builds,
 raw-GitHub doc URLs and runtime downloads depend on those exact paths.
 
+## News messages
+
+The News page (Qt sidebar / Lite News button) shows the remote announcement
+served from `release/message.txt` at `MESSAGE_URL` (see `src/launcher/news.py`).
+
+- Edit `release/message.txt` in Markdown — links `[text](url)` and images
+  `![alt](https://.../img.png)` are supported (host images on GitHub raw).
+- Publish with `python scripts/sync_release.py` (same as other release files).
+- Users are notified only when the content changes. To force a re-notification
+  for an unchanged file, change the marker on the first line:
+  `<!-- id: some-new-id -->`.
+- The launcher caches the last message, so the News page still works offline.
+
 ## Custom GUIs
 
 Starter templates live in `src/launcher/resources/custom_gui_*.py` and are

@@ -88,6 +88,7 @@ class Config:
             "lutris_cmd_override": None,
             "gpu_id": "", "wine_binary": "", "linux_setup_complete": False,
             "home_image_path": "", "home_note": "",
+            "news_seen_hash": "", "news_cache": "",
         }
         try:
             if self.config_file.exists():

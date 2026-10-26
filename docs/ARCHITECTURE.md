@@ -54,6 +54,7 @@ If Qt cannot start on Linux, `main.py` transparently falls back to Lite.
 | `itch_oauth.py` | Full itch.io OAuth flow + EOS auth handoff (tools-free) |
 | `itch_auth.py` | Qt adapter kept for compatibility (`gui_qt.login`, `window/itch_profile`) |
 | `single_instance.py` | Cross-platform advisory lock in the app data dir |
+| `news.py` | Remote announcement (`MESSAGE_URL`): fetch, change detection via seen-hash/`<!-- id -->` marker, offline cache, Markdown→plain text for Tk |
 | `app_restart.py` | Re-exec the launcher (used after UI/theme changes) |
 | `qt_platform.py` | Chooses/persists the Qt display backend, distro hints for missing libs |
 | `ui_registry.py` | Builtin GUI list, custom GUI discovery/loading, `AppContext` |
@@ -66,7 +67,10 @@ custom GUIs stay lightweight. GUI imports are always inside functions.
 - `window/main.py` — `LauncherApp`, the main window. Pages are built in
   `_build_*` methods; behavior comes from mixins:
   `window/game_actions.py`, `window/mod_manager.py`, `window/region_editor.py`,
-  `window/itch_profile.py`, `window/updater.py`.
+  `window/itch_profile.py`, `window/updater.py` (also loads the news feed and
+  shows the change-only news notice).
+- `window/news.py` — `NewsBrowser`, the News page Markdown viewer (fetches
+  remote images through the network session).
 - `theme.py` + `themes/*.py` — palettes and the generated QSS.
 - `splash.py` / `video_splash.py` — static and video splash screens.
 - `login.py` — itch.io login window.
@@ -83,6 +87,7 @@ custom GUIs stay lightweight. GUI imports are always inside functions.
 - `app.py` — `LauncherLiteApp` (single window: install/play/uninstall,
   settings, Discord RPC).
 - `login.py`, `setup_wizard.py`, `settings.py`, `theme.py`, `util.py`.
+- `news.py` — `NewsDialog`: shows the remote announcement with clickable links.
 
 ## Other executables
 

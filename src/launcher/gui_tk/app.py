@@ -20,6 +20,7 @@ from config import (
 from file_manager import FileManager
 from platform_utils import IS_LINUX, IS_WINDOWS, open_local_path
 from itch_oauth import fetch_itch_profile, fetch_itch_username, read_itch_token
+import news as news_feed
 import gui_tk.theme as theme
 from gui_tk.theme import apply_theme
 from gui_tk.util import UIQueue, run_thread
@@ -54,6 +55,9 @@ class LauncherLiteApp:
         self._profile = {"token": False, "username": None, "among_us_name": None, "platforms": []}
         self.current_version = config.get_version() or "Not Installed"
         self.latest_version = None
+        self.news_item = None
+        self._news_unseen = False
+        self._news_prompt_pending = False
 
         apply_theme(self.root)
         self._wire_game_callbacks()
@@ -167,15 +171,17 @@ class LauncherLiteApp:
 
         tools = ttk.Frame(card, style="Card.TFrame")
         tools.grid(row=3, column=0, sticky="ew", pady=(16, 0))
-        for i in range(3):
+        for i in range(4):
             tools.columnconfigure(i, weight=1)
         self.open_btn = ttk.Button(tools, text="Open Folder", command=self._open_folder)
         self.open_btn.grid(row=0, column=0, sticky="ew", padx=(0, 4))
+        ttk.Button(tools, text="News", command=self._open_news).grid(
+            row=0, column=1, sticky="ew", padx=4)
         self.uninstall_btn = ttk.Button(
             tools, text="Uninstall", style="Danger.TButton", command=self._uninstall)
-        self.uninstall_btn.grid(row=0, column=1, sticky="ew", padx=4)
+        self.uninstall_btn.grid(row=0, column=2, sticky="ew", padx=4)
         ttk.Button(tools, text="Settings", command=self._open_settings).grid(
-            row=0, column=2, sticky="ew", padx=(4, 0))
+            row=0, column=3, sticky="ew", padx=(4, 0))
 
         # Footer
         footer = ttk.Frame(root, padding=(20, 0, 20, 14))
@@ -274,6 +280,9 @@ class LauncherLiteApp:
             {"token": True, "username": None, "among_us_name": None, "platforms": []})
         self._load_profile()
         self._refresh_state()
+        if self._news_prompt_pending:
+            self._news_prompt_pending = False
+            self.root.after(400, self._prompt_news)
 
     def _load_profile(self):
         def work():
@@ -338,6 +347,16 @@ class LauncherLiteApp:
                     self.latest_version = latest
                 self.ui.call(self._refresh_state)
 
+                item = news_feed.fetch_news(self.network)
+                if item is None:
+                    item = news_feed.get_cached_news(self.config)
+                else:
+                    news_feed.cache_news(self.config, item)
+                self.news_item = item
+                self._news_unseen = news_feed.is_unseen(self.config.settings, item)
+                if self._news_unseen:
+                    self.ui.call(self._prompt_news)
+
                 if self.config.settings.get("discord_rpc"):
                     self.discord.connect()
                     self.ui.call(self.apply_discord_rpc)
@@ -346,6 +365,27 @@ class LauncherLiteApp:
             except Exception:
                 logging.exception("Initial load failed")
         run_thread(work, "initial-load")
+
+    # ------------------------------------------------------------------ news
+    def _open_news(self):
+        news_feed.mark_seen(self.config, self.news_item)
+        self._news_unseen = False
+        from gui_tk.news import NewsDialog
+        NewsDialog(self.root, self.news_item)
+
+    def _prompt_news(self):
+        if self._closing or not self._news_unseen or self.news_item is None:
+            return
+        if self._gated:
+            self._news_prompt_pending = True
+            return
+        self._news_unseen = False
+        news_feed.mark_seen(self.config, self.news_item)
+        if messagebox.askyesno(
+                "News",
+                "A new message was posted on the News page.\n\nOpen it now?",
+                parent=self.root):
+            self._open_news()
 
     def _check_launcher_update(self):
         try:
