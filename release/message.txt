@@ -1,17 +1,42 @@
-1.0-beta.6
+# 1.0-beta.6
 - GPU selection
 - wine/proton selection
 - Lutris removed
 
-1.0-beta.1 and 1.0-beta.2
+# 1.0-beta.4 to 1.0-beta.5
+- Ubuntu glibc fix
+- normal feauters
+
+# 1.0-beta.1 and 1.0-beta.2
 - Full linux port
 - Fixed itch login
 - Rebranded to Crewlauncher
 - Lite builds(self builds)
+- CI/CD by appveyor and circleci
 
-0.7-1
+# 0.7-1
 - Fixes
 
-0.7
-- LTS
+# 0.7
+- Major LTS
+- Themes
+- Updated Installer
+- Boosted Download
+- isam-client
 
+# 0.6
+- New structure
+
+# 0.5
+- Old LTS
+
+# 0.1 to 0.4
+- Test
+- Core features
+- Tkinter
+- DPG
+- Pyside6
+- 
+
+# 0.x
+- skeleton and concept
