@@ -1,1 +1,17 @@
-Hello!
+1.0-beta.6
+- GPU selection
+- wine/proton selection
+- Lutris removed
+
+1.0-beta.1 and 1.0-beta.2
+- Full linux port
+- Fixed itch login
+- Rebranded to Crewlauncher
+- Lite builds(self builds)
+
+0.7-1
+- Fixes
+
+0.7
+- LTS
+
