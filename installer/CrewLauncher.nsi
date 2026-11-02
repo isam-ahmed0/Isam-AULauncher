@@ -13,13 +13,13 @@
 !define APP_SHORT     "CrewLauncher"
 !define COMPANY       "Isam"
 !ifndef VERSION
-  !define VERSION     "1.0-beta.1"
+  !define VERSION     "1.0-alpha"
 !endif
 ; Numeric X.X.X.X for VIProductVersion/FileVersion (VERSION may be a prerelease
 ; tag like 1.0-beta.1, which is not a valid file version). Build scripts pass
 ; /DFILE_VERSION=; this is the fallback.
 !ifndef FILE_VERSION
-  !define FILE_VERSION "0.0.0.0"
+  !define FILE_VERSION "1.0.0.0"
 !endif
 
 ; Repo root = folder above this script (overridden by /DROOT= in build scripts)
