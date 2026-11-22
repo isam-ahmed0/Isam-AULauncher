@@ -297,7 +297,7 @@ class ModCatalogManager:
 
         text = None
         try:
-            text = self.network.fetch_text(self.url)
+            text = self._read_source()
         except Exception as exc:  # defensive: a broken transport must not kill startup
             log.warning("Mod catalog fetch failed: %s", exc)
 
@@ -324,6 +324,17 @@ class ModCatalogManager:
             self.error = ("Using the cached mod catalog (offline)" if cached
                           else "No mod catalog available")
         return cached
+
+    def _read_source(self) -> Optional[str]:
+        """Read the catalog from HTTPS, or from a local path for development."""
+        url = self.url
+        if url.startswith("file://"):
+            from urllib.parse import unquote, urlparse
+            path = Path(unquote(urlparse(url).path))
+            return path.read_text(encoding="utf-8")
+        if "://" not in url and Path(url).is_file():
+            return Path(url).read_text(encoding="utf-8")
+        return self.network.fetch_text(url)
 
     def _cache_stale(self) -> bool:
         try:

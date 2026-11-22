@@ -6,24 +6,29 @@ file plus one downloadable archive per mod, hosted in a GitHub repository you
 control. The launcher never executes code from the catalog itself — it only
 downloads DLL files into the active mod profile.
 
-> The repository URL is `MOD_CATALOG_URL` in `src/launcher/config.py`. Set the
-> environment variable `ISAM_MOD_CATALOG_URL` to point the launcher at a local
-> or test catalog without editing code.
+> The live catalog is `https://raw.githubusercontent.com/isam-ahmed0/au_mods/master/catalog.json`,
+> configured as `MOD_CATALOG_URL` in `src/launcher/config.py`. Set the
+> environment variable `ISAM_MOD_CATALOG_URL` to a URL **or a local file path**
+> to test a catalog without editing code, e.g.
+> `ISAM_MOD_CATALOG_URL=au_mods/catalog.json python src/launcher/main.py`.
 
 ## Repository layout
 
 ```text
-AU-Mod-Catalog/
+au_mods/                         # https://github.com/isam-ahmed0/au_mods
 ├── catalog.json                 # the manifest described below
+├── README.md
 └── mods/
-    ├── cool-mod-1.2.0.zip
-    └── speed-changer-3.0.zip
+    ├── example-hud-1.0.0.zip
+    ├── example-hats-1.0.0.zip
+    └── example-zoom-1.0.0.zip
 ```
 
-`catalog.json` is served with a raw GitHub URL, and each `download_url` points
-to a raw archive URL in the same repository (or a GitHub release asset). Raw
-GitHub URLs must be committed to the default branch; release assets must be
-attached to a published release.
+`catalog.json` is served with a raw GitHub URL from the `master` branch, and
+each `download_url` points to a raw archive URL in the same repository (or a
+GitHub release asset). The checked-in examples are harmless no-op DLLs that
+demonstrate the full browse → install → update flow; replace them with real
+plugins before announcing the catalog to users.
 
 ## Manifest format
 

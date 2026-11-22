@@ -61,7 +61,7 @@ LAUNCHER_SETUP_URL = f"https://github.com/isam-ahmed0/Isam-AULauncher/releases/d
 
 # Remote mod catalog (see docs/MOD_CATALOG.md for the schema and hosting).
 MOD_CATALOG_URL = os.environ.get("ISAM_MOD_CATALOG_URL") or (
-    "https://raw.githubusercontent.com/isam-ahmed0/AU-Mod-Catalog/main/catalog.json"
+    "https://raw.githubusercontent.com/isam-ahmed0/au_mods/master/catalog.json"
 )
 MOD_CATALOG_TTL = 3600  # seconds before a cached catalog is considered stale
 
