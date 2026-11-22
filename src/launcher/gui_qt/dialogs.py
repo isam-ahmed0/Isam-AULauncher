@@ -7,7 +7,7 @@ from PySide6.QtGui import QFontMetrics, QColor, QPainter, QLinearGradient, QBrus
 from PySide6.QtWidgets import (
     QVBoxLayout, QHBoxLayout, QLabel, QFrame, QCheckBox,
     QPushButton, QMessageBox, QGridLayout, QWidget, QScrollArea, QComboBox,
-    QFileDialog, QInputDialog,
+    QInputDialog,
 )
 
 from config import (
@@ -16,7 +16,7 @@ from config import (
 )
 from file_manager import FileManager
 import gui_qt.theme as theme
-from gui_qt.themes import THEMES, is_custom_theme, delete_custom_theme
+from gui_qt.themes import THEMES, delete_custom_theme
 import ui_registry
 
 
@@ -61,7 +61,7 @@ class _ThemeCard(QFrame):
         from PySide6.QtCore import Qt as Qt2
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
-        w, h = self.width(), self.height()
+        w = self.width()
 
         accent = QColor(self._palette["accent"])
         accent2 = QColor(self._palette["accent_2"])
@@ -166,6 +166,17 @@ class SettingsPage(QWidget):
         desc2.setObjectName("mutedText")
         desc2.setContentsMargins(26, 0, 0, 0)
         layout.addWidget(desc2)
+        layout.addSpacing(12)
+
+        cb_mod_updates = QCheckBox("Check for mod updates")
+        cb_mod_updates.setChecked(settings.get("auto_check_mod_updates", True))
+        cb_mod_updates.stateChanged.connect(
+            lambda: self._save_setting("auto_check_mod_updates", cb_mod_updates.isChecked()))
+        layout.addWidget(cb_mod_updates)
+        desc3 = QLabel("Announce catalog mod updates on startup")
+        desc3.setObjectName("mutedText")
+        desc3.setContentsMargins(26, 0, 0, 0)
+        layout.addWidget(desc3)
         layout.addSpacing(12)
 
         # --- Interface section ---

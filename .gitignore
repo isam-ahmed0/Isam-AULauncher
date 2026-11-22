@@ -43,3 +43,5 @@ C:/Users/
 # AI session dumps (accidentally committed once; keep them out)
 /session.json
 /s.json
+
+au_mods

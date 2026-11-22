@@ -59,6 +59,12 @@ CHUNK_SIZE = 8192
 LAUNCHER_UPDATE_URL = "https://raw.githubusercontent.com/isam-ahmed0/Isam-AULauncher/crew/LAUNCHER_VERSION"
 LAUNCHER_SETUP_URL = f"https://github.com/isam-ahmed0/Isam-AULauncher/releases/download/{LAUNCHER_VERSION}/CrewLauncher-Setup.exe"
 
+# Remote mod catalog (see docs/MOD_CATALOG.md for the schema and hosting).
+MOD_CATALOG_URL = os.environ.get("ISAM_MOD_CATALOG_URL") or (
+    "https://raw.githubusercontent.com/isam-ahmed0/AU-Mod-Catalog/main/catalog.json"
+)
+MOD_CATALOG_TTL = 3600  # seconds before a cached catalog is considered stale
+
 GAME_CRITICAL_FILES = ["Among Us.exe"]
 GAME_CRITICAL_DIRS = ["BepInEx", "dotnet"]
 DEFAULT_GAME_DIR = str(default_game_dir())
@@ -89,6 +95,8 @@ class Config:
             "gpu_id": "", "wine_binary": "", "linux_setup_complete": False,
             "home_image_path": "", "home_note": "",
             "news_seen_hash": "", "news_cache": "",
+            "auto_check_mod_updates": True,
+            "skipped_game_version": "", "skipped_launcher_version": "",
         }
         try:
             if self.config_file.exists():

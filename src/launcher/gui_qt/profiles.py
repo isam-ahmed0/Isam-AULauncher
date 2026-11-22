@@ -7,8 +7,11 @@ from pathlib import Path
 from typing import Optional, List
 
 from platform_utils import IS_WINDOWS
+from mod_catalog import load_meta, save_meta
 
 log = logging.getLogger(__name__)
+
+DISABLED_SUFFIX = ".disabled"
 
 
 class ProfileManager:
@@ -202,6 +205,103 @@ class ProfileManager:
             except OSError as e:
                 log.error(f"Failed to move mod {src} -> {dst}: {e}")
         return moved
+
+    # ------------------------------------------------------- mod-file handling
+    def meta_path(self, name: str) -> Path:
+        return self.profile_path(name) / "mods.json"
+
+    def list_mod_files(self, name: str, include_disabled: bool = True) -> List[Path]:
+        """List profile DLLs in the user's preferred order.
+
+        BepInEx does not guarantee a strict load order from file names, so the
+        order here is an organizational preference shown in the UI, not a
+        promise about the game's plugin loading sequence.
+        """
+        profile = self.profile_path(name)
+        if not profile.is_dir():
+            return []
+        files = []
+        for path in profile.iterdir():
+            if not path.is_file():
+                continue
+            lower = path.name.lower()
+            if lower.endswith(".dll"):
+                files.append(path)
+            elif include_disabled and lower.endswith(".dll" + DISABLED_SUFFIX):
+                files.append(path)
+
+        meta = load_meta(profile)
+        names = {p.name for p in files}
+        order: List[str] = []
+        for stored in meta.get("order", []):
+            if stored in names and stored not in order:
+                order.append(stored)
+        for name in sorted((p.name for p in files), key=str.lower):
+            if name not in order:
+                order.append(name)
+
+        by_name = {p.name: p for p in files}
+        return [by_name[n] for n in order if n in by_name]
+
+    def is_enabled(self, name: str, filename: str) -> bool:
+        return not filename.lower().endswith(".dll" + DISABLED_SUFFIX)
+
+    def set_enabled(self, name: str, filename: str, enabled: bool) -> bool:
+        """Toggle a DLL between ``X.dll`` and ``X.dll.disabled``."""
+        profile = self.profile_path(name)
+        if not profile.is_dir():
+            return False
+        if enabled:
+            if not filename.lower().endswith(".dll" + DISABLED_SUFFIX):
+                return False
+            source = profile / filename
+            target = profile / filename[: -len(DISABLED_SUFFIX)]
+        else:
+            if not filename.lower().endswith(".dll"):
+                return False
+            source = profile / filename
+            target = profile / (filename + DISABLED_SUFFIX)
+        if not source.is_file() or target.exists():
+            return False
+        try:
+            source.rename(target)
+        except OSError as e:
+            log.error("Failed to toggle mod %s: %s", filename, e)
+            return False
+
+        meta = load_meta(profile)
+        disabled = [n for n in meta.get("disabled", []) if n not in (filename, target.name)]
+        if not enabled:
+            disabled.append(target.name)
+        meta["disabled"] = disabled
+        meta["order"] = [target.name if n == filename else n for n in meta.get("order", [])]
+        for record in meta.get("catalog", {}).values():
+            for key in ("filename",):
+                if record.get(key) == filename:
+                    record[key] = target.name
+            record["files"] = [target.name if f == filename else f
+                               for f in (record.get("files") or [])]
+        save_meta(profile, meta)
+        return True
+
+    def reorder_mod(self, name: str, filename: str, delta: int) -> bool:
+        """Move a mod up (``delta=-1``) or down (``delta=1``) in the list."""
+        profile = self.profile_path(name)
+        if not profile.is_dir():
+            return False
+        names = [p.name for p in self.list_mod_files(name)]
+        if filename not in names:
+            return False
+        meta = load_meta(profile)
+        order = [n for n in meta.get("order", []) if n in names]
+        order.extend(n for n in names if n not in order)
+        index = order.index(filename)
+        target = index + delta
+        if target < 0 or target >= len(order):
+            return False
+        order[index], order[target] = order[target], order[index]
+        meta["order"] = order
+        return save_meta(profile, meta)
 
     def ensure_first_profiles(self, game_path: Path) -> str:
         """On first run: if BepInEx/plugins has real files (not junction),

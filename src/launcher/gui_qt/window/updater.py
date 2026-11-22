@@ -8,6 +8,7 @@ from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QMessageBox
 
 from config import LAUNCHER_VERSION, LAUNCHER_UPDATE_URL, VERSION_URL, SOURCE_CODE_URL
+from mod_catalog import version_newer
 import news as news_feed
 
 
@@ -26,6 +27,8 @@ class UpdaterMixin:
             if self.config.settings.get("discord_rpc"):
                 self.discord.connect()
             self._check_launcher_update()
+            self._check_game_update()
+            self._check_mod_updates()
         self._run(go)
 
     def _load_initial_data_sync(self):
@@ -49,6 +52,8 @@ class UpdaterMixin:
             if self.config.settings.get("discord_rpc"):
                 self.discord.connect()
             self._check_launcher_update()
+            self._check_game_update()
+            self._check_mod_updates()
         except Exception as e:
             logging.warning(f"Initial data load failed: {e}")
 
@@ -111,6 +116,8 @@ class UpdaterMixin:
             if not remote:
                 return
             remote = remote.strip()
+            if remote == self.config.settings.get("skipped_launcher_version"):
+                return
             try:
                 if Version(remote) <= Version(LAUNCHER_VERSION):
                     return
@@ -128,45 +135,163 @@ class UpdaterMixin:
 
     def _prompt_launcher_update(self, new_version):
         from platform_utils import IS_LINUX
+        box = QMessageBox(self.window)
+        box.setWindowTitle("Update Available")
+        box.setIcon(QMessageBox.Icon.Information)
+        if IS_LINUX:
+            box.setText(
+                f"A new launcher version (v{new_version}) is available.\n\n"
+                f"Current: v{LAUNCHER_VERSION}\n\n"
+                "Open the downloads page?"
+            )
+            action_btn = box.addButton("Open Downloads", QMessageBox.ButtonRole.AcceptRole)
+        else:
+            box.setText(
+                f"A new launcher version (v{new_version}) is available.\n\n"
+                f"Current: v{LAUNCHER_VERSION}\n"
+                f"New: v{new_version}\n\n"
+                "Download and install now?"
+            )
+            action_btn = box.addButton("Install Now", QMessageBox.ButtonRole.AcceptRole)
+        skip_btn = box.addButton("Skip This Version", QMessageBox.ButtonRole.ActionRole)
+        box.addButton("Later", QMessageBox.ButtonRole.RejectRole)
+        box.exec()
+
+        clicked = box.clickedButton()
+        if clicked is skip_btn:
+            self.config.settings["skipped_launcher_version"] = new_version
+            self.config.save_settings()
+            return
+        if clicked is not action_btn:
+            return
+
         if IS_LINUX:
             from PySide6.QtCore import QUrl
             from PySide6.QtGui import QDesktopServices
-            reply = QMessageBox.information(
-                self.window, "Update Available",
-                f"A new version (v{new_version}) is available.\n\n"
-                f"Current: v{LAUNCHER_VERSION}\n\n"
-                f"Open the downloads page?",
-                QMessageBox.StandardButton.Open | QMessageBox.StandardButton.Cancel,
-            )
-            if reply == QMessageBox.StandardButton.Open:
-                QDesktopServices.openUrl(QUrl(f"{SOURCE_CODE_URL}/releases/latest"))
+            QDesktopServices.openUrl(QUrl(f"{SOURCE_CODE_URL}/releases/latest"))
             return
-        reply = QMessageBox.information(
-            self.window, "Update Available",
-            f"A new version (v{new_version}) is available.\n\n"
-            f"Current: v{LAUNCHER_VERSION}\n"
-            f"New: v{new_version}\n\n"
-            f"Download and install now?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-        )
-        if reply == QMessageBox.StandardButton.Yes:
-            self._set_status("Downloading launcher update...", "info")
-            self._invoke_main(self._busy_on)
-            def go():
-                import tempfile
-                try:
-                    setup_url = f"https://github.com/isam-ahmed0/Isam-AULauncher/releases/download/{new_version}/CrewLauncher-Setup.exe"
-                    setup_path = Path(tempfile.gettempdir()) / "CrewLauncher-Setup.exe"
-                    ok = self.network.download_file(setup_url, setup_path)
-                    if not ok:
-                        self._invoke_main(lambda: self._set_status("Download failed", "danger"))
-                        self._invoke_main(self._busy_off)
-                        return
-                    self._invoke_main(lambda: self._set_status("Launching installer...", "info"))
-                    subprocess.Popen([str(setup_path)])
-                    os._exit(0)
-                except Exception as e:
-                    logging.error(f"Launcher update failed: {e}")
-                    self._invoke_main(lambda: self._set_status(f"Update failed: {e}", "danger"))
+
+        self._set_status("Downloading launcher update...", "info")
+        self._invoke_main(self._busy_on)
+
+        def go():
+            import tempfile
+            try:
+                setup_url = (
+                    "https://github.com/isam-ahmed0/Isam-AULauncher/"
+                    f"releases/download/{new_version}/CrewLauncher-Setup.exe"
+                )
+                setup_path = Path(tempfile.gettempdir()) / "CrewLauncher-Setup.exe"
+                ok = self.network.download_file(setup_url, setup_path)
+                if not ok:
+                    self._invoke_main(lambda: self._set_status("Download failed", "danger"))
                     self._invoke_main(self._busy_off)
-            self._run(go)
+                    return
+                self._invoke_main(lambda: self._set_status("Launching installer...", "info"))
+                subprocess.Popen([str(setup_path)])
+                os._exit(0)
+            except Exception as e:
+                logging.error(f"Launcher update failed: {e}")
+                self._invoke_main(lambda err=e: self._set_status(f"Update failed: {err}", "danger"))
+                self._invoke_main(self._busy_off)
+
+        self._run(go)
+
+    # ------------------------------------------------------------- game updates
+    def _check_game_update(self):
+        """Prompt once when the installed game is behind the remote version."""
+        remote = (self.latest_version or "").strip()
+        if not remote or remote in ("Checking...", "Unknown"):
+            return
+        if self.current_version in ("Not Installed", "", None):
+            return  # the main button already offers a fresh install
+        if remote == self.config.settings.get("skipped_game_version"):
+            return
+        if not version_newer(remote, self.current_version):
+            return
+        self._invoke_main(lambda: self._set_game_update_pending(remote))
+
+    def _set_game_update_pending(self, version):
+        self._game_update_notice_pending = version
+        QTimer.singleShot(800, lambda: self._maybe_show_game_update(60))
+
+    def _maybe_show_game_update(self, attempts=60):
+        if self._shutting_down or not getattr(self, "_game_update_notice_pending", None):
+            return
+        if not self.window.isVisible():
+            if attempts > 0:
+                QTimer.singleShot(500, lambda: self._maybe_show_game_update(attempts - 1))
+            return
+        version = self._game_update_notice_pending
+        self._game_update_notice_pending = None
+        self._prompt_game_update(version)
+
+    def _prompt_game_update(self, version):
+        box = QMessageBox(self.window)
+        box.setWindowTitle("Game Update Available")
+        box.setIcon(QMessageBox.Icon.Information)
+        box.setText(
+            f"A new game version (v{version}) is available.\n\n"
+            f"Current: v{self.current_version}\n\n"
+            "Download and install it now?"
+        )
+        update_btn = box.addButton("Update Now", QMessageBox.ButtonRole.AcceptRole)
+        skip_btn = box.addButton("Skip This Version", QMessageBox.ButtonRole.ActionRole)
+        box.addButton("Later", QMessageBox.ButtonRole.RejectRole)
+        box.exec()
+        clicked = box.clickedButton()
+        if clicked is skip_btn:
+            self.config.settings["skipped_game_version"] = version
+            self.config.save_settings()
+        elif clicked is update_btn:
+            self._download_latest()
+
+    # --------------------------------------------------------------- mod updates
+    def _check_mod_updates(self):
+        """Reuse the shared catalog to announce available mod updates once."""
+        if not self.config.settings.get("auto_check_mod_updates", True):
+            return
+        try:
+            catalog = self.catalog_mgr.fetch()
+            if not catalog:
+                return
+            profile = self.config.get_active_profile()
+            updates = self.catalog_mgr.available_updates(profile, catalog)
+            if updates:
+                self._invoke_main(lambda: self._set_mod_update_pending(updates))
+        except Exception as exc:
+            logging.debug(f"Mod update check failed: {exc}")
+
+    def _set_mod_update_pending(self, updates):
+        self._mod_update_notice_pending = updates
+        QTimer.singleShot(1200, lambda: self._maybe_show_mod_update(60))
+
+    def _maybe_show_mod_update(self, attempts=60):
+        if self._shutting_down or not getattr(self, "_mod_update_notice_pending", None):
+            return
+        if not self.window.isVisible():
+            if attempts > 0:
+                QTimer.singleShot(500, lambda: self._maybe_show_mod_update(attempts - 1))
+            return
+        updates = self._mod_update_notice_pending
+        self._mod_update_notice_pending = None
+        self._prompt_mod_update(updates)
+
+    def _prompt_mod_update(self, updates):
+        names = ", ".join(entry.name for entry in updates[:3])
+        if len(updates) > 3:
+            names += f" and {len(updates) - 3} more"
+        box = QMessageBox(self.window)
+        box.setWindowTitle("Mod Updates Available")
+        box.setIcon(QMessageBox.Icon.Information)
+        box.setText(
+            f"{len(updates)} mod update(s) are available for the active profile.\n\n"
+            f"{names}\n\n"
+            "Open the Mod Browser to install them?"
+        )
+        open_btn = box.addButton("Open Mod Browser", QMessageBox.ButtonRole.AcceptRole)
+        box.addButton("Later", QMessageBox.ButtonRole.RejectRole)
+        box.exec()
+        if box.clickedButton() is open_btn:
+            self._refresh_mod_browser()
+            self._switch_page(8, "Mod Browser")

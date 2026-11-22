@@ -762,6 +762,55 @@ QTreeWidget#assetsFileTree::item:selected {{
     background-color: {p["accent"]};
     color: {p["text_bright"]};
 }}
+
+/* ===== MOD BROWSER (scoped keys) ===== */
+QFrame#modBrowserCard {{
+    background-color: {p["bg_surface"]};
+    border: 1px solid {p["border_subtle"]};
+    border-radius: 12px;
+}}
+
+QLabel#modBrowserTitle {{
+    font-size: 18px;
+    font-weight: 800;
+    color: {p["text_bright"]};
+}}
+
+QLabel#modBrowserMeta {{
+    font-size: 12px;
+    color: {p["text_secondary"]};
+}}
+
+QLineEdit#modBrowserSearch {{
+    background-color: {p["bg_elevated"]};
+    color: {p["text_primary"]};
+    border: 1px solid {p["border_subtle"]};
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 14px;
+}}
+
+QLineEdit#modBrowserSearch:focus {{
+    border-color: {p["border_focus"]};
+}}
+
+QListWidget#modBrowserList {{
+    background-color: {p["bg_surface"]};
+    border: 1px solid {p["border_subtle"]};
+    border-radius: 12px;
+    padding: 6px;
+    font-size: 14px;
+}}
+
+QListWidget#modBrowserList::item {{
+    padding: 10px 12px;
+    border-radius: 6px;
+}}
+
+QListWidget#modBrowserList::item:selected {{
+    background-color: {p["accent"]};
+    color: {p["text_bright"]};
+}}
 """
 
 

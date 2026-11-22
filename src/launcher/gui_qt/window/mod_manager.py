@@ -5,9 +5,11 @@ from PySide6.QtWidgets import (
     QMessageBox, QInputDialog, QListWidgetItem, QFileDialog,
 )
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QColor
 
 from file_manager import FileManager
 from gui_qt.mod_details import ModInfoDialog
+import gui_qt.theme as theme
 
 
 class ModManagerMixin:
@@ -145,18 +147,34 @@ class ModManagerMixin:
             self._mods_status.setObjectName("mutedText")
             self._mods_status.style().polish(self._mods_status)
             return
-        dlls = sorted(profile_dir.glob("*.dll"), key=lambda f: f.name.lower())
+        dlls = self.profile_mgr.list_mod_files(name)
         if not dlls:
             self._mods_status.setText("No mods in this profile")
             self._mods_status.setObjectName("mutedText")
             self._mods_status.style().polish(self._mods_status)
             return
+
+        states = self.catalog_mgr.status(name, self.catalog_mgr.catalog)
         for dll in dlls:
             size = FileManager.format_size(dll.stat().st_size)
-            item = QListWidgetItem(f"{dll.name}  ({size})")
+            enabled = self.profile_mgr.is_enabled(name, dll.name)
+            label = f"{'●' if enabled else '○'} {dll.name}  ({size})"
+            record = self.catalog_mgr.record_for_file(name, dll.name)
+            state = record[0] and states.get(record[0]) if record else None
+            if record:
+                label += f"  ·  v{record[1].get('version', '')}"
+            if state == "update":
+                label += "  ·  UPDATE AVAILABLE"
+            item = QListWidgetItem(label)
             item.setData(Qt.ItemDataRole.UserRole, str(dll))
+            if not enabled:
+                item.setForeground(QColor(theme.TEXT_MUTED))
+            elif state == "update":
+                item.setForeground(QColor(theme.WARNING))
             self._mods_list.addItem(item)
-        self._mods_status.setText(f"{len(dlls)} mod(s) in '{name}'")
+
+        count = sum(1 for dll in dlls if self.profile_mgr.is_enabled(name, dll.name))
+        self._mods_status.setText(f"{len(dlls)} mod(s) in '{name}'  ·  {count} enabled")
         self._mods_status.setObjectName("infoText")
         self._mods_status.style().polish(self._mods_status)
 
@@ -176,7 +194,7 @@ class ModManagerMixin:
         )
         if not ok:
             return
-        names = [item.text().split("  ")[0] for item in selected]
+        names = [Path(item.data(Qt.ItemDataRole.UserRole)).name for item in selected]
         reply = QMessageBox.question(
             self.window, "Confirm",
             f"Move {len(names)} mod(s) to '{item}'?\n" + "\n".join(names),
@@ -197,7 +215,7 @@ class ModManagerMixin:
         if not selected:
             QMessageBox.information(self.window, "Info", "Select mod(s) to remove first.")
             return
-        names = [item.text().split("  ")[0] for item in selected]
+        names = [Path(item.data(Qt.ItemDataRole.UserRole)).name for item in selected]
         reply = QMessageBox.question(
             self.window, "Confirm",
             f"Remove {len(names)} mod(s)?\n" + "\n".join(names),
@@ -205,9 +223,15 @@ class ModManagerMixin:
         )
         if reply != QMessageBox.StandardButton.Yes:
             return
+        profile_name = self._profile_combo.currentText()
         removed = 0
         for item in selected:
             dll_path = Path(item.data(Qt.ItemDataRole.UserRole))
+            record = self.catalog_mgr.record_for_file(profile_name, dll_path.name)
+            if record:
+                ok, _ = self.catalog_mgr.uninstall(record[0], profile_name)
+                removed += int(ok)
+                continue
             try:
                 dll_path.unlink()
                 removed += 1
@@ -253,3 +277,105 @@ class ModManagerMixin:
         self._cb_refresh_mods()
         if hasattr(self, "_refresh_home_mods_card"):
             self._refresh_home_mods_card()
+
+    # ------------------------------------------------------- enable / order / update
+    def _cb_toggle_mod(self):
+        """Enable or disable the selected DLLs (BepInEx ignores ``.disabled``)."""
+        selected = self._mods_list.selectedItems()
+        if not selected:
+            QMessageBox.information(self.window, "Info", "Select mod(s) to toggle first.")
+            return
+        profile_name = self._profile_combo.currentText()
+        if not profile_name:
+            return
+        changed = 0
+        for item in selected:
+            dll_path = Path(item.data(Qt.ItemDataRole.UserRole))
+            enabled = not self.profile_mgr.is_enabled(profile_name, dll_path.name)
+            if self.profile_mgr.set_enabled(profile_name, dll_path.name, enabled):
+                changed += 1
+        last_path = Path(selected[-1].data(Qt.ItemDataRole.UserRole))
+        state = "disabled" if not self.profile_mgr.is_enabled(profile_name, last_path.name) else "enabled"
+        self._mods_status.setText(f"{state.capitalize()} {changed} mod(s)")
+        self._mods_status.setObjectName("successText")
+        self._mods_status.style().polish(self._mods_status)
+        self._cb_refresh_mods()
+
+    def _cb_move_mod(self, delta: int):
+        """Reorder a single mod in the profile's display/load preference list."""
+        selected = self._mods_list.selectedItems()
+        if len(selected) != 1:
+            QMessageBox.information(self.window, "Info", "Select exactly one mod to reorder.")
+            return
+        profile_name = self._profile_combo.currentText()
+        if not profile_name:
+            return
+        dll_path = Path(selected[0].data(Qt.ItemDataRole.UserRole))
+        if not self.profile_mgr.reorder_mod(profile_name, dll_path.name, delta):
+            return
+        self._cb_refresh_mods()
+        for i in range(self._mods_list.count()):
+            item = self._mods_list.item(i)
+            if Path(item.data(Qt.ItemDataRole.UserRole)) == dll_path:
+                self._mods_list.setCurrentItem(item)
+                break
+
+    def _cb_update_mods(self):
+        """Update selected catalog-installed mods to their latest versions."""
+        selected = self._mods_list.selectedItems()
+        if not selected:
+            QMessageBox.information(self.window, "Info", "Select mod(s) to update first.")
+            return
+        profile_name = self.config.get_active_profile()
+        if not profile_name:
+            return
+        if self.game.is_running:
+            QMessageBox.warning(self.window, "Error", "Close Among Us before updating mods.")
+            return
+
+        entries = []
+        for item in selected:
+            record = self.catalog_mgr.record_for_file(
+                profile_name, Path(item.data(Qt.ItemDataRole.UserRole)).name)
+            if not record or not self.catalog_mgr.catalog:
+                continue
+            entry = self.catalog_mgr.catalog.by_id(record[0])
+            if entry and entry not in entries:
+                entries.append(entry)
+        if not entries:
+            QMessageBox.information(
+                self.window, "Info",
+                "Those mods were added manually. Use Browse Mods to install updates "
+                "from the catalog.",
+            )
+            return
+
+        self._mods_status.setText(f"Updating {len(entries)} mod(s)...")
+        self._mods_status.setObjectName("infoText")
+        self._mods_status.style().polish(self._mods_status)
+
+        def go():
+            results = []
+            for entry in entries:
+                ok, message = self.catalog_mgr.install(
+                    entry, profile_name,
+                    is_running=lambda: self.game.is_running,
+                )
+                results.append((ok, message))
+
+            def done():
+                failed = [msg for ok, msg in results if not ok]
+                self._mods_status.setText(
+                    f"Updated {len(results) - len(failed)} mod(s)"
+                    if not failed else f"Update failed: {failed[0]}"
+                )
+                self._mods_status.setObjectName("successText" if not failed else "dangerText")
+                self._mods_status.style().polish(self._mods_status)
+                self._cb_refresh_mods()
+                self._refresh_mod_browser()
+                if not failed:
+                    self._show_mod_warnings(profile_name)
+
+            self._invoke_main(done)
+
+        self._run(go)

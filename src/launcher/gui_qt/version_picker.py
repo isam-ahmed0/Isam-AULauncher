@@ -3,7 +3,7 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont, QColor
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QFrame, QWidget, QScrollArea, QSizePolicy,
+    QFrame, QWidget, QScrollArea,
 )
 import gui_qt.theme as theme
 
@@ -147,6 +147,14 @@ class VersionPickerDialog(QDialog):
         outer.addWidget(self._count_label)
         self._update_count_label()
 
+        self._notes_label = QLabel("")
+        self._notes_label.setObjectName("mutedText")
+        self._notes_label.setContentsMargins(20, 0, 20, 8)
+        self._notes_label.setWordWrap(True)
+        self._notes_label.setMaximumHeight(110)
+        outer.addWidget(self._notes_label)
+        self._update_notes()
+
         # Scrollable version list
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
@@ -196,6 +204,25 @@ class VersionPickerDialog(QDialog):
             self._count_label.setText("No versions found")
             self._count_label.setStyleSheet("")
 
+    def _release_for(self, tag):
+        for release in self._releases:
+            if release.version == tag:
+                return release
+        return None
+
+    def _update_notes(self):
+        """Show the selected release's notes (fetched with the release list)."""
+        release = self._release_for(self._selected_tag)
+        body = (getattr(release, "body", "") or "").strip() if release else ""
+        if not body:
+            self._notes_label.clear()
+            self._notes_label.hide()
+            return
+        if len(body) > 600:
+            body = body[:600].rstrip() + "..."
+        self._notes_label.setText(f"Release notes: {body}")
+        self._notes_label.show()
+
     def _populate_list(self):
         # Clear existing rows
         while self._version_list_layout.count():
@@ -236,6 +263,7 @@ class VersionPickerDialog(QDialog):
         for row in self._rows:
             row.set_selected(row._tag == tag)
         self._download_btn.setEnabled(True)
+        self._update_notes()
 
     def _on_download(self):
         if self._selected_tag:
@@ -252,6 +280,7 @@ class VersionPickerDialog(QDialog):
         self._error_message = error
         self._selected_tag = self._latest_version or (versions[0].version if versions else "")
         self._update_count_label()
+        self._update_notes()
         self._populate_list()
         self._download_btn.setEnabled(bool(self._selected_tag and self._releases))
         self._refresh_btn.setEnabled(True)

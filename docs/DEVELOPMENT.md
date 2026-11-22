@@ -28,12 +28,14 @@ The interface can also be changed in **Settings > Interface** or via the
 
 ## Checks
 
-There is no automated test suite yet; use these before committing:
+The only automated tests so far cover the mod catalog backend in `tests/`;
+use these before committing:
 
 ```bash
 ruff check src/launcher                     # lint (config in ruff.toml)
 python -m compileall -q src/launcher        # syntax check
 python src/launcher/main.py --version       # entry point smoke test
+python -m unittest discover -s tests -v     # mod catalog backend tests
 ```
 
 Then run the app and exercise the changed screen in both `--ui qt` and

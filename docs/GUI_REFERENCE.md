@@ -33,6 +33,7 @@ src/launcher/gui_qt/
 ├── game.py               # GameManager (download, launch, process mgmt)
 ├── regions.py            # RegionManager
 ├── profiles.py           # ProfileManager (directory junctions)
+├── mod_browser.py        # ModBrowserPage (remote catalog browser)
 ├── mod_details.py        # ModDetailsDialog
 ├── mod_warnings.py       # ModWarningsDialog
 ├── worker.py             # Worker thread + _UISignaler
@@ -51,6 +52,7 @@ src/launcher/gui_qt/
 │   ├── game_actions.py   # GameActionsMixin
 │   ├── region_editor.py  # RegionEditorMixin
 │   ├── mod_manager.py    # ModManagerMixin
+│   ├── mod_browser.py    # ModBrowserMixin
 │   ├── itch_profile.py   # ItchProfileMixin
 │   └── updater.py        # UpdaterMixin
 └── assets_manager/       # AU-Assets-Swapper resource-pack manager
@@ -113,6 +115,7 @@ src/launcher/gui_qt/
 | 4 | Settings | `SettingsPage` (dialogs.py) | Yes | No |
 | 5 | About | `AboutPage` (dialogs.py) | Yes | No |
 | 6 | Assets | `_build_assets_page()` | No | No |
+| 8 | Mod Browser | `ModBrowserPage()` (`gui_qt/mod_browser.py`) | No | No |
 
 ### Page Margins
 - Game/Profile: 32, 20, 32, 20 (content below hero)
@@ -162,7 +165,7 @@ def enable_hover_glow(widget, duration=150):
     # On enter: fade to 0.85 (DIMS — unconventional)
     # On leave: fade back to 1.0
 ```
-Applied to: All 7 nav buttons in sidebar
+Applied to: All 9 nav buttons in sidebar
 **Problem**: Dims on hover instead of brightening. Most launchers brighten/glow.
 
 ### 2. Splash Fade-Out (splash.py:66-75)
@@ -277,7 +280,7 @@ CURRENT_THEME
 
 ### LauncherApp (window/main.py)
 - Main window controller
-- Inherits: GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProfileMixin, UpdaterMixin
+- Inherits: GameActionsMixin, RegionEditorMixin, ModManagerMixin, ModBrowserMixin, ItchProfileMixin, UpdaterMixin, AssetsManagerMixin
 - Has: `self.window` (QMainWindow), `self.pages` (QStackedWidget), `self.nav_buttons` dict
 - Page switch: `_switch_page(index, label)` — instant swap, no animation
 
@@ -416,4 +419,4 @@ from PySide6.QtWidgets import (
 5. **Worker threads** — Network calls run in QThread via Worker class. UI updates must be dispatched to main thread via `_invoke_main()`.
 6. **Sidebar is fixed 200px** — Do not make responsive.
 7. **Hero is fixed 180px** — Do not make responsive.
-8. **7 nav buttons** — Game, Tools, Profile, Mods, Settings, About, Assets.
+8. **9 nav buttons** — Home, News, Assets, Tools, Profile, Mods, Mod Browser, Settings, About. Mod Browser is appended at index 8 so existing hardcoded page indices stay valid.

@@ -5,7 +5,7 @@ import logging
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional
 from dataclasses import dataclass
 
 import requests
@@ -28,6 +28,7 @@ class GameVersion:
     version: str
     url: str
     checksum: Optional[str] = None
+    body: str = ""  # release notes, shown in the version picker
 
 
 class NetworkManager:
@@ -191,7 +192,8 @@ class NetworkManager:
                     if asset["name"] == "app.zip":
                         versions.append(GameVersion(
                             version=rel.get("tag_name"),
-                            url=asset["browser_download_url"]
+                            url=asset["browser_download_url"],
+                            body=(rel.get("body") or "").strip(),
                         ))
             logging.info(f"Fetched {len(versions)} game releases")
             return versions, None

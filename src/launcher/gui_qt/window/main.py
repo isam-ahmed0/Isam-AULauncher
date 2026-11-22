@@ -26,7 +26,7 @@ from gui_qt import icons
 from ..dialogs import SettingsPage, AboutPage
 
 from config import (
-    Config, APP_NAME, BRAND_SHORT, MAKER, LAUNCHER_VERSION,
+    Config, APP_NAME, MAKER, LAUNCHER_VERSION,
 )
 from network import NetworkManager, DiscordRPC
 import gui_qt.theme as theme
@@ -34,10 +34,13 @@ from gui_qt.theme import apply_theme
 from gui_qt.game import GameManager
 from gui_qt.regions import RegionManager
 from gui_qt.profiles import ProfileManager
+from gui_qt.mod_browser import ModBrowserPage
+from mod_catalog import ModCatalogManager
 
 from .game_actions import GameActionsMixin
 from .region_editor import RegionEditorMixin
 from .mod_manager import ModManagerMixin
+from .mod_browser import ModBrowserMixin
 from .itch_profile import ItchProfileMixin
 from .updater import UpdaterMixin
 from .news import NewsBrowser
@@ -46,7 +49,8 @@ from ..assets_manager import AssetsManagerMixin
 import news as news_feed
 
 
-class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProfileMixin, UpdaterMixin, AssetsManagerMixin):
+class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ModBrowserMixin,
+                  ItchProfileMixin, UpdaterMixin, AssetsManagerMixin):
     def __init__(self, existing_app=None):
         self.config = Config()
         try:
@@ -59,6 +63,7 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         self.game = GameManager(self.config, self.network)
         self.region_mgr = RegionManager()
         self.profile_mgr = ProfileManager(self.config.profiles_dir)
+        self.catalog_mgr = ModCatalogManager(self.config, self.network)
 
         self.game.game_started.connect(self._on_game_started)
         self.game.game_stopped.connect(self._on_game_stopped)
@@ -74,6 +79,8 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         self._workers = []
         self.news_item = None
         self._news_notice_pending = None
+        self._mod_update_notice_pending = None
+        self._game_update_notice_pending = None
 
         self._locate_pending = False
         self._change_location_pending = False
@@ -215,6 +222,8 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
             ("Assets", 6, "package"),
             ("Tools", 1, "wrench"),
             ("Profile", 2, "user-circle"),
+            ("Mods", 3, "puzzle-piece"),
+            ("Mod Browser", 8, "download-simple"),
             ("Settings", 4, "gear"),
             ("About", 5, "info"),
         ]:
@@ -225,7 +234,7 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
             btn.setIconSize(QSize(24, 24))
             btn.setToolTip(label)
             btn._nav_icon_name = icon_name
-            btn.clicked.connect(lambda checked, i=idx, l=label: self._switch_page(i, l))
+            btn.clicked.connect(lambda checked, i=idx, lbl=label: self._switch_page(i, lbl))
             sidebar_layout.addWidget(btn, 0, Qt.AlignmentFlag.AlignHCenter)
             self.nav_buttons[label] = btn
             self.nav_icon_names[label] = icon_name
@@ -249,6 +258,11 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         self.page_about = AboutPage()
         self.page_assets = self._build_assets_page()
         self.page_news = self._build_news_page()
+        self.mod_browser = ModBrowserPage()
+        self.mod_browser.install_requested.connect(self._cb_install_mod)
+        self.mod_browser.remove_requested.connect(self._cb_remove_mod)
+        self.mod_browser.refresh_requested.connect(
+            lambda: self._load_mod_catalog(force=True))
         self.pages.addWidget(self.page_game)
         self.pages.addWidget(self.page_tools)
         self.pages.addWidget(self.page_profile)
@@ -257,6 +271,7 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         self.pages.addWidget(self.page_about)
         self.pages.addWidget(self.page_assets)
         self.pages.addWidget(self.page_news)
+        self.pages.addWidget(self.mod_browser)  # index 8 — appended to avoid renumbering
 
         right_layout.addWidget(self.pages, 1)
 
@@ -896,6 +911,12 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
         add_mods_btn.clicked.connect(self._cb_add_mods)
         mods_btn_row.addWidget(add_mods_btn)
 
+        browse_btn = QPushButton("Browse Mods")
+        browse_btn.setObjectName("primaryBtn")
+        browse_btn.setFixedHeight(38)
+        browse_btn.clicked.connect(self._cb_browse_mods)
+        mods_btn_row.addWidget(browse_btn)
+
         move_mods_btn = QPushButton("Move to...")
         move_mods_btn.setObjectName("toolBtn")
         move_mods_btn.setFixedHeight(38)
@@ -916,6 +937,30 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
 
         mods_btn_row.addStretch()
         layout.addLayout(mods_btn_row)
+
+        actions_row = QHBoxLayout()
+        actions_row.setSpacing(10)
+        for label, cb, obj_name in [
+            ("Enable / Disable", self._cb_toggle_mod, "toolBtn"),
+            ("Move Up", lambda: self._cb_move_mod(-1), "toolBtn"),
+            ("Move Down", lambda: self._cb_move_mod(1), "toolBtn"),
+            ("Update Selected", self._cb_update_mods, "primaryBtn"),
+        ]:
+            btn = QPushButton(label)
+            btn.setObjectName(obj_name)
+            btn.setFixedHeight(38)
+            btn.clicked.connect(cb)
+            actions_row.addWidget(btn)
+        actions_row.addStretch()
+        layout.addLayout(actions_row)
+
+        order_note = QLabel(
+            "List order is a saved preference — BepInEx does not guarantee a "
+            "strict load order from file names."
+        )
+        order_note.setObjectName("mutedText")
+        order_note.setWordWrap(True)
+        layout.addWidget(order_note)
 
         self._mods_status = QLabel("")
         self._mods_status.setObjectName("statusText")
@@ -1037,6 +1082,11 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ItchProf
                     self.assets_page.refresh()
                 except Exception:
                     logging.exception("Failed to refresh assets page")
+            if label == "Mod Browser":
+                if self.catalog_mgr.catalog is None:
+                    self._load_mod_catalog()
+                else:
+                    self._refresh_mod_browser()
             effective = label if label in self.nav_buttons else "Home"
             for name, btn in self.nav_buttons.items():
                 btn.setChecked(name == effective)
