@@ -10,6 +10,7 @@ const $ = <T extends HTMLElement = HTMLElement>(id: string): T =>
 
 type UpdateState = {
   available?: boolean;
+  force_available?: boolean;
   needed?: boolean;
   version?: string | null;
   latest?: string | null;
@@ -20,6 +21,7 @@ type UpdateState = {
 let game: UpdateState = {};
 let launcher: UpdateState = {};
 let loaded = false;
+let updateNoticeShown = false;
 
 export function initUpdates(): void {
   $("updates-check").addEventListener("click", () => void checkUpdates());
@@ -27,7 +29,10 @@ export function initUpdates(): void {
 
   on("update_check", (data) => applyGame(data));
   on("game_update", (data) => applyGame(data));
-  on("launcher_update", (data) => applyLauncher(data));
+  on("launcher_update", (data) => {
+    applyLauncher(data);
+    maybeNotifyLauncher(data);
+  });
   on("toast", (data) => {
     if (data?.title === "Install complete" || data?.title === "Install failed") {
       void checkUpdates();
@@ -74,6 +79,17 @@ function applyLauncher(data: any): void {
   render();
 }
 
+/** One startup notice when an automatic check finds a newer launcher. */
+function maybeNotifyLauncher(data: any): void {
+  if (updateNoticeShown || !data?.available || data?.skipped) return;
+  updateNoticeShown = true;
+  toast({
+    title: "Launcher update available",
+    message: `v${data.version} is ready. Open Updates to install.`,
+    level: "warning",
+  });
+}
+
 function action(label: string, variant: string, run: () => void): HTMLButtonElement {
   const button = document.createElement("button");
   button.className = `btn${variant ? ` ${variant}` : ""}`;
@@ -109,15 +125,24 @@ function render(): void {
   }
 
   const launcherAvailable = Boolean(launcher.available) && !launcher.skipped;
+  const forceAvailable = Boolean(launcher.force_available)
+    && !launcherAvailable && !launcher.skipped;
   const launcherVersion = launcher.version || "";
+  const launcherCurrent = launcher.current || store.app.launcher_version || "unknown";
   const launcherState = $("launcher-update-state");
   launcherState.textContent = launcher.skipped
     ? "Skipped"
     : launcherAvailable ? "Update available" : "Up to date";
   launcherState.className = `pill${launcherAvailable ? " warning" : launcher.skipped ? "" : " success"}`;
-  $("launcher-update-detail").textContent = launcherVersion
-    ? `Current v${launcher.current || store.app.launcher_version} · latest v${launcherVersion}.`
-    : `Current v${store.app.launcher_version || "unknown"}. No newer release found.`;
+  if (forceAvailable && launcherVersion) {
+    $("launcher-update-detail").textContent =
+      `Current v${launcherCurrent} · remote v${launcherVersion} is older. ` +
+      "Force update is available for testing.";
+  } else {
+    $("launcher-update-detail").textContent = launcherVersion
+      ? `Current v${launcherCurrent} · latest v${launcherVersion}.`
+      : `Current v${launcherCurrent}. No newer release found.`;
+  }
   $("launcher-update-card").classList.toggle("available", launcherAvailable);
 
   const launcherActions = $("launcher-update-actions");
@@ -137,5 +162,16 @@ function render(): void {
       launcher = { ...launcher, skipped: true };
       render();
     }));
+  } else if (forceAvailable && launcherVersion) {
+    launcherActions.appendChild(action(
+      `Force update to v${launcherVersion}`, "ghost", async () => {
+        const confirmed = window.confirm(
+          `Install v${launcherVersion} even though it is older than v${launcherCurrent}?`,
+        );
+        if (!confirmed) return;
+        const res = await api("update_launcher", launcherVersion, true);
+        if (!res.ok) toast({ title: "Update failed", message: res.error, level: "danger" });
+      },
+    ));
   }
 }

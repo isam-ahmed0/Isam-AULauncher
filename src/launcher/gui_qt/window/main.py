@@ -1142,8 +1142,8 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ModBrows
         self.gfx_text.show()
         import graphics
         gpu = graphics.describe_gpu(self.config.get_gpu())
-        wine = self.config.get_wine_binary() or graphics.resolve_wine() or "Not found"
-        self.gfx_text.setText(f"GPU: {gpu}  |  Wine: {wine}")
+        runner = self.config.get_wine_binary() or graphics.resolve_runner() or "Not found"
+        self.gfx_text.setText(f"GPU: {gpu}  |  Runner: {runner}")
 
     def _update_main_btn(self):
         self._update_gfx_info()

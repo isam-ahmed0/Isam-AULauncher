@@ -448,15 +448,15 @@ class AppContext:
         return self.install(*args, **kwargs)
 
     def launch(self, profile=None, method=None):
-        """Launch the game using the configured Wine/GPU setup (Linux)."""
+        """Launch the game using the configured Wine/Proton + GPU setup (Linux)."""
         gp = self.game_path()
         if not gp:
             return False
         if IS_LINUX:
             try:
                 import graphics
-                wine = graphics.resolve_wine(self.config.get_wine_binary())
-                if not wine:
+                runner = graphics.resolve_runner(self.config.get_wine_binary())
+                if not runner:
                     return False
                 return bool(self.game.launch_wine(gp, gp / "Among Us.exe"))
             except Exception as e:
@@ -698,7 +698,7 @@ class AppContext:
 
     # -- itch.io --------------------------------------------------------
     def _itch_prefix(self):
-        """Wine prefix the token file lives in (Linux only)."""
+        """Prefix the token file lives in (Linux only)."""
         if IS_WINDOWS:
             return None
         try:

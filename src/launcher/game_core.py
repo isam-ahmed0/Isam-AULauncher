@@ -92,19 +92,22 @@ class GameCore:
             return False
 
     def launch_wine(self, gp: Path, exe: Path) -> bool:
-        """Launch the Windows game with Wine on the configured GPU (Linux)."""
-        from platform_utils import wine_env
+        """Launch the Windows game with the selected Wine/Proton runner (Linux)."""
+        from platform_utils import runner_env
         import graphics
-        wine = graphics.resolve_wine(self.config.get_wine_binary())
-        if not wine:
-            self._status("Wine not found — run setup", "danger")
+        runner = graphics.resolve_runner(self.config.get_wine_binary())
+        if not runner:
+            self._status("Wine/Proton runner not found — run setup", "danger")
             return False
+        exe_path = Path(exe)
+        if not exe_path.is_absolute():
+            exe_path = gp / exe_path
         prefix = self.config.get_wine_prefix()
         gpu = self.config.get_gpu()
+        cmd = [runner] + graphics.runner_args(runner, exe_path)
         try:
             self._process = subprocess.Popen(
-                [wine, exe.name], cwd=str(gp),
-                env=wine_env(prefix, gpu=gpu))
+                cmd, cwd=str(gp), env=runner_env(runner, prefix, gpu=gpu))
             self._status("Game launched!", "success")
             self._started()
             return True

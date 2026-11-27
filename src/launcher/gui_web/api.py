@@ -187,7 +187,10 @@ class LauncherApi:
             return _ok(True)
         self._started = True
         self._spawn(self._poll_loop)
-        self._spawn(self._check_game_update)
+        # Launcher + game checks run together at startup. The page already has
+        # its event listeners installed before calling ready(), so the result
+        # lands on the Updates page without pressing "Check for updates".
+        self._spawn(self._update_check_worker)
         if IS_LINUX:
             self._spawn(self._detect_system)
         return _ok(True)
@@ -223,8 +226,8 @@ class LauncherApi:
     def system_payload(self):
         """Local GPU + Wine/Proton snapshot for the Settings page."""
         payload = {
-            "gpus": [], "gpu": "", "wine": "", "wines": [],
-            "wine_binary": "", "prefix": "",
+            "gpus": [], "gpu": "", "wine": "", "wines": [], "runners": [],
+            "wine_binary": "", "runner": "", "runner_kind": "", "prefix": "",
         }
         try:
             import graphics
@@ -237,12 +240,16 @@ class LauncherApi:
         try:
             import graphics as g
             payload["wine_binary"] = self.ctx.config.get_wine_binary()
-            payload["wines"] = g.detect_wine_binaries() or []
-            wine = g.resolve_wine(payload["wine_binary"])
-            payload["wine"] = g.describe_wine(wine) if wine else ""
+            runners = g.detect_runners() or []
+            payload["runners"] = runners
+            payload["wines"] = runners  # legacy key for older UI code
+            runner = g.resolve_runner(payload["wine_binary"])
+            payload["runner"] = runner or ""
+            payload["runner_kind"] = g.runner_kind(runner) if runner else ""
+            payload["wine"] = runner or ""  # legacy key
             payload["prefix"] = str(self.ctx.config.get_wine_prefix())
         except Exception as exc:
-            log.debug("wine detect failed: %s", exc)
+            log.debug("runner detect failed: %s", exc)
         return payload
 
     def _detect_system(self):
@@ -378,16 +385,16 @@ class LauncherApi:
         try:
             if IS_LINUX:
                 import graphics
-                wine = graphics.resolve_wine(self.ctx.config.get_wine_binary())
-                if not wine or not self.ctx.config.is_linux_setup_complete():
+                runner = graphics.resolve_runner(self.ctx.config.get_wine_binary())
+                if not runner or not self.ctx.config.is_linux_setup_complete():
                     self.em.emit("status", {
-                        "text": "Wine is not set up yet — run setup in Settings.",
+                        "text": "Wine/Proton is not set up yet — run setup in Settings.",
                         "level": "warning",
                     })
                     self.em.emit("toast", {
                         "level": "warning", "title": "Setup required",
-                        "message": "No Wine build is configured. Open Settings → "
-                                   "Graphics and run the setup wizard first.",
+                        "message": "No Wine/Proton runner is configured. Open "
+                                   "Settings → Graphics and run the setup wizard first.",
                     })
                     return
                 ok = bool(self.ctx.game.launch_wine(
@@ -1183,7 +1190,7 @@ class LauncherApi:
             if value:
                 path = Path(value).expanduser()
                 if not path.is_file() or not os.access(str(path), os.X_OK):
-                    return _err("That Wine executable was not found or is not runnable.")
+                    return _err("That Wine/Proton runner was not found or is not runnable.")
                 value = str(path.resolve())
         elif key == "wine_prefix":
             value = str(value or "").strip()
@@ -1252,7 +1259,7 @@ class LauncherApi:
 
     # ------------------------------------------------------------ itch.io
     def _itch_prefix(self):
-        """Wine prefix holding the game's itch token (None on Windows)."""
+        """Prefix holding the game's itch token (None on Windows)."""
         if IS_WINDOWS:
             return None
         try:
@@ -1359,15 +1366,24 @@ class LauncherApi:
         except Exception as exc:
             log.debug("launcher update check failed: %s", exc)
         available = False
+        force_available = False
         if remote:
             try:
                 from packaging.version import Version
-                available = Version(remote) > Version(LAUNCHER_VERSION)
+                remote_version = Version(remote)
+                local_version = Version(LAUNCHER_VERSION)
+                available = remote_version > local_version
+                # Keep PEP 440 ordering for the automatic update, but expose a
+                # manual override when the remote tag is merely different
+                # (e.g. the test tag 1.0-alpha against a local 1.0 build).
+                force_available = remote_version != local_version
             except Exception:
                 available = False
+                force_available = False
         skipped = remote == self.ctx.config.settings.get("skipped_launcher_version")
         self.em.emit("launcher_update", {
             "available": bool(available and not skipped),
+            "force_available": bool(force_available and not available and not skipped),
             "version": remote,
             "current": LAUNCHER_VERSION,
             "skipped": bool(skipped),
@@ -1408,8 +1424,16 @@ class LauncherApi:
         })
         return _ok(True)
 
-    def update_launcher(self, version):
-        """Open the releases page on Linux, download/run the installer on Windows."""
+    def update_launcher(self, version, force=False):
+        """Install on Windows; open the matching release page elsewhere.
+
+        ``force`` targets the exact tag instead of the latest release. It is
+        used by the Web UI when the remote version is older than the local one
+        and the user explicitly opts in.
+        """
+        version = str(version or "").strip()
+        if not version:
+            return _err("No launcher version was supplied.")
         if IS_WINDOWS:
             url = (f"{SOURCE_CODE_URL}/releases/download/{version}/"
                    "CrewLauncher-Setup.exe")
@@ -1417,7 +1441,9 @@ class LauncherApi:
             target = Path(tempfile.gettempdir()) / "CrewLauncher-Setup.exe"
             self._spawn(self._launcher_install_worker, url, str(target))
             return _ok({"started": True})
-        return self.open_url(f"{SOURCE_CODE_URL}/releases/latest")
+        page = (f"{SOURCE_CODE_URL}/releases/tag/{version}" if force
+                else f"{SOURCE_CODE_URL}/releases/latest")
+        return self.open_url(page)
 
     def _launcher_install_worker(self, url, target):
         def progress(downloaded, total, speed=None):

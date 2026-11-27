@@ -291,34 +291,36 @@ class SettingsPage(QWidget):
             layout.addLayout(setup_row)
             layout.addSpacing(12)
 
-            wine_title = QLabel("Wine")
+            wine_title = QLabel("Wine / Proton")
             wine_title.setObjectName("sectionTitle")
             layout.addWidget(wine_title)
             layout.addSpacing(6)
 
-            self._wines = graphics.detect_wine_binaries()
+            self._wines = graphics.detect_runners()
             wrow = QHBoxLayout()
             wrow.setContentsMargins(8, 0, 8, 0)
-            wine_lbl = QLabel("Wine build")
+            wine_lbl = QLabel("Runner")
             wine_lbl.setObjectName("mutedText")
             wine_lbl.setFixedWidth(140)
             wrow.addWidget(wine_lbl)
             self.wine_combo = QComboBox()
-            self.wine_combo.addItem("Auto-detect", "")
-            for w in self._wines:
-                self.wine_combo.addItem(f"{w['name']} — {w['path']}", w["path"])
+            self.wine_combo.addItem("Auto-detect (prefers Proton)", "")
+            for runner in self._wines:
+                self.wine_combo.addItem(
+                    graphics.runner_label(runner), runner["path"])
             cur = self.config.get_wine_binary()
             if cur:
                 idx = self.wine_combo.findData(cur)
                 if idx >= 0:
                     self.wine_combo.setCurrentIndex(idx)
                 else:
-                    self.wine_combo.setEditText(cur)
+                    self.wine_combo.addItem(f"Configured: {cur}", cur)
+                    self.wine_combo.setCurrentIndex(self.wine_combo.count() - 1)
             self.wine_combo.currentIndexChanged.connect(self._save_wine)
             wrow.addWidget(self.wine_combo, 1)
             layout.addLayout(wrow)
 
-            pf_lbl = QLabel(f"Wine prefix: {self.config.get_wine_prefix()}")
+            pf_lbl = QLabel(f"Game/login prefix: {self.config.get_wine_prefix()}")
             pf_lbl.setObjectName("mutedText")
             pf_lbl.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
             layout.addWidget(pf_lbl)
@@ -412,10 +414,10 @@ class SettingsPage(QWidget):
         if IS_LINUX:
             import graphics
             gpu_val = graphics.describe_gpu(self.config.get_gpu(), self._gpus)
-            wine_val = self.config.get_wine_binary() \
-                or graphics.resolve_wine() or "Not found"
+            runner_val = self.config.get_wine_binary() \
+                or graphics.resolve_runner() or "Not found"
             fields.append(("GPU:", gpu_val, "gameInfoLabel"))
-            fields.append(("Wine:", wine_val, "gameInfoLabel"))
+            fields.append(("Runner:", runner_val, "gameInfoLabel"))
 
         for row, (label, value, obj_name) in enumerate(fields):
             row_layout = QHBoxLayout()
@@ -842,21 +844,21 @@ def show_linux_docs(parent=None):
 def show_wine_missing(parent=None):
     _show_docs_dialog(
         parent,
-        "Wine Not Found",
-        "To sign in with itch.io on Linux, Wine is required.\n"
-        "Please install Wine, then try again. The launcher will not install or "
-        "modify Wine for you.",
+        "Wine / Proton Not Found",
+        "To sign in with itch.io on Linux, Wine or Proton is required.\n"
+        "Please install one, then try again. The launcher will not install or "
+        "modify it for you.",
         [("Open LINUX.md", LINUX_DOC_URL), ("Open WINE.md", WINE_DOC_URL)],
         preview_names=("WINE.md", "LINUX.md"),
     )
 
 
 def wine_login_gate(parent=None) -> bool:
-    """Gate itch.io sign-in on Wine availability (Linux only).
+    """Gate itch.io sign-in on Wine/Proton availability (Linux only).
 
-    Returns ``True`` when sign-in may proceed: on Windows/macOS, when ``wine``
-    is found on PATH, or when the user explicitly forces it because they already
-    have Wine that wasn't auto-detected. Returns ``False`` to block sign-in.
+    Returns ``True`` when sign-in may proceed: on Windows/macOS, when a runner
+    is detected, or when the user explicitly forces it because they already have
+    Wine/Proton that wasn't auto-detected. Returns ``False`` to block sign-in.
     """
     from platform_utils import IS_LINUX, find_wine
 
@@ -865,17 +867,17 @@ def wine_login_gate(parent=None) -> bool:
 
     while True:
         box = QMessageBox(parent)
-        box.setWindowTitle("Wine Not Found")
+        box.setWindowTitle("Wine / Proton Not Found")
         box.setIcon(QMessageBox.Icon.Warning)
-        box.setText("To sign in with itch.io on Linux, Wine is required.\n"
-                    "Please install Wine, then try again. The launcher will not "
-                    "install or modify Wine for you.")
-        box.setInformativeText("Already have Wine but it wasn't detected?\n"
+        box.setText("To sign in with itch.io on Linux, Wine or Proton is required.\n"
+                    "Please install one, then try again. The launcher will not "
+                    "install or modify it for you.")
+        box.setInformativeText("Already have a runner but it wasn't detected?\n"
                                "That can happen with Lutris bundles or custom "
                                "installs. Continue anyway as long as the game runs "
                                "in the configured prefix.")
         box.setStandardButtons(QMessageBox.StandardButton.Cancel)
-        force_btn = box.addButton("I have Wine — Continue anyway",
+        force_btn = box.addButton("I have Wine/Proton — Continue anyway",
                                   QMessageBox.ButtonRole.AcceptRole)
         doc_wine = box.addButton("Open WINE.md", QMessageBox.ButtonRole.ActionRole)
         doc_linux = box.addButton("Open LINUX.md", QMessageBox.ButtonRole.ActionRole)

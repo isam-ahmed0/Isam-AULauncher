@@ -91,7 +91,9 @@ function applyForm(): void {
 function applySystem(): void {
   fillGpus();
   fillWines();
-  $("settings-wine-detected").textContent = store.system.wine || "Not found";
+  const runner = store.system.runner || store.system.wine;
+  const kind = store.system.runner_kind === "proton" ? "Proton" : "Wine";
+  $("settings-wine-detected").textContent = runner ? `${kind} — ${runner}` : "Not found";
   $("setting-wine-prefix").textContent = store.system.prefix || "—";
 }
 
@@ -102,16 +104,18 @@ function fillWines(): void {
 
   const auto = document.createElement("option");
   auto.value = "";
-  auto.textContent = "Auto-detect";
+  auto.textContent = "Auto-detect (prefers Proton)";
   select.appendChild(auto);
 
+  const runners = store.system.runners || store.system.wines || [];
   let found = current === "";
-  for (const wine of store.system.wines || []) {
+  for (const runner of runners) {
     const option = document.createElement("option");
-    option.value = wine.path;
-    option.textContent = `${wine.name} — ${wine.path}`;
+    option.value = runner.path;
+    const kind = runner.kind === "proton" ? "Proton" : "Wine";
+    option.textContent = `${kind} · ${runner.name} — ${runner.path}`;
     select.appendChild(option);
-    if (wine.path === current) found = true;
+    if (runner.path === current) found = true;
   }
   if (current && !found) {
     // Keep an existing configured runner visible even if it is not detected now.

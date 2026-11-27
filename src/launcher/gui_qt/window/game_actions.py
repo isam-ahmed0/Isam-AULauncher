@@ -206,7 +206,7 @@ class GameActionsMixin:
 
     # --------------------------------------------------------------- linux launch
     def _launch_linux_game(self):
-        """Launch the game directly with Wine on the configured GPU (Linux)."""
+        """Launch the game with the selected Wine/Proton runner and GPU (Linux)."""
         import graphics
         from platform_utils import IS_LINUX
         gp = self.config.get_game_path()
@@ -214,15 +214,15 @@ class GameActionsMixin:
             QMessageBox.warning(self.window, "Error", "Game not installed!")
             return False
 
-        wine = graphics.resolve_wine(self.config.get_wine_binary())
-        if not wine or not self.config.is_linux_setup_complete():
+        runner = graphics.resolve_runner(self.config.get_wine_binary())
+        if not runner or not self.config.is_linux_setup_complete():
             if self._offer_setup():
-                wine = graphics.resolve_wine(self.config.get_wine_binary())
-        if not wine:
+                runner = graphics.resolve_runner(self.config.get_wine_binary())
+        if not runner:
             QMessageBox.warning(
-                self.window, "Wine not found",
-                "No Wine build is configured.\n\n"
-                "Run the setup wizard (Settings \u2192 Graphics) or install Wine.")
+                self.window, "Runner not found",
+                "No Wine/Proton runner is configured.\n\n"
+                "Run the setup wizard (Settings \u2192 Graphics) or install Wine/Proton.")
             return False
 
         return self.game.launch_wine(gp, gp / "Among Us.exe")

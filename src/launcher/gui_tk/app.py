@@ -471,14 +471,14 @@ class LauncherLiteApp:
             self._set_status("Game not installed!", "danger")
             return
         try:
-            wine = graphics.resolve_wine(self.config.get_wine_binary())
-            if not wine or not self.config.is_linux_setup_complete():
+            runner = graphics.resolve_runner(self.config.get_wine_binary())
+            if not runner or not self.config.is_linux_setup_complete():
                 if self._offer_setup():
-                    wine = graphics.resolve_wine(self.config.get_wine_binary())
-            if not wine:
+                    runner = graphics.resolve_runner(self.config.get_wine_binary())
+            if not runner:
                 messagebox.showwarning(
-                    "Wine not found",
-                    "No Wine build is configured.\n\nRun the setup wizard (Settings → Graphics) or install Wine.",
+                    "Runner not found",
+                    "No Wine/Proton runner is configured.\n\nRun the setup wizard (Settings → Graphics) or install Wine/Proton.",
                     parent=self.root)
                 return
             self.game.launch_wine(gp, gp / "Among Us.exe")

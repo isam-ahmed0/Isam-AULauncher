@@ -93,7 +93,7 @@ class SettingsDialog:
         # --- Linux ---
         if IS_LINUX:
             self._gpus = graphics.detect_gpus()
-            self._wines = graphics.detect_wine_binaries()
+            self._wines = graphics.detect_runners()
 
             ttk.Separator(body, orient="horizontal").pack(fill="x", pady=10)
             ttk.Label(body, text="Graphics", style="Heading.TLabel").pack(anchor="w")
@@ -125,25 +125,29 @@ class SettingsDialog:
                 style="Secondary.TButton").pack(side="left")
 
             ttk.Separator(body, orient="horizontal").pack(fill="x", pady=10)
-            ttk.Label(body, text="Wine", style="Heading.TLabel").pack(anchor="w")
+            ttk.Label(body, text="Wine / Proton", style="Heading.TLabel").pack(anchor="w")
 
             wrow = ttk.Frame(body, style="Card.TFrame")
             wrow.pack(fill="x", pady=(6, 0))
-            ttk.Label(wrow, text="Wine build", style="CardMuted.TLabel").pack(side="left")
-            self.wine_combo = ttk.Combobox(
-                wrow, state="readonly", width=30,
-                values=["Auto-detect"] + [f"{w['name']} — {w['path']}" for w in self._wines])
-            self.wine_combo.pack(side="left", fill="x", expand=True)
+            ttk.Label(wrow, text="Runner", style="CardMuted.TLabel").pack(side="left")
+            values = ["Auto-detect (prefers Proton)"]
+            values.extend(graphics.runner_label(w) for w in self._wines)
             cur = self.config.get_wine_binary()
             idx = 0
-            for i, w in enumerate(self._wines):
-                if w["path"] == cur:
+            for i, runner in enumerate(self._wines):
+                if runner["path"] == cur:
                     idx = i + 1
                     break
+            if cur and idx == 0:
+                values.append(f"Configured: {cur}")
+                idx = len(values) - 1
+            self.wine_combo = ttk.Combobox(
+                wrow, state="readonly", width=30, values=values)
+            self.wine_combo.pack(side="left", fill="x", expand=True)
             self.wine_combo.current(idx)
             self.wine_combo.bind("<<ComboboxSelected>>", lambda _e: self._save_wine())
 
-            ttk.Label(body, text=f"Wine prefix: {self.config.get_wine_prefix()}",
+            ttk.Label(body, text=f"Game/login prefix: {self.config.get_wine_prefix()}",
                 style="CardMuted.TLabel", wraplength=380).pack(anchor="w", pady=(8, 0))
 
         # --- Account ---
@@ -192,9 +196,9 @@ class SettingsDialog:
         ]
         if IS_LINUX:
             gpu = graphics.describe_gpu(self.config.get_gpu())
-            wine = self.config.get_wine_binary() or graphics.resolve_wine() or "Not found"
+            runner = self.config.get_wine_binary() or graphics.resolve_runner() or "Not found"
             rows.append(("GPU:", gpu))
-            rows.append(("Wine:", wine))
+            rows.append(("Runner:", runner))
         return rows
 
     def _save(self, key, value):
@@ -312,17 +316,21 @@ class SettingsDialog:
             messagebox.showerror("Restart Launcher", str(e), parent=self.win)
 
     def _save_wine(self):
+        text = self.wine_combo.get()
+        if text.startswith("Configured: "):
+            self._save("wine_binary", text[len("Configured: "):])
+            return
         idx = self.wine_combo.current()
-        if idx <= 0:
+        if idx <= 0 or idx - 1 >= len(self._wines):
             self._save("wine_binary", "")
         else:
             self._save("wine_binary", self._wines[idx - 1]["path"])
 
     def _open_setup_wizard(self):
         from gui_tk.setup_wizard import SetupWizard
-        dlg = SetupWizard(self.config, self.win)
+        SetupWizard(self.config, self.win)
         self._gpus = graphics.detect_gpus()
-        self._wines = graphics.detect_wine_binaries()
+        self._wines = graphics.detect_runners()
 
     def _sign_in(self):
         from gui_tk.login import LoginDialog

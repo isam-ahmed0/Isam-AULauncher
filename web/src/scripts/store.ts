@@ -17,6 +17,12 @@ export interface GameState {
   active_profile: string;
 }
 
+export interface SystemRunner {
+  name: string;
+  path: string;
+  kind: "wine" | "proton" | string;
+}
+
 export interface StoreState {
   app: {
     name: string;
@@ -52,7 +58,10 @@ export interface StoreState {
     gpus: any[];
     gpu: string;
     wine: string;
-    wines: Array<{ name: string; path: string }>;
+    wines: SystemRunner[];
+    runners: SystemRunner[];
+    runner: string;
+    runner_kind: string;
     wine_binary: string;
     prefix: string;
   };
@@ -103,7 +112,10 @@ export const store: StoreState = {
   },
   home: { image: "", note: "", image_data: null },
   paths: { appdata: "", profiles: "", guis: "", log: "", default_game_dir: "" },
-  system: { gpus: [], gpu: "", wine: "", wines: [], wine_binary: "", prefix: "" },
+  system: {
+    gpus: [], gpu: "", wine: "", wines: [], runners: [], runner: "",
+    runner_kind: "", wine_binary: "", prefix: "",
+  },
   status: { text: "Starting…", level: "info" },
   progress: null,
   progressLabel: "",

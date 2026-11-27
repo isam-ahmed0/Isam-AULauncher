@@ -12,7 +12,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from platform_utils import external_env, IS_LINUX
+from platform_utils import external_env
 
 log = logging.getLogger(__name__)
 
@@ -155,9 +155,24 @@ def describe_gpu(gpu_id, gpus=None):
 
 
 # ---------------------------------------------------------------------------
-# Wine binary discovery
+# Wine / Proton runner discovery
 # ---------------------------------------------------------------------------
+_RUNNER_PROTON = "proton"
+_RUNNER_WINE = "wine"
+
 _WINE_NAMES = ("wine-staging", "wine", "wine64", "wine-stable", "wine-devel")
+
+# Proton's launcher script lives at the root of each compatibility tool.
+_PROTON_GLOBS = (
+    "~/.steam/root/compatibilitytools.d/*/proton",
+    "~/.steam/steam/compatibilitytools.d/*/proton",
+    "~/.local/share/Steam/compatibilitytools.d/*/proton",
+    "~/.var/app/com.valvesoftware.Steam/.local/share/Steam/compatibilitytools.d/*/proton",
+    "~/.steam/root/steamapps/common/Proton */proton",
+    "~/.steam/steam/steamapps/common/Proton */proton",
+    "~/.local/share/Steam/steamapps/common/Proton */proton",
+    "~/.var/app/com.valvesoftware.Steam/.local/share/Steam/steamapps/common/Proton */proton",
+)
 
 _WINE_GLOBS = (
     # Lutris (native + Flatpak)
@@ -262,17 +277,50 @@ def _extract_wine_name(path):
     return name
 
 
+def _resolved_executable(path):
+    """Absolute path for an executable file, or None."""
+    try:
+        p = Path(path).expanduser()
+        if not p.is_file() or not os.access(str(p), os.X_OK):
+            return None
+        return str(p.resolve())
+    except Exception:
+        return None
+
+
+def proton_script_for_wine(path):
+    """Map a Proton build's internal ``bin/wine`` to its ``proton`` script.
+
+    Older launcher configs stored ``.../<Proton>/files/bin/wine``. Running that
+    binary directly skips Proton's setup; this helper finds the sibling script
+    so existing selections switch to the full Proton runner.
+    """
+    try:
+        p = Path(path).expanduser()
+        parts = p.parts
+        if not p.name.lower().startswith("wine"):
+            return None
+        for marker in ("files", "dist"):
+            if marker not in parts:
+                continue
+            idx = parts.index(marker)
+            if idx + 1 >= len(parts) or parts[idx + 1].lower() != "bin":
+                continue
+            candidate = Path(*parts[:idx]) / "proton"
+            return _resolved_executable(candidate)
+    except Exception:
+        pass
+    return None
+
+
 def detect_wine_binaries():
     """Return a list of ``{"name", "path"}`` for Wine builds found on the system."""
     found = []
     seen = set()
 
     def add(path):
-        try:
-            rp = str(Path(path).expanduser().resolve())
-        except Exception:
-            rp = str(path)
-        if rp in seen or not os.path.isfile(rp) or not os.access(rp, os.X_OK):
+        rp = _resolved_executable(path)
+        if not rp or rp in seen:
             return
         seen.add(rp)
         found.append({"name": _extract_wine_name(rp), "path": rp})
@@ -292,12 +340,71 @@ def detect_wine_binaries():
     return found
 
 
-def resolve_wine(override=None):
-    """Path to the wine executable: explicit override, PATH, then first found."""
+def detect_proton_scripts():
+    """Return Proton runner scripts as ``{"name", "path", "kind"}`` dicts."""
+    found = []
+    seen = set()
+    for pattern in _PROTON_GLOBS:
+        for p in sorted(glob.glob(os.path.expanduser(pattern))):
+            rp = _resolved_executable(p)
+            if not rp or rp in seen:
+                continue
+            seen.add(rp)
+            found.append({
+                "name": _extract_wine_name(rp),
+                "path": rp,
+                "kind": _RUNNER_PROTON,
+            })
+    return found
+
+
+def detect_runners():
+    """All available runners, Proton first, then Wine binaries."""
+    runners = detect_proton_scripts()
+    seen = {r["path"] for r in runners}
+    for wine in detect_wine_binaries():
+        if wine["path"] in seen:
+            continue
+        runners.append({**wine, "kind": _RUNNER_WINE})
+        seen.add(wine["path"])
+    return runners
+
+
+def runner_kind(path):
+    """``"proton"`` for a Proton script, ``"wine"`` for a Wine executable."""
+    if not path:
+        return ""
+    name = Path(str(path)).name.lower()
+    return _RUNNER_PROTON if name.startswith("proton") else _RUNNER_WINE
+
+
+def runner_args(runner, exe):
+    """Command arguments after the runner, for Wine or Proton."""
+    args = [str(exe)]
+    if runner_kind(runner) == _RUNNER_PROTON:
+        args.insert(0, "run")
+    return args
+
+
+def runner_label(entry):
+    """Dropdown label for a ``detect_runners()`` entry."""
+    path = entry.get("path", "")
+    kind = runner_kind(path)
+    name = entry.get("name") or _extract_wine_name(path)
+    prefix = "Proton" if kind == _RUNNER_PROTON else "Wine"
+    return f"{prefix} · {name} — {path}"
+
+
+def resolve_runner(override=None):
+    """Path to the preferred runner: override, then Proton, then Wine."""
     if override:
-        p = Path(override).expanduser()
-        if p.is_file() and os.access(str(p), os.X_OK):
-            return str(p)
+        direct = _resolved_executable(override)
+        if not direct:
+            return None
+        return proton_script_for_wine(direct) or direct
+    for runner in detect_runners():
+        if runner["kind"] == _RUNNER_PROTON:
+            return runner["path"]
     p = shutil.which("wine")
     if p:
         return p
@@ -305,8 +412,17 @@ def resolve_wine(override=None):
     return found[0]["path"] if found else None
 
 
+def resolve_wine(override=None):
+    """Compatibility alias for :func:`resolve_runner`.
+
+    Older callers use this name even though the selected runner may now be a
+    Proton script; launch code should prefer :func:`resolve_runner`.
+    """
+    return resolve_runner(override)
+
+
 def describe_wine(path):
-    """Short label for a wine path (or \"Not found\")."""
+    """Short label for a runner path (or \"Not found\")."""
     if not path:
         return "Not found"
     return str(path)

@@ -1,13 +1,14 @@
 """Cross-platform helpers for Windows / Linux / macOS.
 
-Nothing here executes Wine or touches Wine configuration. These helpers only
-locate the global Wine prefix so the launcher can read/write the same
-``AppData/LocalLow`` files the Windows game uses.
+Nothing here executes a runner or rebuilds a prefix. These helpers locate the
+game/login prefix so the launcher can read/write the same ``AppData/LocalLow``
+files the Windows game uses, and build environments for Wine/Proton launches.
 """
 import json
 import logging
 import os
 import sys
+import shlex
 import shutil
 import subprocess
 from pathlib import Path
@@ -81,24 +82,103 @@ def open_local_path(path):
 
 
 def find_wine(override=None):
-    """Return the path to the wine executable, or None.
+    """Return the selected Wine/Proton runner path, or None.
 
-    Honours an explicit ``override`` (the user-selected wine binary) before
-    falling back to whatever ``wine`` is on PATH. Never installs wine.
+    The name is kept for callers that only need "some runner" (notably the
+    itch.io login gate). Proton scripts are valid here because they are
+    executable runners too. Never installs anything.
     """
     if override:
         p = Path(override).expanduser()
         if p.is_file() and os.access(str(p), os.X_OK):
             return str(p)
+    try:
+        from graphics import resolve_runner
+        runner = resolve_runner()
+        if runner:
+            return runner
+    except Exception as exc:
+        logging.debug("runner detection failed: %s", exc)
     return shutil.which("wine")
 
 
+def compat_data_dir() -> Path:
+    """Proton compat-data root for Among Us (``~/.amongus`` by default)."""
+    env = os.environ.get("STEAM_COMPAT_DATA_PATH")
+    if env:
+        return Path(env).expanduser()
+    return Path.home() / ".amongus"
+
+
+def proton_compat_dir(prefix=None) -> Path:
+    """Compat-data root whose ``pfx`` child is ``prefix``.
+
+    The launcher's default prefix is ``~/.amongus/pfx``, so the matching Proton
+    compat root is ``~/.amongus``. An explicit prefix named ``pfx`` is treated
+    the same way; other overrides are already treated as compat roots.
+    """
+    if prefix:
+        p = Path(prefix).expanduser()
+        return p.parent if p.name.lower() == "pfx" else p
+    return compat_data_dir()
+
+
+def steam_client_dir(runner=None) -> Path:
+    """Steam install path to pass as ``STEAM_COMPAT_CLIENT_INSTALL_PATH``.
+
+    For Steam Proton/GE-Proton the root is the parent of
+    ``compatibilitytools.d`` (or ``steamapps``). Falls back to the usual Steam
+    locations when the runner lives elsewhere (Lutris, a copied build, ...).
+    """
+    env = os.environ.get("STEAM_COMPAT_CLIENT_INSTALL_PATH")
+    if env:
+        return Path(env).expanduser()
+    if runner:
+        try:
+            parts = Path(runner).expanduser().resolve().parts
+            for marker in ("compatibilitytools.d", "steamapps"):
+                if marker in parts:
+                    return Path(*parts[:parts.index(marker)])
+        except Exception:
+            pass
+    candidates = (
+        Path.home() / ".local" / "share" / "Steam",
+        Path.home() / ".steam" / "steam",
+        Path.home() / ".steam" / "root",
+        Path.home() / ".var" / "app" / "com.valvesoftware.Steam"
+        / ".local" / "share" / "Steam",
+    )
+    for candidate in candidates:
+        if candidate.is_dir():
+            return candidate
+    return candidates[0]
+
+
 def wine_prefix() -> Path:
-    """The user's global Wine prefix ($WINEPREFIX or ~/.wine)."""
+    """Prefix shared by the game, login token and fixer (Linux).
+
+    ``$WINEPREFIX`` still wins. Otherwise the launcher uses
+    ``~/.amongus/pfx``: Proton's ``pfx`` child inside the ``~/.amongus`` compat
+    root. The Wine prefix directory itself is not created by the launcher.
+    """
     env = os.environ.get("WINEPREFIX")
     if env:
-        return Path(env)
-    return Path.home() / ".wine"
+        return Path(env).expanduser()
+    return compat_data_dir() / "pfx"
+
+
+def runner_env(runner=None, prefix=None, gpu=None):
+    """Environment for a Wine or Proton launch, pinned to the chosen prefix.
+
+    Proton needs Steam's two compat variables in addition to ``WINEPREFIX``;
+    it sets its own ``WINEPREFIX`` to ``<STEAM_COMPAT_DATA_PATH>/pfx``, which
+    is the same directory :func:`wine_prefix` resolves to by default.
+    """
+    env = wine_env(prefix, gpu=gpu)
+    if runner and Path(str(runner)).name.lower().startswith("proton"):
+        env["STEAM_COMPAT_DATA_PATH"] = str(proton_compat_dir(prefix))
+        env["STEAM_COMPAT_CLIENT_INSTALL_PATH"] = str(steam_client_dir(runner))
+    return env
 
 
 def _wine_user_dir(prefix: Path) -> Path:
@@ -116,14 +196,14 @@ def _wine_user_dir(prefix: Path) -> Path:
 
 
 def wine_local_low() -> Path:
-    """The Windows LocalLow equivalent inside the global Wine prefix."""
+    """The Windows LocalLow equivalent inside the configured prefix."""
     return _wine_user_dir(wine_prefix()) / "AppData" / "LocalLow"
 
 
 def itch_token_dir(prefix=None) -> Path:
     """Directory Among Us reads its itch.io token from, per platform.
 
-    On Linux this is inside the given (or global) Wine prefix so it always
+    On Linux this is inside the given (or default) prefix so it always
     matches the prefix the game is launched with.
     """
     if IS_WINDOWS:
@@ -731,27 +811,41 @@ def create_desktop_shortcut(name, exe_path, working_dir, prefix=None,
                             gpu=None, wine=None, icon_source=None):
     """Write a freedesktop .desktop launcher. Returns the .desktop path.
 
-    Launches the game with Wine in the given (or global) prefix, injecting the
-    environment variables for the selected GPU.
+    Launches the game with the selected Wine/Proton runner in the given (or
+    default) prefix, injecting the variables for the selected GPU.
     """
     apps_dir = Path.home() / ".local" / "share" / "applications"
     apps_dir.mkdir(parents=True, exist_ok=True)
     slug_name = "isam-au"
     desktop_path = apps_dir / f"{slug_name}.desktop"
 
-    wine_bin = find_wine(wine)
-    if not wine_bin:
-        wine_bin = "wine"
-    pfx = prefix or wine_prefix()
+    pfx = Path(prefix) if prefix else wine_prefix()
+    try:
+        import graphics
+        runner = graphics.resolve_runner(wine) or find_wine(wine) or "wine"
+        is_proton = graphics.runner_kind(runner) == "proton"
+        exec_args = [runner] + graphics.runner_args(runner, exe_path)
+    except Exception:
+        logging.exception("Failed to resolve runner for shortcut")
+        runner = find_wine(wine) or "wine"
+        is_proton = Path(str(runner)).name.lower().startswith("proton")
+        exec_args = [runner, str(exe_path)]
 
-    env_parts = [f'WINEPREFIX="{pfx}"']
+    env_parts = [f'WINEPREFIX={shlex.quote(str(pfx))}']
+    if is_proton:
+        env_parts.append(
+            f'STEAM_COMPAT_DATA_PATH={shlex.quote(str(proton_compat_dir(pfx)))}')
+        env_parts.append(
+            'STEAM_COMPAT_CLIENT_INSTALL_PATH='
+            + shlex.quote(str(steam_client_dir(runner))))
     try:
         import graphics
         for key, val in graphics.gpu_env(gpu).items():
-            env_parts.append(f'{key}="{val}"')
+            env_parts.append(f'{key}={shlex.quote(str(val))}')
     except Exception:
         logging.exception("Failed to build GPU env for shortcut")
-    exec_line = "env " + " ".join(env_parts) + f' "{wine_bin}" "{exe_path}"'
+    quoted_args = " ".join(shlex.quote(str(arg)) for arg in exec_args)
+    exec_line = "env " + " ".join(env_parts) + " " + quoted_args
 
     icon_path = _ensure_icon(icon_source)
     lines = [

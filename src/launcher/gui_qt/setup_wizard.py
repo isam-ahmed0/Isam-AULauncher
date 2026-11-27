@@ -1,10 +1,9 @@
 """First-run Linux setup wizard (PySide6).
 
-Walks the user through picking a GPU and a Wine build, then saves the choice.
-Shown once on first Linux launch (and re-openable from Settings).
+Walks the user through picking a GPU and a Wine/Proton runner, then saves the
+choice. Shown once on first Linux launch (and re-openable from Settings).
 """
 import subprocess
-from pathlib import Path
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
@@ -12,7 +11,6 @@ from PySide6.QtWidgets import (
     QPushButton, QStackedWidget, QWidget, QMessageBox,
 )
 
-import gui_qt.theme as theme
 import graphics
 
 
@@ -31,7 +29,7 @@ class SetupWizard(QDialog):
         self.setMinimumWidth(520)
 
         self._gpus = graphics.detect_gpus()
-        self._wines = graphics.detect_wine_binaries()
+        self._runners = graphics.detect_runners()
 
         outer = QVBoxLayout(self)
         outer.setContentsMargins(28, 22, 28, 22)
@@ -74,7 +72,7 @@ class SetupWizard(QDialog):
         lay = QVBoxLayout(page)
         lay.setContentsMargins(0, 6, 0, 6)
         text = QLabel(
-            "This wizard picks the GPU and Wine build Among Us runs with.\n\n"
+            "This wizard picks the GPU and Wine/Proton runner Among Us runs with.\n\n"
             "You can change these later in Settings.")
         text.setObjectName("mutedText")
         text.setWordWrap(True)
@@ -124,26 +122,30 @@ class SetupWizard(QDialog):
         page = QWidget()
         lay = QVBoxLayout(page)
         lay.setContentsMargins(0, 6, 0, 6)
-        lbl = QLabel("Wine build")
+        lbl = QLabel("Wine / Proton build")
         lbl.setObjectName("mutedText")
         lay.addWidget(lbl)
         self.wine_combo = QComboBox()
-        self.wine_combo.addItem("Auto-detect", "")
-        for w in self._wines:
-            self.wine_combo.addItem(f"{w['name']} — {w['path']}", w["path"])
+        self.wine_combo.addItem("Auto-detect (prefers Proton)", "")
+        for runner in self._runners:
+            self.wine_combo.addItem(
+                graphics.runner_label(runner), runner["path"])
         cur = self.config.get_wine_binary()
         if cur:
             idx = self.wine_combo.findData(cur)
             if idx >= 0:
                 self.wine_combo.setCurrentIndex(idx)
+            else:
+                self.wine_combo.addItem(f"Configured: {cur}", cur)
+                self.wine_combo.setCurrentIndex(self.wine_combo.count() - 1)
         lay.addWidget(self.wine_combo)
-        if not self._wines:
+        if not self._runners:
             warn = QLabel(
-                "Wine was not found on this system. Install Wine or a Proton build.")
+                "No Wine/Proton runner was found. Install Wine or a Proton build.")
             warn.setObjectName("mutedText")
             warn.setWordWrap(True)
             lay.addWidget(warn)
-        prefix = QLabel(f"Prefix: {self.config.get_wine_prefix()}")
+        prefix = QLabel(f"Game/login prefix: {self.config.get_wine_prefix()}")
         prefix.setObjectName("mutedText")
         prefix.setWordWrap(True)
         lay.addWidget(prefix)
@@ -161,9 +163,9 @@ class SetupWizard(QDialog):
         self.summary_lbl.setObjectName("infoText")
         self.summary_lbl.setWordWrap(True)
         lay.addWidget(self.summary_lbl)
-        test = QPushButton("Test Wine")
+        test = QPushButton("Test runner")
         test.setObjectName("smallBtn")
-        test.clicked.connect(self._test_wine)
+        test.clicked.connect(self._test_runner)
         lay.addWidget(test, 0, Qt.AlignmentFlag.AlignLeft)
         lay.addStretch()
         return page
@@ -197,26 +199,28 @@ class SetupWizard(QDialog):
         return self.gpu_combo.currentData() or ""
 
     def _selected_wine(self):
-        data = self.wine_combo.currentData()
-        if data:
-            return data
-        return ""
+        return self.wine_combo.currentData() or ""
 
     def _summary_text(self):
         gpu = graphics.describe_gpu(self._selected_gpu_id(), self._gpus)
-        wine = self._selected_wine() or graphics.resolve_wine() or "Not found"
-        return f"GPU: {gpu}\nWine: {wine}\nPrefix: {self.config.get_wine_prefix()}"
+        runner = self._selected_wine() or graphics.resolve_runner() or "Not found"
+        return f"GPU: {gpu}\nRunner: {runner}\nPrefix: {self.config.get_wine_prefix()}"
 
-    def _test_wine(self):
-        wine = self._selected_wine() or graphics.resolve_wine()
-        if not wine:
-            QMessageBox.warning(self, "Wine not found",
-                                "No Wine binary is selected.")
+    def _test_runner(self):
+        runner = self._selected_wine() or graphics.resolve_runner()
+        if not runner:
+            QMessageBox.warning(self, "Runner not found",
+                                "No Wine/Proton runner is selected.")
+            return
+        if graphics.runner_kind(runner) == "proton":
+            QMessageBox.information(
+                self, "Proton runner",
+                f"Proton is configured:\n{runner}\n\nUse LAUNCH to verify it.")
             return
         try:
             from platform_utils import external_env
             out = subprocess.run(
-                [wine, "--version"], capture_output=True, text=True,
+                [runner, "--version"], capture_output=True, text=True,
                 timeout=15, env=external_env())
             text = (out.stdout or out.stderr or "").strip() or "No output"
             QMessageBox.information(self, "Wine test", text)

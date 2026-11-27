@@ -86,10 +86,10 @@ class LoginDialog:
     def _start(self):
         if IS_LINUX and not find_wine():
             if not messagebox.askyesno(
-                "Wine Not Found",
-                "To sign in with itch.io on Linux, Wine is required: the token "
-                "is written into the Wine prefix that Among Us reads.\n\n"
-                "Already have Wine that wasn't auto-detected (e.g. a Lutris "
+                "Wine / Proton Not Found",
+                "To sign in with itch.io on Linux, Wine or Proton is required: "
+                "the token is written into the prefix that Among Us reads.\n\n"
+                "Already have a runner that wasn't auto-detected (e.g. a Lutris "
                 "bundle or custom install)? Click Yes to continue anyway, as "
                 "long as the game runs in the configured prefix.",
                 parent=self.win, default="no",

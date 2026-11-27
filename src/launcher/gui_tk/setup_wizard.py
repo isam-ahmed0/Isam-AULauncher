@@ -1,6 +1,6 @@
 """First-run Linux setup wizard (tkinter).
 
-Mirrors the Qt SetupWizard: picks GPU and Wine build, saves choices.
+Mirrors the Qt SetupWizard: picks GPU and Wine/Proton runner, saves choices.
 """
 import subprocess
 import tkinter as tk
@@ -15,7 +15,7 @@ class SetupWizard:
         self.config = config
         self.parent = parent
         self._gpus = graphics.detect_gpus()
-        self._wines = graphics.detect_wine_binaries()
+        self._runners = graphics.detect_runners()
 
         self.win = tk.Toplevel(parent)
         self.win.title("CrewLauncher Setup")
@@ -33,7 +33,7 @@ class SetupWizard:
 
         desc = ttk.Label(
             body,
-            text="This wizard picks the GPU and Wine build Among Us runs with.\n\nYou can change these later in Settings.",
+            text="This wizard picks the GPU and Wine/Proton runner Among Us runs with.\n\nYou can change these later in Settings.",
             style="CardMuted.TLabel", wraplength=400, justify="left")
         desc.pack(anchor="w", pady=(0, 12))
 
@@ -95,22 +95,27 @@ class SetupWizard:
 
     def _build_wine(self):
         page = ttk.Frame(self.stack, padding=6)
-        ttk.Label(page, text="Wine build", style="CardMuted.TLabel").pack(anchor="w")
-        self.wine_combo = ttk.Combobox(page, state="readonly", width=42,
-            values=["Auto-detect"] + [f"{w['name']} — {w['path']}" for w in self._wines])
-        self.wine_combo.pack(fill="x", pady=(2, 6))
+        ttk.Label(page, text="Wine / Proton build", style="CardMuted.TLabel").pack(anchor="w")
+        values = ["Auto-detect (prefers Proton)"]
+        values.extend(graphics.runner_label(w) for w in self._runners)
         cur = self.config.get_wine_binary()
         idx = 0
-        for i, w in enumerate(self._wines):
-            if w["path"] == cur:
+        for i, runner in enumerate(self._runners):
+            if runner["path"] == cur:
                 idx = i + 1
                 break
+        if cur and idx == 0:
+            values.append(f"Configured: {cur}")
+            idx = len(values) - 1
+        self.wine_combo = ttk.Combobox(
+            page, state="readonly", width=42, values=values)
+        self.wine_combo.pack(fill="x", pady=(2, 6))
         self.wine_combo.current(idx)
-        if not self._wines:
+        if not self._runners:
             ttk.Label(page,
-                text="Wine was not found on this system. Install Wine or a Proton build.",
+                text="No Wine/Proton runner was found. Install Wine or a Proton build.",
                 style="CardMuted.TLabel", wraplength=400, justify="left").pack(anchor="w")
-        ttk.Label(page, text=f"Prefix: {self.config.get_wine_prefix()}",
+        ttk.Label(page, text=f"Game/login prefix: {self.config.get_wine_prefix()}",
             style="CardMuted.TLabel", wraplength=400).pack(anchor="w")
         return page
 
@@ -120,7 +125,7 @@ class SetupWizard:
         self.summary_lbl = ttk.Label(page, text="", style="Card.TLabel",
             wraplength=400, justify="left")
         self.summary_lbl.pack(anchor="w", pady=(2, 8))
-        test = ttk.Button(page, text="Test Wine", command=self._test_wine, style="Secondary.TButton")
+        test = ttk.Button(page, text="Test runner", command=self._test_wine, style="Secondary.TButton")
         test.pack(anchor="w")
         return page
 
@@ -153,33 +158,46 @@ class SetupWizard:
         return self._gpus[idx - 1]["id"]
 
     def _selected_wine(self):
+        text = self.wine_combo.get()
+        if text.startswith("Configured: "):
+            return text[len("Configured: "):]
         idx = self.wine_combo.current()
-        if idx <= 0:
+        if idx <= 0 or idx - 1 >= len(self._runners):
             return ""
-        return self._wines[idx - 1]["path"]
+        return self._runners[idx - 1]["path"]
 
     def _summary_text(self):
         gpu = graphics.describe_gpu(self._selected_gpu(), self._gpus)
-        wine = self._selected_wine() or graphics.resolve_wine() or "Not found"
-        return f"GPU: {gpu}\nWine: {wine}\nPrefix: {self.config.get_wine_prefix()}"
+        runner = self._selected_wine() or graphics.resolve_runner() or "Not found"
+        return f"GPU: {gpu}\nRunner: {runner}\nPrefix: {self.config.get_wine_prefix()}"
 
     def _browse_wine(self):
-        start = "/usr/bin" if __import__("pathlib").Path("/usr/bin").is_dir() else str(__import__("pathlib").Path.home())
+        from pathlib import Path
+        from tkinter import filedialog
+        start = "/usr/bin" if Path("/usr/bin").is_dir() else str(Path.home())
         path = filedialog.askopenfilename(
-            title="Select the Wine executable", initialdir=start,
-            parent=self.win)
+            title="Select a Wine executable or Proton script",
+            initialdir=start, parent=self.win)
         if path:
             self.wine_combo.set(path)
 
     def _test_wine(self):
-        wine = self._selected_wine() or graphics.resolve_wine()
-        if not wine:
-            messagebox.showwarning("Wine not found", "No Wine binary is selected.", parent=self.win)
+        runner = self._selected_wine() or graphics.resolve_runner()
+        if not runner:
+            messagebox.showwarning(
+                "Runner not found", "No Wine/Proton runner is selected.",
+                parent=self.win)
+            return
+        if graphics.runner_kind(runner) == "proton":
+            messagebox.showinfo(
+                "Proton runner",
+                f"Proton is configured:\n{runner}\n\nUse LAUNCH to verify it.",
+                parent=self.win)
             return
         try:
             from platform_utils import external_env
             out = subprocess.run(
-                [wine, "--version"], capture_output=True, text=True,
+                [runner, "--version"], capture_output=True, text=True,
                 timeout=15, env=external_env())
             text = (out.stdout or out.stderr or "").strip() or "No output"
             messagebox.showinfo("Wine test", text, parent=self.win)

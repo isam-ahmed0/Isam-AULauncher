@@ -97,13 +97,25 @@ class Config:
             "news_seen_hash": "", "news_cache": "",
             "skipped_game_version": "", "skipped_launcher_version": "",
         }
+        settings = dict(defaults)
         try:
             if self.config_file.exists():
                 with open(self.config_file, 'r') as f:
-                    return {**defaults, **json.load(f)}
+                    settings.update(json.load(f))
         except Exception as e:
             logging.error(f"Failed to load settings: {e}")
-        return defaults
+
+        # A previously selected Proton bin/wine should now use the Proton
+        # wrapper itself (it sets up the prefix and Steam environment).
+        if sys.platform.startswith("linux") and settings.get("wine_binary"):
+            try:
+                from graphics import proton_script_for_wine
+                migrated = proton_script_for_wine(settings["wine_binary"])
+                if migrated:
+                    settings["wine_binary"] = migrated
+            except Exception as e:
+                logging.debug(f"Wine -> Proton migration skipped: {e}")
+        return settings
 
     def save_settings(self):
         import tempfile
@@ -176,7 +188,7 @@ class Config:
 
     # ------------------------------------------------------------------ linux
     def get_wine_prefix(self) -> Path:
-        """Wine prefix the game/fixer should use (setting overrides global)."""
+        """Game/login prefix (config override, else ~/.amongus/pfx on Linux)."""
         from platform_utils import wine_prefix
         val = (self.settings.get("wine_prefix") or "").strip()
         return Path(val) if val else wine_prefix()
