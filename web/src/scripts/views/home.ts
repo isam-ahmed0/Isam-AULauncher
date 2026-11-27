@@ -14,6 +14,11 @@ const $ = <T extends HTMLElement = HTMLElement>(id: string): T => {
 
 let versionsLoaded = false;
 
+async function syncState(): Promise<void> {
+  const res = await api<any>("game_state");
+  if (res.ok && res.data) updateGame(res.data);
+}
+
 export function initHome(): void {
   $("main-action").addEventListener("click", onMainAction);
   $("versions-btn").addEventListener("click", showVersions);
@@ -55,7 +60,7 @@ export function initHome(): void {
       banner.classList.add("show");
     }
   });
-  on("install_done", (data) => {
+  on("install_done", async (data) => {
     hideProgress();
     if (data?.ok) {
       toast({ title: "Install complete", message: `Among Us v${data.version ?? ""} is ready.`, level: "success" });
@@ -63,6 +68,7 @@ export function initHome(): void {
     } else {
       toast({ title: "Install failed", message: "Check the log for details.", level: "danger" });
     }
+    await syncState();
     render();
   });
   on("verify_result", (data) => showVerifyResult(data));
@@ -506,6 +512,17 @@ function renderHomeCard(): void {
 
 export function render(): void {
   const g = store.game;
+
+  // Do not flash "NOT INSTALLED" before the real state has loaded.
+  if (!store.booted) {
+    const badge = $("hero-badge");
+    badge.textContent = "CHECKING…";
+    badge.className = "pill";
+    $("hero-sub").textContent = "Loading launcher state…";
+    ($("main-action") as HTMLButtonElement).disabled = true;
+    $("main-action-label").textContent = "…";
+    return;
+  }
 
   // hero badge + sub
   const badge = $("hero-badge");

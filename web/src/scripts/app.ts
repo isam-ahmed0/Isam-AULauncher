@@ -1,6 +1,6 @@
 /* CrewLauncher web app entry ------------------------------------------------ */
 
-import { api, isDesktop } from "./bridge";
+import { api, bridgeAvailable, isDesktop } from "./bridge";
 import "./events"; // installs window.__clEvent before Python can push
 import { store, update } from "./store";
 import { on } from "./events";
@@ -47,13 +47,23 @@ function initKeyboard(): void {
   });
 }
 
-async function refresh(): Promise<void> {
+function applyGameState(data: any): void {
+  if (!data) return;
+  update({ game: { ...store.game, ...data } });
+  renderHome();
+}
+
+/** Re-read the authoritative local state; returns false on bridge errors. */
+async function syncGameState(showToast = false): Promise<boolean> {
   const res = await api<any>("game_state");
-  if (res.ok && res.data) {
-    update({ game: { ...store.game, ...res.data } });
-    renderHome();
-    toast({ title: "Refreshed", level: "info", timeout: 1800 });
-  }
+  if (!res.ok || !res.data) return false;
+  applyGameState(res.data);
+  if (showToast) toast({ title: "Refreshed", level: "info", timeout: 1800 });
+  return true;
+}
+
+async function refresh(): Promise<void> {
+  await syncGameState(true);
 }
 
 function wireEvents(): void {
@@ -82,12 +92,7 @@ function wireEvents(): void {
     $("win-max").title = store.maximized ? "Restore" : "Maximize";
   });
 
-  on("game_state", (data) => {
-    if (data) {
-      update({ game: { ...store.game, ...data } });
-      renderHome();
-    }
-  });
+  on("game_state", (data) => applyGameState(data));
 }
 
 function applyTheme(): void {
@@ -122,7 +127,7 @@ async function boot(): Promise<void> {
     if (view === "about") void loadAbout();
   });
 
-  if (!isDesktop()) {
+  if (!(await bridgeAvailable())) {
     update({ preview: true, booted: true });
     $("sb-status").textContent = "Browser preview — Python bridge unavailable";
     $("hero-badge").textContent = "PREVIEW";
@@ -132,25 +137,43 @@ async function boot(): Promise<void> {
     return;
   }
 
-  const res = await api<any>("bootstrap");
-  if (!res.ok) {
-    $("sb-status").textContent = `Bootstrap failed: ${res.error}`;
-    toast({ title: "Startup error", message: res.error, level: "danger" });
-    update({ booted: true, preview: true });
-    return;
+  // Tell Python the page is up first: flush queued events and start background
+  // polls before asking for the initial snapshot.
+  const ready = await api("ready");
+  if (!ready.ok) {
+    console.error("ready() failed", ready.error);
   }
 
-  const data = res.data ?? {};
-  update({
-    app: data.app ?? store.app,
-    game: { ...store.game, ...(data.state ?? {}) },
-    settings: { ...store.settings, ...(data.settings ?? {}) },
-    home: { ...store.home, ...(data.home ?? {}) },
-    paths: { ...store.paths, ...(data.paths ?? {}) },
-    booted: true,
-  });
-
+  const res = await api<any>("bootstrap");
+  let bootstrapped = false;
+  if (res.ok && res.data) {
+    const data = res.data;
+    update({
+      app: data.app ?? store.app,
+      game: { ...store.game, ...(data.state ?? {}) },
+      settings: { ...store.settings, ...(data.settings ?? {}) },
+      home: { ...store.home, ...(data.home ?? {}) },
+      paths: { ...store.paths, ...(data.paths ?? {}) },
+      booted: true,
+    });
+    bootstrapped = true;
+  } else {
+    console.error("bootstrap failed", res.ok ? "empty response" : res.error);
+    update({ booted: true });
+  }
   applyTheme();
+
+  // Re-read local state after bootstrap. If the first bridge call was lost,
+  // this still paints the correct installed version on the first screen.
+  const synced = await syncGameState();
+  if (!synced && !bootstrapped) {
+    $("sb-status").textContent = "Could not read game state";
+    toast({
+      title: "Startup error",
+      message: "Game state is unavailable; use the refresh button to retry.",
+      level: "danger",
+    });
+  }
   renderHome();
 
   const sbVersion = $("sb-version");
@@ -159,11 +182,13 @@ async function boot(): Promise<void> {
       `Launcher ${store.app.launcher_version} · Game ${store.game.version || "—"}`;
   }
 
-  // Tell Python the page is up: flush queued events, start background polls.
-  const ready = await api("ready");
-  if (!ready.ok) {
-    console.error("ready() failed", ready.error);
-  }
+  // Self-heal any missed state event while the window is open.
+  window.setInterval(() => {
+    if (isDesktop()) void syncGameState();
+  }, 10000);
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden && isDesktop()) void syncGameState();
+  });
 
   onNavigate((view) => {
     document.title =

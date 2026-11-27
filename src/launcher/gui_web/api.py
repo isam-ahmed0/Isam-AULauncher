@@ -180,6 +180,9 @@ class LauncherApi:
     def ready(self):
         """The page is up: flush queued events and start background work."""
         self.em.enable()
+        # Push one authoritative snapshot as soon as the page can receive it;
+        # the JS boot also re-reads game_state, so a lost early call self-heals.
+        self._emit_state()
         if self._started:
             return _ok(True)
         self._started = True
