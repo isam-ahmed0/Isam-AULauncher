@@ -12,7 +12,7 @@ pip install -r src/launcher/requirements.txt
 
 Optional for building/packaging: `pip install -r build/requirements.txt`.
 
-The default Web interface needs Node.js 22+ and the built Astro assets:
+The default Web interface needs Node.js 22.23.4+ and the built Astro assets:
 
 ```bash
 cd web && npm ci && npm run build   # writes ../src/launcher/resources/web/
@@ -73,9 +73,9 @@ modules under `web/src/scripts/views/`; add a matching Astro component in
 
 All launcher builds generate the Web assets before packaging. Linux builds call
 `build/web_assets.sh`, which runs `npm ci && npm run build` and verifies the
-gitignored `src/launcher/resources/web/index.html`. CircleCI installs Node.js 22+
-in its Ubuntu, Arch and Fedora jobs; AppVeyor installs Node via Chocolatey;
-GitHub Actions uses `actions/setup-node`. Linux builds exclude
+gitignored `src/launcher/resources/web/index.html`. CircleCI installs a supported
+Node.js in all three Linux jobs (Fedora uses NodeSource 24); AppVeyor installs
+Node via Chocolatey; GitHub Actions uses `actions/setup-node`. Linux builds exclude
 QtWebEngine/QtWebChannel from the frozen PySide6 payload because pywebview uses
 GTK/WebKit there; Windows builds keep them for other Qt code paths.
 

@@ -8,12 +8,20 @@ set -euo pipefail
 
 echo "[ci-fedora] installing build dependencies"
 dnf install -y --setopt=install_weak_deps=False \
-  rpm-build python3 python3-pip python3-devel gcc binutils nodejs npm \
+  rpm-build python3 python3-pip python3-devel gcc binutils \
   mesa-libGL mesa-libEGL libglvnd-egl libglvnd-glx mesa-dri-drivers \
   fontconfig freetype libxkbcommon libxkbcommon-x11 \
   libxcb libX11 libXext libXrender libXi libSM libICE \
   libXrandr libXcursor libXfixes libXdamage libXcomposite dbus-libs \
   python3-tkinter tk
+
+# Fedora's nodejs package can lag Astro's minimum (22.23.4), so use NodeSource.
+echo "[ci-fedora] installing Node.js 24"
+dnf install -y curl ca-certificates gnupg
+curl -fsSL https://rpm.nodesource.com/setup_24.x | bash -
+dnf install -y nodejs
+node --version
+npm --version
 
 echo "[ci-fedora] creating python symlink"
 ln -sf /usr/bin/python3 /usr/bin/python
