@@ -57,6 +57,7 @@ If Qt cannot start on Linux, `main.py` transparently falls back to Lite.
 | `platform_utils.py` | Cross-platform data dirs, Wine prefix discovery, Lutris/Steam/desktop integration helpers |
 | `graphics.py` | `lspci` GPU detection, `DRI_PRIME`/`__NV_PRIME_RENDER_OFFLOAD` env, Wine binary lookup |
 | `file_manager.py` | Extract zips with progress, file verification helpers |
+| `assets_manager.py` | Toolkit-free AU-Assets-Swapper pack manager used by the Web interface (packs, files, metadata, active config, zip import/export) |
 | `mod_inspector.py` | Reads BepInEx plugin metadata; finds duplicates, missing deps, incompatibilities |
 | `mod_catalog.py` | Remote mod catalog: fetch a JSON manifest fresh on every load (no cache), install/reinstall/remove mods into profiles from fresh downloads, per-profile `mods.json` metadata (see [MOD_CATALOG.md](MOD_CATALOG.md)) |
 | `itch_oauth.py` | Full itch.io OAuth flow + EOS auth handoff (tools-free) |
@@ -92,10 +93,11 @@ enable/disable, reorder, import, issue scan), Browse Mods (catalog search,
 categories, install/reinstall/remove), Regions (add/apply/ping/reset), News
 (live feed with offline cache), Account (itch.io OAuth), Settings (web/Qt
 themes, interface choice, Wine/GPU, behavior toggles), Updates (game/launcher
-checks with skip) and About (versions, links, log tail). The Python bridge
-reuses the toolkit-free `gui_qt/profiles.py`, `gui_qt/regions.py` and
-`gui_qt/zipextract.py` helpers; it never imports Qt widgets. The
-AU-Assets-Swapper page is deliberately deferred.
+checks with skip), Assets (AU-Assets-Swapper packs with add files/folder,
+activate, info, rename, duplicate, import/export) and About (versions, links,
+log tail). The Python bridge reuses the toolkit-free `gui_qt/profiles.py`,
+`gui_qt/regions.py` and `gui_qt/zipextract.py` helpers plus `assets_manager.py`;
+it never imports Qt widgets.
 
 ## Qt interface (`src/launcher/gui_qt/`)
 

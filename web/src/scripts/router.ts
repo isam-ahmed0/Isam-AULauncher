@@ -3,6 +3,7 @@
 const VIEWS = [
   "home",
   "mods",
+  "assets",
   "browse",
   "regions",
   "news",

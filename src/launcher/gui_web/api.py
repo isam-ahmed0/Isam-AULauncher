@@ -626,6 +626,14 @@ class LauncherApi:
             types = ("Images (*.png;*.jpg;*.jpeg;*.webp;*.gif;*.bmp)",)
         elif kinds == "mods":
             types = ("Mod files (*.dll;*.zip)", "All files (*.*)")
+        elif kinds == "assets":
+            types = (
+                "Asset files (*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.webp;*.tga;"
+                "*.wav;*.ogg;*.mp3;*.flac;*.ttf;*.otf;*.ab;*.tsv;*.txt;*.csv)",
+                "All files (*.*)",
+            )
+        elif kinds == "archives":
+            types = ("Asset packs (*.zip)", "All files (*.*)")
         else:
             types = ("All files (*.*)",)
         try:
@@ -638,6 +646,19 @@ class LauncherApi:
             return _ok({"path": None, "paths": []})
         paths = [str(p) for p in result]
         return _ok({"path": paths[0], "paths": paths})
+
+    def pick_save(self, filename="pack.zip"):
+        """Native save dialog. Returns the chosen path or None."""
+        import webview
+        try:
+            result = self._window.create_file_dialog(
+                webview.SAVE_DIALOG, save_filename=str(filename or "pack.zip"))
+        except Exception as exc:
+            return _err(f"Save dialog failed: {exc}")
+        if not result:
+            return _ok({"path": None})
+        path = result[0] if isinstance(result, (tuple, list)) else result
+        return _ok({"path": str(path)})
 
     # ------------------------------------------------------------ home card
     @staticmethod
@@ -1154,6 +1175,270 @@ class LauncherApi:
             "level": "success" if ok else "warning",
             "title": "Region check", "message": message,
         })
+
+    # ------------------------------------------------------------ assets
+    def _auas(self):
+        import assets_manager
+        return assets_manager.AUASManager(self.ctx.game_path())
+
+    @staticmethod
+    def _auas_meta(meta):
+        if not meta:
+            return {}
+        return {
+            "name": meta.name or "",
+            "author": meta.author or "",
+            "description": meta.description or "",
+            "version": meta.version or "",
+            "thumbnail": meta.thumbnail or "",
+            "game_version": meta.game_version or "",
+            "created_at": meta.created_at or "",
+            "categories": list(meta.categories or []),
+        }
+
+    def _auas_guard(self):
+        if self._running():
+            return _err("Close Among Us before changing asset packs.")
+        return None
+
+    def assets_state(self):
+        """All AUAS packs plus the active selection."""
+        import assets_manager as auas
+        mgr = self._auas()
+        packs = []
+        for name in mgr.list_packs():
+            pack = mgr.get_pack(name)
+            if not pack:
+                continue
+            packs.append({
+                "name": name,
+                "active": bool(pack.active),
+                "asset_count": int(pack.asset_count),
+                "total_size": int(pack.total_size),
+                "categories": dict(pack.categories),
+                "metadata": self._auas_meta(pack.metadata),
+            })
+        return _ok({
+            "installed": bool(mgr.is_installed()),
+            "game_path": str(mgr.game_path) if mgr.game_path else "",
+            "active": mgr.get_active_pack() or "",
+            "packs": packs,
+            "categories": list(auas.ASSET_CATEGORIES),
+            "game_running": self._running(),
+        })
+
+    def assets_pack_detail(self, name):
+        """Metadata and file list for one pack."""
+        mgr = self._auas()
+        pack = mgr.get_pack(str(name or "").strip())
+        if not pack:
+            return _err("Pack not found.")
+        assets = {}
+        for category, files in mgr.list_assets(pack.name).items():
+            assets[category] = [
+                {"path": rel, "size": int(size)} for rel, size in files
+            ]
+        meta = pack.metadata
+        thumb = self._read_image(meta.thumbnail) if meta and meta.thumbnail else None
+        return _ok({
+            "name": pack.name,
+            "path": str(pack.path),
+            "active": bool(pack.active),
+            "asset_count": int(pack.asset_count),
+            "total_size": int(pack.total_size),
+            "categories": dict(pack.categories),
+            "metadata": self._auas_meta(meta),
+            "assets": assets,
+            "thumbnail_data": thumb,
+        })
+
+    def assets_pack_create(self, name):
+        guard = self._auas_guard()
+        if guard:
+            return guard
+        import assets_manager as auas
+        name = str(name or "").strip()
+        if not auas.AUASManager.is_valid_name(name):
+            return _err("Use a pack name without slashes or reserved characters.")
+        with self._lock:
+            if not self._auas().create_pack(name):
+                return _err("Could not create that pack. It may already exist.")
+        return _ok({"name": name})
+
+    def assets_pack_delete(self, name):
+        guard = self._auas_guard()
+        if guard:
+            return guard
+        with self._lock:
+            if not self._auas().delete_pack(str(name or "").strip()):
+                return _err("Could not delete that pack.")
+        return _ok(True)
+
+    def assets_pack_duplicate(self, source, new_name):
+        guard = self._auas_guard()
+        if guard:
+            return guard
+        import assets_manager as auas
+        new_name = str(new_name or "").strip()
+        if not auas.AUASManager.is_valid_name(new_name):
+            return _err("Invalid new pack name.")
+        with self._lock:
+            if not self._auas().duplicate_pack(str(source or "").strip(), new_name):
+                return _err("Could not duplicate that pack.")
+        return _ok({"name": new_name})
+
+    def assets_pack_rename(self, old_name, new_name):
+        guard = self._auas_guard()
+        if guard:
+            return guard
+        import assets_manager as auas
+        new_name = str(new_name or "").strip()
+        if not auas.AUASManager.is_valid_name(new_name):
+            return _err("Invalid new pack name.")
+        with self._lock:
+            if not self._auas().rename_pack(str(old_name or "").strip(), new_name):
+                return _err("Could not rename that pack.")
+        return _ok({"name": new_name})
+
+    def assets_pack_set_active(self, name):
+        guard = self._auas_guard()
+        if guard:
+            return guard
+        target = str(name or "").strip() or None
+        with self._lock:
+            mgr = self._auas()
+            pack_path = mgr.pack_path(target) if target else None
+            if target and (not pack_path or not pack_path.is_dir()):
+                return _err("Pack not found.")
+            if not mgr.set_active_pack(target):
+                return _err("Could not write the AUAS config.")
+        return _ok({"active": target or ""})
+
+    def assets_pack_save_info(self, name, metadata):
+        guard = self._auas_guard()
+        if guard:
+            return guard
+        import assets_manager as auas
+        data = metadata if isinstance(metadata, dict) else {}
+        with self._lock:
+            mgr = self._auas()
+            old = mgr.get_metadata(str(name or "").strip()) or auas.PackMetadata()
+            meta = auas.PackMetadata(
+                name=str(data.get("name") or old.name or name or "").strip(),
+                author=str(data.get("author") or "").strip(),
+                description=str(data.get("description") or "").strip(),
+                version=str(data.get("version") or "1.0.0").strip(),
+                thumbnail=str(data.get("thumbnail") or "").strip() or None,
+                game_version=str(data.get("game_version") or "").strip() or None,
+                created_at=data.get("created_at") or old.created_at,
+                categories=list(data.get("categories") or old.categories or []),
+            )
+            if not mgr.save_metadata(str(name or "").strip(), meta):
+                return _err("Could not save pack info.")
+        return _ok(self._auas_meta(meta))
+
+    def assets_pack_add_files(self, name, paths, overwrite=True):
+        guard = self._auas_guard()
+        if guard:
+            return guard
+        mgr = self._auas()
+        if isinstance(paths, str):
+            paths = [paths]
+        items = []
+        for raw in paths or []:
+            path = Path(raw).expanduser()
+            category = mgr.guess_category(path.name)
+            if category:
+                items.append((path, category))
+        if not items:
+            return _err("No supported asset files were selected.")
+        with self._lock:
+            copied, skipped, errors = mgr.copy_assets(
+                str(name or "").strip(), items, bool(overwrite))
+        return _ok({
+            "copied": int(copied), "skipped": int(skipped), "errors": errors,
+        })
+
+    def assets_pack_add_folder(self, name, folder):
+        guard = self._auas_guard()
+        if guard:
+            return guard
+        root = Path(str(folder or "")).expanduser()
+        if not root.is_dir():
+            return _err("That folder was not found.")
+        mgr = self._auas()
+        items = []
+        for path in root.rglob("*"):
+            if not path.is_file():
+                continue
+            category = mgr.guess_category(path.name)
+            if category:
+                items.append((path, category))
+        if not items:
+            return _err("No supported asset files were found in that folder.")
+        with self._lock:
+            copied, skipped, errors = mgr.copy_assets(
+                str(name or "").strip(), items, bool(True))
+        return _ok({
+            "copied": int(copied), "skipped": int(skipped), "errors": errors,
+        })
+
+    def assets_pack_remove(self, name, category, relpath):
+        guard = self._auas_guard()
+        if guard:
+            return guard
+        with self._lock:
+            ok = self._auas().remove_asset(
+                str(name or "").strip(), str(category or ""), str(relpath or ""))
+        return _ok({"removed": bool(ok)}) if ok else _err("Could not remove that file.")
+
+    def assets_pack_open(self, name):
+        path = self._auas().pack_path(str(name or "").strip())
+        if not path or not path.is_dir():
+            return _err("Pack not found.")
+        return self.open_path(str(path))
+
+    def assets_pack_export(self, name):
+        picked = self.pick_save(f"{name or 'pack'}.zip")
+        if not picked.get("ok"):
+            return picked
+        path = picked["data"].get("path")
+        if not path:
+            return _ok({"path": None})
+        dest = Path(path)
+        if dest.suffix.lower() != ".zip":
+            dest = dest.with_name(dest.stem + ".zip")
+        with self._lock:
+            ok = self._auas().export_pack(str(name or "").strip(), dest)
+        return _ok({"path": str(dest)}) if ok else _err("Could not export that pack.")
+
+    def assets_pack_import_preview(self, path):
+        import assets_manager as auas
+        source = Path(str(path or "")).expanduser()
+        if not source.is_file():
+            return _err("That file was not found.")
+        meta = auas.AUASManager.read_zip_meta(source)
+        suggested = (meta.name if meta and meta.name else source.stem)
+        return _ok({
+            "path": str(source),
+            "suggested": suggested,
+            "metadata": self._auas_meta(meta),
+        })
+
+    def assets_pack_import(self, path, name):
+        guard = self._auas_guard()
+        if guard:
+            return guard
+        import assets_manager as auas
+        target = str(name or "").strip()
+        if not auas.AUASManager.is_valid_name(target):
+            return _err("Invalid pack name.")
+        with self._lock:
+            mgr = self._auas()
+            if mgr.pack_path(target) and mgr.pack_path(target).exists():
+                return _err("A pack with that name already exists.")
+            imported = mgr.import_pack(Path(str(path or "")).expanduser(), target)
+        return _ok({"name": imported}) if imported else _err("Could not import that pack.")
 
     # ------------------------------------------------------------ settings
     SETTING_KEYS = (

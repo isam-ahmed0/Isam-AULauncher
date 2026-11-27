@@ -1,0 +1,102 @@
+---
+---
+<section class="view" data-view="assets" id="view-assets">
+  <div class="page-head">
+    <div>
+      <h1>Assets Manager</h1>
+      <p class="sub">Swap game sprites, audio, fonts and bundles with AU-Assets-Swapper packs.</p>
+    </div>
+    <div class="head-actions">
+      <button class="btn icon-btn" id="assets-refresh" title="Refresh packs">
+        <svg class="icon sm"><use href="#i-refresh" /></svg>
+      </button>
+      <button class="btn" id="assets-import">
+        <svg class="icon sm"><use href="#i-download" /></svg>
+        Import .zip
+      </button>
+      <button class="btn primary" id="assets-create">
+        <svg class="icon sm"><use href="#i-plus" /></svg>
+        New pack
+      </button>
+    </div>
+  </div>
+
+  <div class="notice danger" id="assets-game-notice">
+    <svg class="icon"><use href="#i-alert" /></svg>
+    <span class="grow">Close Among Us before creating, editing or activating asset packs.</span>
+  </div>
+  <div class="notice info" id="assets-install-notice">
+    <svg class="icon"><use href="#i-info" /></svg>
+    <span class="grow">
+      Asset packs will appear once AU-Assets-Swapper is installed and the game has been launched.
+      You can create a pack now and the launcher will prepare <span class="mono">AUAS_Data</span>.
+    </span>
+  </div>
+
+  <div class="assets-layout">
+    <section class="card assets-packs">
+      <div class="card-title">
+        <svg class="icon sm"><use href="#i-layers" /></svg>
+        Packs
+        <span class="pill" id="assets-pack-count" style="margin-left: auto;">0</span>
+      </div>
+      <div class="assets-list" id="assets-list">
+        <div class="empty" style="padding: 34px 16px;">
+          <span class="badge-icon"><svg class="icon lg"><use href="#i-layers" /></svg></span>
+          <h3>No packs yet</h3>
+          <p>Create a pack, then add matching asset files to it.</p>
+          <button class="btn primary" id="assets-create-empty">Create a pack</button>
+        </div>
+      </div>
+      <div class="assets-list-foot">
+        <span class="faint truncate" id="assets-active-label">No active pack</span>
+        <button class="btn ghost" id="assets-deactivate" hidden>Use original assets</button>
+      </div>
+    </section>
+
+    <section class="card assets-detail">
+      <div class="assets-detail-head">
+        <span class="badge-icon small"><svg class="icon"><use href="#i-image" /></svg></span>
+        <div class="assets-detail-title">
+          <h2 id="assets-pack-title">No pack selected</h2>
+          <p class="sub mono" id="assets-pack-path"></p>
+        </div>
+        <span class="pill" id="assets-pack-state" style="margin-left: auto;">Inactive</span>
+      </div>
+
+      <div class="assets-thumb" id="assets-thumb-wrap" hidden>
+        <img id="assets-thumb" alt="Pack thumbnail" />
+      </div>
+      <p class="muted assets-summary" id="assets-pack-summary"></p>
+
+      <div class="assets-actions">
+        <button class="btn primary" id="assets-pack-activate">Activate</button>
+        <button class="btn" id="assets-pack-add-files">Add files</button>
+        <button class="btn" id="assets-pack-add-folder">Add folder</button>
+        <button class="btn" id="assets-pack-info">Pack info</button>
+        <button class="btn" id="assets-pack-open">Open folder</button>
+        <button class="btn" id="assets-pack-export">Export .zip</button>
+        <button class="btn icon-btn" id="assets-pack-rename" title="Rename pack">
+          <svg class="icon sm"><use href="#i-edit" /></svg>
+        </button>
+        <button class="btn icon-btn" id="assets-pack-duplicate" title="Duplicate pack">
+          <svg class="icon sm"><use href="#i-plus" /></svg>
+        </button>
+        <button class="btn icon-btn danger" id="assets-pack-delete" title="Delete pack">
+          <svg class="icon sm"><use href="#i-x" /></svg>
+        </button>
+      </div>
+
+      <div class="card-title assets-files-title">
+        <svg class="icon sm"><use href="#i-folder" /></svg>
+        Files
+        <span class="pill" id="assets-file-count" style="margin-left: auto;">0</span>
+      </div>
+      <div class="assets-files" id="assets-file-list">
+        <div class="empty" style="padding: 28px 16px;">
+          <p>Select a pack to see its replacement files.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+</section>

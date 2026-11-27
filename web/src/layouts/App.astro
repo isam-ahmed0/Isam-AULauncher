@@ -4,12 +4,14 @@ import "../styles/base.css";
 import "../styles/shell.css";
 import "../styles/home.css";
 import "../styles/mods.css";
+import "../styles/assets.css";
 import "../styles/pages.css";
 import TitleBar from "../components/TitleBar.astro";
 import Sidebar from "../components/Sidebar.astro";
 import StatusBar from "../components/StatusBar.astro";
 import HomeView from "../components/views/Home.astro";
 import ModsView from "../components/views/Mods.astro";
+import AssetsView from "../components/views/Assets.astro";
 import BrowseView from "../components/views/Browse.astro";
 import RegionsView from "../components/views/Regions.astro";
 import NewsView from "../components/views/News.astro";
@@ -33,6 +35,7 @@ import AboutView from "../components/views/About.astro";
       <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.2 12 3l9 7.2" /><path d="M5.5 9.4V21h13V9.4" /><path d="M9.5 21v-6h5v6" /></symbol>
       <symbol id="i-puzzle" viewBox="0 0 24 24"><path d="M10 3.6a2 2 0 1 1 4 0c0 .8.7 1.5 1.5 1.5H17a1 1 0 0 1 1 1v1.5c0 .8.7 1.5 1.5 1.5a2 2 0 1 1 0 4c-.8 0-1.5.7-1.5 1.5V17a1 1 0 0 1-1 1h-1.5c-.8 0-1.5.7-1.5 1.5a2 2 0 1 1-4 0c0-.8-.7-1.5-1.5-1.5H6a1 1 0 0 1-1-1v-1.5c0-.8-.7-1.5-1.5-1.5a2 2 0 1 1 0-4c.8 0 1.5-.7 1.5-1.5V6a1 1 0 0 1 1-1h1.5C9.3 5.1 10 4.4 10 3.6Z" /></symbol>
       <symbol id="i-compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="m15.5 8.5-2 5-5 2 2-5Z" /></symbol>
+      <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5Z" /><path d="m3 12 9 5 9-5" /><path d="m3 16 9 5 9-5" /></symbol>
       <symbol id="i-map" viewBox="0 0 24 24"><path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11Z" /><circle cx="12" cy="10" r="2.6" /></symbol>
       <symbol id="i-news" viewBox="0 0 24 24"><rect x="3" y="5" width="14" height="14" rx="2" /><path d="M7 9h6M7 13h6M7 17h4" /><path d="M17 9h4v8a2 2 0 0 1-4 0Z" /></symbol>
       <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5" /><path d="M5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5" /></symbol>
@@ -66,6 +69,7 @@ import AboutView from "../components/views/About.astro";
         <main class="content" id="content">
           <HomeView />
           <ModsView />
+          <AssetsView />
           <BrowseView />
           <RegionsView />
           <NewsView />

@@ -8,6 +8,7 @@ import { initRouter, onNavigate, currentView } from "./router";
 import { toast } from "./toast";
 import { initHome, render as renderHome } from "./views/home";
 import { initMods, loadProfiles } from "./views/mods";
+import { initAssets, loadAssets } from "./views/assets";
 import { initBrowse, loadCatalog } from "./views/browse";
 import { initRegions, loadRegions } from "./views/regions";
 import { initNews, loadNews } from "./views/news";
@@ -107,6 +108,7 @@ async function boot(): Promise<void> {
   wireEvents();
   initHome();
   initMods();
+  initAssets();
   initBrowse();
   initRegions();
   initNews();
@@ -118,6 +120,7 @@ async function boot(): Promise<void> {
   onNavigate((view) => {
     if (!isDesktop()) return;
     if (view === "mods") void loadProfiles();
+    if (view === "assets") void loadAssets();
     if (view === "browse") void loadCatalog(false);
     if (view === "regions") void loadRegions();
     if (view === "news") void loadNews(false);
