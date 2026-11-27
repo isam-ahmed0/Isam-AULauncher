@@ -168,17 +168,6 @@ class SettingsPage(QWidget):
         layout.addWidget(desc2)
         layout.addSpacing(12)
 
-        cb_mod_updates = QCheckBox("Check for mod updates")
-        cb_mod_updates.setChecked(settings.get("auto_check_mod_updates", True))
-        cb_mod_updates.stateChanged.connect(
-            lambda: self._save_setting("auto_check_mod_updates", cb_mod_updates.isChecked()))
-        layout.addWidget(cb_mod_updates)
-        desc3 = QLabel("Announce catalog mod updates on startup")
-        desc3.setObjectName("mutedText")
-        desc3.setContentsMargins(26, 0, 0, 0)
-        layout.addWidget(desc3)
-        layout.addSpacing(12)
-
         # --- Interface section ---
         layout.addWidget(QFrame(frameShape=QFrame.Shape.HLine))
         layout.addSpacing(8)

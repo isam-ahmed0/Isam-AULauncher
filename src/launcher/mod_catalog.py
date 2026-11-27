@@ -1,14 +1,15 @@
-"""Remote mod catalog: fetch, cache, install, update and remove BepInEx mods.
+"""Remote mod catalog: fetch, install and remove BepInEx mods.
 
 This module is deliberately toolkit-free — it must never import PySide6 or
 tkinter.  Qt only supplies callbacks/progress reporters.
 
 The catalog is a JSON file served over HTTPS (see ``docs/MOD_CATALOG.md``).
-Installed catalog mods are recorded in a per-profile ``mods.json`` so the
-launcher can tell which version is installed without re-reading DLL metadata.
+It is always fetched fresh — no catalog or download cache — so a mod whose
+``download_url`` points at a ``releases/latest/download/<asset>`` URL is
+refreshed on every reinstall.  Installed catalog mods are recorded in a
+per-profile ``mods.json``.
 """
 
-import hashlib
 import json
 import logging
 import os
@@ -21,13 +22,12 @@ from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
 from typing import Callable, Optional
 
-from config import MOD_CATALOG_TTL, MOD_CATALOG_URL
+from config import MOD_CATALOG_URL
 
 log = logging.getLogger(__name__)
 
 META_NAME = "mods.json"
 _PREFIX_RE = re.compile(r"^\d{2,3}_")
-_SHA_RE = re.compile(r"^[0-9a-f]{64}$")
 
 
 class CatalogError(ValueError):
@@ -40,7 +40,8 @@ class CatalogError(ValueError):
 def version_newer(candidate: str, current: str) -> bool:
     """True when ``candidate`` is newer than ``current``.
 
-    Falls back to a plain string comparison for non-PEP440 game version tags.
+    Used for game/launcher versions (not catalog mods, which have no version
+    field). Falls back to a plain string comparison for non-PEP440 tags.
     """
     candidate = (candidate or "").strip()
     current = (current or "").strip()
@@ -62,13 +63,10 @@ def version_newer(candidate: str, current: str) -> bool:
 class ModEntry:
     id: str
     name: str
-    version: str = ""
     author: str = ""
     category: str = "Other"
     description: str = ""
     download_url: str = ""
-    sha256: str = ""
-    size: int = 0
     dependencies: list = field(default_factory=list)
     incompatibilities: list = field(default_factory=list)
     game_version: str = ""
@@ -84,9 +82,6 @@ class ModEntry:
             raise CatalogError("A mod entry needs both 'id' and 'name'")
         if not url:
             raise CatalogError(f"Mod '{name}' has no 'download_url'")
-        sha = str(raw.get("sha256") or "").strip().lower()
-        if sha and not _SHA_RE.match(sha):
-            raise CatalogError(f"Mod '{name}' has an invalid sha256 (expected 64 hex chars)")
 
         def str_list(key: str) -> list:
             value = raw.get(key) or []
@@ -94,21 +89,13 @@ class ModEntry:
                 value = [value]
             return [str(v).strip() for v in value if str(v).strip()]
 
-        try:
-            size = int(raw.get("size") or 0)
-        except (TypeError, ValueError):
-            size = 0
-
         return cls(
             id=entry_id,
             name=name,
-            version=str(raw.get("version") or "").strip(),
             author=str(raw.get("author") or "").strip(),
             category=str(raw.get("category") or "Other").strip() or "Other",
             description=str(raw.get("description") or "").strip(),
             download_url=url,
-            sha256=sha,
-            size=size,
             dependencies=str_list("dependencies"),
             incompatibilities=str_list("incompatibilities"),
             game_version=str(raw.get("game_version") or "").strip(),
@@ -272,58 +259,42 @@ class ModCatalogManager:
         self.config = config
         self.network = network
         self.url = catalog_url or MOD_CATALOG_URL
-        self.cache_file = Path(config.cache_dir) / "mods" / "catalog.json"
-        self.download_dir = Path(config.cache_dir) / "mods" / "downloads"
-        self.download_dir.mkdir(parents=True, exist_ok=True)
         self.catalog: Optional[ModCatalog] = None
         self.error = ""
         self.offline = False
-        self._last_fetch = 0.0
 
     # ---------------------------------------------------------------- fetching
     def fetch(self, force: bool = False) -> Optional[ModCatalog]:
-        """Fetch the catalog, falling back to the last cached copy offline."""
-        now = time.time()
-        if not force and self.catalog is not None and (now - self._last_fetch) < MOD_CATALOG_TTL:
-            return self.catalog
-        if not force and not self._cache_stale():
-            cached = self._load_cache()
-            if cached:
-                self.catalog = cached
-                self._last_fetch = now
-                self.offline = False
-                self.error = ""
-                return cached
+        """Fetch the catalog fresh from the source; never serve a cached copy.
 
+        ``force`` is kept for older callers and is ignored — every call now
+        fetches from the network.
+        """
         text = None
         try:
             text = self._read_source()
         except Exception as exc:  # defensive: a broken transport must not kill startup
             log.warning("Mod catalog fetch failed: %s", exc)
 
-        if text:
-            try:
-                catalog = ModCatalog.from_text(text)
-            except CatalogError as exc:
-                self.error = str(exc)
-                log.error("Invalid mod catalog: %s", exc)
-                catalog = None
-            if catalog is not None:
-                self._save_cache(text)
-                self.catalog = catalog
-                self._last_fetch = now
-                self.offline = False
-                self.error = ""
-                return catalog
+        if not text:
+            self.catalog = None
+            self.offline = True
+            self.error = "No mod catalog available"
+            return None
 
-        cached = self._load_cache()
-        self.catalog = cached
-        self._last_fetch = now
-        self.offline = cached is not None
-        if not self.error:
-            self.error = ("Using the cached mod catalog (offline)" if cached
-                          else "No mod catalog available")
-        return cached
+        try:
+            catalog = ModCatalog.from_text(text)
+        except CatalogError as exc:
+            self.catalog = None
+            self.offline = True
+            self.error = str(exc)
+            log.error("Invalid mod catalog: %s", exc)
+            return None
+
+        self.catalog = catalog
+        self.offline = False
+        self.error = ""
+        return catalog
 
     def _read_source(self) -> Optional[str]:
         """Read the catalog from HTTPS, or from a local path for development."""
@@ -334,29 +305,8 @@ class ModCatalogManager:
             return path.read_text(encoding="utf-8")
         if "://" not in url and Path(url).is_file():
             return Path(url).read_text(encoding="utf-8")
-        return self.network.fetch_text(url)
-
-    def _cache_stale(self) -> bool:
-        try:
-            return (time.time() - self.cache_file.stat().st_mtime) > MOD_CATALOG_TTL
-        except OSError:
-            return True
-
-    def _load_cache(self) -> Optional[ModCatalog]:
-        try:
-            return ModCatalog.from_text(self.cache_file.read_text(encoding="utf-8"))
-        except (OSError, CatalogError):
-            return None
-
-    def _save_cache(self, text: str) -> None:
-        try:
-            self.cache_file.parent.mkdir(parents=True, exist_ok=True)
-            fd, tmp = tempfile.mkstemp(dir=str(self.cache_file.parent), suffix=".json")
-            with os.fdopen(fd, "w", encoding="utf-8") as handle:
-                handle.write(text)
-            os.replace(tmp, self.cache_file)
-        except OSError as exc:
-            log.warning("Could not cache mod catalog: %s", exc)
+        return self.network.fetch_text(
+            url, headers={"Cache-Control": "no-cache", "Pragma": "no-cache"})
 
     # ------------------------------------------------------------------ state
     def _profile(self, profile_name: str) -> Path:
@@ -366,30 +316,16 @@ class ModCatalogManager:
         return load_meta(self._profile(profile_name)).get("catalog", {})
 
     def status(self, profile_name: str, catalog: ModCatalog = None) -> dict:
-        """Map mod id -> 'install' | 'installed' | 'update' | 'unknown'."""
+        """Map mod id -> 'install' | 'installed' | 'unknown'."""
         catalog = catalog or self.catalog
         installed = self.installed(profile_name)
         result = {}
         if catalog:
             for entry in catalog.mods:
-                record = installed.get(entry.id)
-                if not record:
-                    result[entry.id] = "install"
-                elif version_newer(entry.version, str(record.get("version") or "")):
-                    result[entry.id] = "update"
-                else:
-                    result[entry.id] = "installed"
+                result[entry.id] = "installed" if entry.id in installed else "install"
         for mod_id in installed:
             result.setdefault(mod_id, "unknown")
         return result
-
-    def available_updates(self, profile_name: str, catalog: ModCatalog = None) -> list:
-        """Return catalog entries that have a newer version installed nowhere."""
-        catalog = catalog or self.catalog
-        if not catalog:
-            return []
-        states = self.status(profile_name, catalog)
-        return [entry for entry in catalog.mods if states.get(entry.id) == "update"]
 
     def record_for_file(self, profile_name: str, filename: str) -> Optional[tuple]:
         """Return (mod_id, record) for a DLL that came from the catalog."""
@@ -407,10 +343,12 @@ class ModCatalogManager:
         progress_callback: Callable = None,
         is_running: Callable = None,
     ) -> tuple:
-        """Download, verify and install a catalog mod into a profile.
+        """Download the current file and install a catalog mod into a profile.
 
-        Returns ``(success, message)``.  ``progress_callback`` receives the
-        same ``(downloaded, total, speed)`` triple as ``NetworkManager``.
+        The download always happens — there is no archive cache, so a
+        ``releases/latest`` URL yields the newest published asset. Returns
+        ``(success, message)``.  ``progress_callback`` receives the same
+        ``(downloaded, total, speed)`` triple as ``NetworkManager``.
         """
         if is_running and is_running():
             return False, "Close Among Us before installing mods."
@@ -420,27 +358,14 @@ class ModCatalogManager:
 
         preferred = Path(entry.download_url.split("?", 1)[0]).name or f"{entry.id}.bin"
         preferred = re.sub(r"[^A-Za-z0-9._-]", "_", preferred)
-        archive = self.download_dir / preferred
-        needs_download = not archive.exists() or not self._hash_ok(archive, entry)
-        if needs_download:
-            # Stale resume segments would poison a re-download of a changed file.
-            for part in self.download_dir.iterdir():
-                if part.name.startswith(preferred + ".part"):
-                    try:
-                        part.unlink()
-                    except OSError:
-                        pass
-            if not self.network.download_file(entry.download_url, archive, progress_callback):
-                return False, "Download failed."
-            if not self._hash_ok(archive, entry):
-                try:
-                    archive.unlink(missing_ok=True)
-                except OSError:
-                    pass
-                return False, "Download failed checksum verification — the file may be corrupted."
 
+        download_dir = Path(tempfile.mkdtemp(prefix="IsamAULauncher-mod-"))
         staging = Path(tempfile.mkdtemp(dir=str(profile.parent), prefix=".modinstall-"))
         try:
+            archive = download_dir / preferred
+            if not self.network.download_file(entry.download_url, archive, progress_callback):
+                return False, "Download failed."
+
             dlls = install_archive(archive, staging, preferred_name=preferred)
             if not dlls:
                 return False, "The download contained no .dll files."
@@ -459,18 +384,18 @@ class ModCatalogManager:
                 shutil.move(str(staging / dll), str(profile / dll))
 
             meta.setdefault("catalog", {})[entry.id] = {
-                "version": entry.version,
                 "filename": dlls[0],
                 "files": dlls,
                 "installed_at": time.time(),
             }
             save_meta(profile, meta)
-            return True, f"Installed {entry.name} v{entry.version}"
+            return True, f"Installed {entry.name}"
         except (OSError, zipfile.BadZipFile, CatalogError) as exc:
             log.exception("Failed to install mod %s", entry.id)
             return False, f"Install failed: {exc}"
         finally:
             shutil.rmtree(str(staging), ignore_errors=True)
+            shutil.rmtree(str(download_dir), ignore_errors=True)
 
     def uninstall(self, entry_id: str, profile_name: str) -> tuple:
         profile = self._profile(profile_name)
@@ -496,14 +421,3 @@ class ModCatalogManager:
                 files.append(name)
         return files
 
-    def _hash_ok(self, archive: Path, entry: ModEntry) -> bool:
-        if not entry.sha256:
-            return True
-        try:
-            digest = hashlib.sha256()
-            with open(archive, "rb") as handle:
-                for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-                    digest.update(chunk)
-            return digest.hexdigest() == entry.sha256
-        except OSError:
-            return False

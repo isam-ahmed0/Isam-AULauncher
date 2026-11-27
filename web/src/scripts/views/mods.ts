@@ -21,9 +21,7 @@ interface ModInfo {
   enabled: boolean;
   size: number;
   size_text: string;
-  version: string;
   catalog_id: string | null;
-  update: boolean;
 }
 
 let profiles: ProfileInfo[] = [];
@@ -39,7 +37,6 @@ export function initMods(): void {
   $("mods-import").addEventListener("click", importMods);
   document.getElementById("mods-import-empty")?.addEventListener("click", importMods);
   $("mods-scan").addEventListener("click", scanIssues);
-  $("mods-updates").addEventListener("click", checkUpdates);
 
   $("profile-select").addEventListener("change", () => {
     selectedProfile = ($("profile-select") as HTMLSelectElement).value;
@@ -49,7 +46,6 @@ export function initMods(): void {
   on("profiles_changed", (data) => applyProfiles(data));
   on("mods_changed", (data) => applyMods(data));
   on("mod_issues", (data) => showIssues(data?.issues ?? []));
-  on("mod_updates", (data) => showUpdates(data?.updates ?? [], data?.error));
   on("catalog_install_done", () => {
     void loadProfiles();
   });
@@ -112,7 +108,7 @@ function applyMods(data: any): void {
 
   mods.forEach((mod, index) => {
     const row = document.createElement("div");
-    row.className = `mod-row${mod.enabled ? "" : " disabled"}${mod.update ? " update" : ""}`;
+    row.className = `mod-row${mod.enabled ? "" : " disabled"}`;
 
     const info = document.createElement("div");
     info.className = "mod-info";
@@ -128,11 +124,7 @@ function applyMods(data: any): void {
     (info.querySelector(".m-name") as HTMLElement).textContent = mod.name;
     (info.querySelector(".mono") as HTMLElement).textContent = mod.size_text;
     const meta = info.querySelectorAll(".m-meta span")[1] as HTMLElement;
-    meta.textContent = [
-      mod.version ? `v${mod.version}` : "",
-      mod.enabled ? "" : "disabled",
-      mod.update ? "UPDATE AVAILABLE" : "",
-    ].filter(Boolean).join(" · ");
+    meta.textContent = mod.enabled ? "" : "disabled";
 
     const toggle = document.createElement("button");
     toggle.className = `switch${mod.enabled ? " on" : ""}`;
@@ -280,11 +272,6 @@ function scanIssues(): void {
   toast({ title: "Scanning mods…", timeout: 1800 });
 }
 
-function checkUpdates(): void {
-  void api("mod_update_check");
-  toast({ title: "Checking for updates…", timeout: 1800 });
-}
-
 function showIssues(issues: any[]): void {
   const notice = $("mods-issues-notice");
   if (!issues.length) {
@@ -295,16 +282,5 @@ function showIssues(issues: any[]): void {
   $("mods-issues-text").textContent = issues
     .map((i) => i.description)
     .join("  •  ");
-  notice.classList.add("show");
-}
-
-function showUpdates(updates: any[], error?: string): void {
-  const notice = $("mods-updates-notice");
-  if (error || !updates.length) {
-    notice.classList.remove("show");
-    if (error) toast({ title: "Update check failed", message: error, level: "warning" });
-    return;
-  }
-  $("mods-updates-text").textContent = `${updates.length} mod update(s): ${updates.map((u) => u.name).join(", ")}`;
   notice.classList.add("show");
 }

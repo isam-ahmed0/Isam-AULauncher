@@ -28,7 +28,6 @@ class UpdaterMixin:
                 self.discord.connect()
             self._check_launcher_update()
             self._check_game_update()
-            self._check_mod_updates()
         self._run(go)
 
     def _load_initial_data_sync(self):
@@ -53,7 +52,6 @@ class UpdaterMixin:
                 self.discord.connect()
             self._check_launcher_update()
             self._check_game_update()
-            self._check_mod_updates()
         except Exception as e:
             logging.warning(f"Initial data load failed: {e}")
 
@@ -245,53 +243,3 @@ class UpdaterMixin:
             self.config.save_settings()
         elif clicked is update_btn:
             self._download_latest()
-
-    # --------------------------------------------------------------- mod updates
-    def _check_mod_updates(self):
-        """Reuse the shared catalog to announce available mod updates once."""
-        if not self.config.settings.get("auto_check_mod_updates", True):
-            return
-        try:
-            catalog = self.catalog_mgr.fetch()
-            if not catalog:
-                return
-            profile = self.config.get_active_profile()
-            updates = self.catalog_mgr.available_updates(profile, catalog)
-            if updates:
-                self._invoke_main(lambda: self._set_mod_update_pending(updates))
-        except Exception as exc:
-            logging.debug(f"Mod update check failed: {exc}")
-
-    def _set_mod_update_pending(self, updates):
-        self._mod_update_notice_pending = updates
-        QTimer.singleShot(1200, lambda: self._maybe_show_mod_update(60))
-
-    def _maybe_show_mod_update(self, attempts=60):
-        if self._shutting_down or not getattr(self, "_mod_update_notice_pending", None):
-            return
-        if not self.window.isVisible():
-            if attempts > 0:
-                QTimer.singleShot(500, lambda: self._maybe_show_mod_update(attempts - 1))
-            return
-        updates = self._mod_update_notice_pending
-        self._mod_update_notice_pending = None
-        self._prompt_mod_update(updates)
-
-    def _prompt_mod_update(self, updates):
-        names = ", ".join(entry.name for entry in updates[:3])
-        if len(updates) > 3:
-            names += f" and {len(updates) - 3} more"
-        box = QMessageBox(self.window)
-        box.setWindowTitle("Mod Updates Available")
-        box.setIcon(QMessageBox.Icon.Information)
-        box.setText(
-            f"{len(updates)} mod update(s) are available for the active profile.\n\n"
-            f"{names}\n\n"
-            "Open the Mod Browser to install them?"
-        )
-        open_btn = box.addButton("Open Mod Browser", QMessageBox.ButtonRole.AcceptRole)
-        box.addButton("Later", QMessageBox.ButtonRole.RejectRole)
-        box.exec()
-        if box.clickedButton() is open_btn:
-            self._refresh_mod_browser()
-            self._switch_page(8, "Mod Browser")

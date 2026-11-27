@@ -762,7 +762,7 @@ class LauncherApi:
 
     # ------------------------------------------------------------ mods
     def mods_list(self, profile=None):
-        """Full mod list for a profile, with enabled/version/update metadata."""
+        """Full mod list for a profile, with enabled state and catalog id."""
         profile = profile or self.ctx.get_active_profile()
         pmanager = self.ctx.profiles
         if not pmanager:
@@ -771,18 +771,13 @@ class LauncherApi:
             mgr = self._catalog()
             files = pmanager.list_mod_files(profile)
             installed = mgr.installed(profile)
-            states = mgr.status(profile)
             by_file = {}
             for mod_id, record in installed.items():
                 names = list(record.get("files") or [])
                 if record.get("filename") and record["filename"] not in names:
                     names.append(record["filename"])
                 for filename in names:
-                    by_file[filename] = {
-                        "id": mod_id,
-                        "version": record.get("version") or "",
-                        "state": states.get(mod_id, "unknown"),
-                    }
+                    by_file[filename] = {"id": mod_id}
             mods = []
             for path in files:
                 info = by_file.get(path.name, {})
@@ -796,9 +791,7 @@ class LauncherApi:
                     "enabled": pmanager.is_enabled(profile, path.name),
                     "size": size,
                     "size_text": self.ctx.format_size(size),
-                    "version": info.get("version", ""),
                     "catalog_id": info.get("id"),
-                    "update": info.get("state") == "update",
                 })
             return _ok({
                 "profile": profile,
@@ -936,39 +929,15 @@ class LauncherApi:
             payload = []
         self.em.emit("mod_issues", {"issues": payload})
 
-    def mod_update_check(self):
-        """Check installed catalog mods for newer versions (threaded)."""
-        self._spawn(self._mod_update_worker)
-        return _ok({"started": True})
-
-    def _mod_update_worker(self):
-        try:
-            mgr = self._catalog()
-            if mgr.catalog is None:
-                mgr.fetch()
-            profile = self.ctx.get_active_profile()
-            updates = mgr.available_updates(profile)
-            payload = [{
-                "id": e.id, "name": e.name, "version": e.version,
-            } for e in (updates or [])]
-            error = mgr.error
-        except Exception as exc:
-            log.debug("mod update check failed: %s", exc)
-            payload, error = [], str(exc)
-        self.em.emit("mod_updates", {"updates": payload, "error": error})
-
     # ------------------------------------------------------------ catalog
     @staticmethod
     def _entry_dict(entry):
         return {
             "id": entry.id,
             "name": entry.name,
-            "version": entry.version,
             "author": entry.author,
             "category": entry.category,
             "description": entry.description,
-            "size": entry.size,
-            "size_text": FileManager.format_size(int(entry.size or 0)),
             "dependencies": list(entry.dependencies or []),
             "incompatibilities": list(entry.incompatibilities or []),
             "game_version": entry.game_version,
@@ -1168,7 +1137,7 @@ class LauncherApi:
     # ------------------------------------------------------------ settings
     SETTING_KEYS = (
         "theme", "web_theme", "ui_mode", "display_backend", "auto_update",
-        "discord_rpc", "create_shortcuts", "auto_check_mod_updates",
+        "discord_rpc", "create_shortcuts",
         "active_profile", "gpu_id", "wine_binary", "wine_prefix",
         "warn_plain_wine", "home_note",
     )
@@ -1179,7 +1148,7 @@ class LauncherApi:
         payload["web_theme"] = s.get("web_theme", "dark") or "dark"
         payload["ui_mode"] = s.get("ui_mode", "web") or "web"
         for key in ("auto_update", "discord_rpc", "create_shortcuts",
-                    "auto_check_mod_updates", "warn_plain_wine"):
+                    "warn_plain_wine"):
             payload[key] = bool(s.get(key, True))
         payload["active_profile"] = self.ctx.config.get_active_profile()
         return _ok(payload)

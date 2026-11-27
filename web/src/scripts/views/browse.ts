@@ -10,12 +10,9 @@ const $ = <T extends HTMLElement = HTMLElement>(id: string): T =>
 interface CatalogEntry {
   id: string;
   name: string;
-  version: string;
   author: string;
   category: string;
   description: string;
-  size: number;
-  size_text: string;
   dependencies: string[];
   incompatibilities: string[];
   game_version: string;
@@ -34,12 +31,11 @@ interface CatalogData {
 let entries: CatalogEntry[] = [];
 let states: Record<string, string> = {};
 let installedIds = new Set<string>();
-let loaded = false;
+let loaded = false;  // whether a catalog has been received (not a cache)
 
 const STATE_LABEL: Record<string, string> = {
   install: "Not installed",
   installed: "Installed",
-  update: "Update available",
   unknown: "Not in catalog",
 };
 
@@ -55,7 +51,7 @@ export function initBrowse(): void {
       installedIds.add(data.id);
       render();
     }
-    void loadCatalog(false);
+    void loadCatalog(true);
   });
   on("mods_changed", (data) => {
     const ids = (data?.mods ?? [])
@@ -66,17 +62,16 @@ export function initBrowse(): void {
   });
 }
 
-export async function loadCatalog(force = false): Promise<void> {
-  if (!force && loaded) return;
-  const cached = await api<CatalogData>("catalog_get");
-  if (cached.ok && cached.data && cached.data.mods?.length) {
-    applyCatalog(cached.data);
-  }
-  const res = await api("catalog_load", force);
+export async function loadCatalog(_force = false): Promise<void> {
+  // Always fetch: the catalog and downloaded archives are never cached.
+  const status = $("catalog-status");
+  status.textContent = "Fetching catalog…";
+  status.className = "pill";
+  const res = await api("catalog_load", true);
   if (!res.ok) toast({ title: "Catalog failed", message: res.error, level: "danger" });
 }
 
-function applyCatalog(data: any): void {
+function applyCatalog(data: CatalogData): void {
   if (!data) return;
   entries = data.mods ?? [];
   states = data.states ?? {};
@@ -84,7 +79,7 @@ function applyCatalog(data: any): void {
 
   const status = $("catalog-status");
   status.textContent = data.offline
-    ? "Offline (cached)"
+    ? "Catalog unavailable"
     : `${entries.length} mods`;
   status.className = `pill${data.offline ? " warning" : " accent"}`;
 
@@ -155,8 +150,7 @@ function render(): void {
       </div>`;
     (top.querySelector("h3") as HTMLElement).textContent = entry.name;
     (top.querySelector(".mc-author") as HTMLElement).textContent =
-      [entry.version ? `v${entry.version}` : "", entry.author, entry.category]
-        .filter(Boolean).join(" · ");
+      [entry.author, entry.category].filter(Boolean).join(" · ");
 
     const desc = document.createElement("p");
     desc.className = "mc-desc";
@@ -165,8 +159,7 @@ function render(): void {
     const tags = document.createElement("div");
     tags.className = "mc-tags";
     const badges: Array<[string, string]> = [
-      [STATE_LABEL[state] ?? state, state === "update" ? "warning" : state === "installed" ? "success" : ""],
-      [entry.size_text, ""],
+      [STATE_LABEL[state] ?? state, state === "installed" ? "success" : ""],
       ...(entry.game_version ? [[`for ${entry.game_version}`, ""] as [string, string]] : []),
       ...(entry.dependencies?.length ? [[`Requires: ${entry.dependencies.join(", ")}`, ""] as [string, string]] : []),
       ...(entry.incompatibilities?.length ? [[`Conflicts: ${entry.incompatibilities.join(", ")}`, "danger"] as [string, string]] : []),
@@ -182,9 +175,8 @@ function render(): void {
     const foot = document.createElement("div");
     foot.className = "mc-foot";
     const install = document.createElement("button");
-    install.className = `btn${state === "update" ? " warning" : state === "install" ? " primary" : ""}`;
-    install.textContent = state === "update" ? "Update" : state === "install" ? "Install" : "Reinstall";
-    install.disabled = state === "installed";
+    install.className = `btn${state === "install" ? " primary" : ""}`;
+    install.textContent = state === "install" ? "Install" : "Reinstall";
     install.addEventListener("click", async () => {
       const res = await api("catalog_install", entry.id);
       if (!res.ok) toast({ title: "Install failed", message: res.error, level: "danger" });
@@ -194,7 +186,7 @@ function render(): void {
     const remove = document.createElement("button");
     remove.className = "btn ghost";
     remove.textContent = "Remove";
-    remove.disabled = !installedIds.has(entry.id) && !["installed", "update", "unknown"].includes(state);
+    remove.disabled = !installedIds.has(entry.id) && !["installed", "unknown"].includes(state);
     remove.addEventListener("click", async () => {
       const res = await api("catalog_remove", entry.id);
       if (!res.ok) toast({ title: "Remove failed", message: res.error, level: "danger" });

@@ -22,7 +22,6 @@ export function initSettings(): void {
   wireSegmented("setting-web-theme", "web_theme");
   wireSegmented("setting-backend", "display_backend");
   wireSwitch("setting-auto-update", "auto_update");
-  wireSwitch("setting-mod-updates", "auto_check_mod_updates");
   wireSwitch("setting-discord", "discord_rpc");
   wireSwitch("setting-shortcuts", "create_shortcuts");
   wireSwitch("setting-warn-wine", "warn_plain_wine");
@@ -72,7 +71,6 @@ function applyForm(): void {
   setSegmented("setting-web-theme", values.web_theme || "dark");
   setSegmented("setting-backend", values.display_backend || "");
   setSwitch("setting-auto-update", values.auto_update !== false);
-  setSwitch("setting-mod-updates", values.auto_check_mod_updates !== false);
   setSwitch("setting-discord", values.discord_rpc !== false);
   setSwitch("setting-shortcuts", values.create_shortcuts !== false);
   setSwitch("setting-warn-wine", values.warn_plain_wine !== false);

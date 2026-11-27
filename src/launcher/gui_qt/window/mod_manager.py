@@ -154,23 +154,14 @@ class ModManagerMixin:
             self._mods_status.style().polish(self._mods_status)
             return
 
-        states = self.catalog_mgr.status(name, self.catalog_mgr.catalog)
         for dll in dlls:
             size = FileManager.format_size(dll.stat().st_size)
             enabled = self.profile_mgr.is_enabled(name, dll.name)
             label = f"{'●' if enabled else '○'} {dll.name}  ({size})"
-            record = self.catalog_mgr.record_for_file(name, dll.name)
-            state = record[0] and states.get(record[0]) if record else None
-            if record:
-                label += f"  ·  v{record[1].get('version', '')}"
-            if state == "update":
-                label += "  ·  UPDATE AVAILABLE"
             item = QListWidgetItem(label)
             item.setData(Qt.ItemDataRole.UserRole, str(dll))
             if not enabled:
                 item.setForeground(QColor(theme.TEXT_MUTED))
-            elif state == "update":
-                item.setForeground(QColor(theme.WARNING))
             self._mods_list.addItem(item)
 
         count = sum(1 for dll in dlls if self.profile_mgr.is_enabled(name, dll.name))
@@ -321,16 +312,16 @@ class ModManagerMixin:
                 break
 
     def _cb_update_mods(self):
-        """Update selected catalog-installed mods to their latest versions."""
+        """Reinstall selected catalog mods, pulling the latest release asset."""
         selected = self._mods_list.selectedItems()
         if not selected:
-            QMessageBox.information(self.window, "Info", "Select mod(s) to update first.")
+            QMessageBox.information(self.window, "Info", "Select mod(s) to reinstall first.")
             return
         profile_name = self.config.get_active_profile()
         if not profile_name:
             return
         if self.game.is_running:
-            QMessageBox.warning(self.window, "Error", "Close Among Us before updating mods.")
+            QMessageBox.warning(self.window, "Error", "Close Among Us before reinstalling mods.")
             return
 
         entries = []
@@ -345,12 +336,12 @@ class ModManagerMixin:
         if not entries:
             QMessageBox.information(
                 self.window, "Info",
-                "Those mods were added manually. Use Browse Mods to install updates "
+                "Those mods were added manually. Use Browse Mods to install them "
                 "from the catalog.",
             )
             return
 
-        self._mods_status.setText(f"Updating {len(entries)} mod(s)...")
+        self._mods_status.setText(f"Reinstalling {len(entries)} mod(s)...")
         self._mods_status.setObjectName("infoText")
         self._mods_status.style().polish(self._mods_status)
 
@@ -366,8 +357,8 @@ class ModManagerMixin:
             def done():
                 failed = [msg for ok, msg in results if not ok]
                 self._mods_status.setText(
-                    f"Updated {len(results) - len(failed)} mod(s)"
-                    if not failed else f"Update failed: {failed[0]}"
+                    f"Reinstalled {len(results) - len(failed)} mod(s)"
+                    if not failed else f"Reinstall failed: {failed[0]}"
                 )
                 self._mods_status.setObjectName("successText" if not failed else "dangerText")
                 self._mods_status.style().polish(self._mods_status)

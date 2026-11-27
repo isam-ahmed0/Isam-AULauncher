@@ -58,7 +58,7 @@ If Qt cannot start on Linux, `main.py` transparently falls back to Lite.
 | `graphics.py` | `lspci` GPU detection, `DRI_PRIME`/`__NV_PRIME_RENDER_OFFLOAD` env, Wine binary lookup |
 | `file_manager.py` | Extract zips with progress, file verification helpers |
 | `mod_inspector.py` | Reads BepInEx plugin metadata; finds duplicates, missing deps, incompatibilities |
-| `mod_catalog.py` | Remote mod catalog: fetch/cache a JSON manifest, verify SHA-256, install/update/remove mods into profiles, per-profile `mods.json` metadata (see [MOD_CATALOG.md](MOD_CATALOG.md)) |
+| `mod_catalog.py` | Remote mod catalog: fetch a JSON manifest fresh on every load (no cache), install/reinstall/remove mods into profiles from fresh downloads, per-profile `mods.json` metadata (see [MOD_CATALOG.md](MOD_CATALOG.md)) |
 | `itch_oauth.py` | Full itch.io OAuth flow + EOS auth handoff (tools-free) |
 | `itch_auth.py` | Qt adapter kept for compatibility (`gui_qt.login`, `window/itch_profile`) |
 | `single_instance.py` | Cross-platform advisory lock in the app data dir |
@@ -89,7 +89,7 @@ custom GUIs stay lightweight. GUI imports are always inside functions.
 The web screens mirror the Qt feature set: Home (install/update/launch/stop,
 progress, version picker, folder inspection, home card), Mods (profiles,
 enable/disable, reorder, import, issue scan), Browse Mods (catalog search,
-categories, install/update/remove), Regions (add/apply/ping/reset), News
+categories, install/reinstall/remove), Regions (add/apply/ping/reset), News
 (live feed with offline cache), Account (itch.io OAuth), Settings (web/Qt
 themes, interface choice, Wine/GPU, behavior toggles), Updates (game/launcher
 checks with skip) and About (versions, links, log tail). The Python bridge
@@ -103,8 +103,8 @@ AU-Assets-Swapper page is deliberately deferred.
   `_build_*` methods; behavior comes from mixins:
   `window/game_actions.py`, `window/mod_manager.py`, `window/mod_browser.py`,
   `window/region_editor.py`, `window/itch_profile.py`, `window/updater.py`
-  (news feed, change-only news notice, and game/launcher/mod update checks with
-  a "skip this version" option).
+  (news feed, change-only news notice, and game/launcher update checks with a
+  "skip this version" option).
 - `window/news.py` — `NewsBrowser`, the News page Markdown viewer (fetches
   remote images through the network session).
 - `theme.py` + `themes/*.py` — palettes and the generated QSS.
@@ -113,7 +113,7 @@ AU-Assets-Swapper page is deliberately deferred.
 - `dialogs.py` — Settings page, About page, help dialogs.
 - `assets_manager/` — asset-pack page (`tab.py`), pack files/manager
   (`manager.py`), pack metadata (`pack_info.py`), models and the app mixin.
-- `mod_browser.py` — catalog page (search, category filter, details, install/update).
+- `mod_browser.py` — catalog page (search, category filter, details, install/reinstall).
 - Feature widgets: `mod_details.py`, `mod_warnings.py`, `profiles.py`,
   `regions.py`, `version_picker.py`, `setup_wizard.py`, `theme_maker.py`,
   `widgets.py`, `icons.py`, `worker.py` (thread → signal bridge),
@@ -143,7 +143,7 @@ config.json        settings
 current_version.txt / game_path.txt
 Profiles/          launcher profiles (each has a mods.json with mod metadata)
 guis/              user custom GUIs (see DOC/CUSTOM_GUI.md)
-cache/             downloads, including cache/mods/catalog.json
+cache/             game downloads (mod catalog/downloads are never cached)
 logs/launcher.log  log file
 ```
 

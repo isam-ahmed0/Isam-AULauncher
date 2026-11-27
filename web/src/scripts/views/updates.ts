@@ -24,7 +24,6 @@ let loaded = false;
 export function initUpdates(): void {
   $("updates-check").addEventListener("click", () => void checkUpdates());
   $("updates-auto").addEventListener("click", () => toggle("auto_update", "updates-auto"));
-  $("updates-mods").addEventListener("click", () => toggle("auto_check_mod_updates", "updates-mods"));
 
   on("update_check", (data) => applyGame(data));
   on("game_update", (data) => applyGame(data));
@@ -42,7 +41,6 @@ export async function loadUpdates(): Promise<void> {
   if (res.ok && res.data) {
     loaded = true;
     $("updates-auto").classList.toggle("on", res.data.auto_update !== false);
-    $("updates-mods").classList.toggle("on", res.data.auto_check_mod_updates !== false);
   }
   render();
 }

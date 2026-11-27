@@ -63,7 +63,6 @@ LAUNCHER_SETUP_URL = f"https://github.com/isam-ahmed0/Isam-AULauncher/releases/d
 MOD_CATALOG_URL = os.environ.get("ISAM_MOD_CATALOG_URL") or (
     "https://raw.githubusercontent.com/isam-ahmed0/au_mods/master/catalog.json"
 )
-MOD_CATALOG_TTL = 3600  # seconds before a cached catalog is considered stale
 
 GAME_CRITICAL_FILES = ["Among Us.exe"]
 GAME_CRITICAL_DIRS = ["BepInEx", "dotnet"]
@@ -96,7 +95,6 @@ class Config:
             "gpu_id": "", "wine_binary": "", "linux_setup_complete": False,
             "home_image_path": "", "home_note": "",
             "news_seen_hash": "", "news_cache": "",
-            "auto_check_mod_updates": True,
             "skipped_game_version": "", "skipped_launcher_version": "",
         }
         try:

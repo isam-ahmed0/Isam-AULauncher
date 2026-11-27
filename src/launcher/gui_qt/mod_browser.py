@@ -11,14 +11,12 @@ import gui_qt.theme as theme
 _STATE_LABEL = {
     "install": "Not installed",
     "installed": "Installed",
-    "update": "Update available",
     "unknown": "Installed (not in catalog)",
 }
 
 _STATE_STYLE = {
     "install": theme.TEXT_SECONDARY,
     "installed": theme.SUCCESS,
-    "update": theme.WARNING,
     "unknown": theme.INFO,
 }
 
@@ -188,7 +186,7 @@ class ModBrowserPage(QWidget):
         self._list.clear()
         for entry in sorted((catalog.mods if catalog else []), key=lambda m: m.name.lower()):
             state = self._states.get(entry.id, "install")
-            item = QListWidgetItem(f"{entry.name}  ·  v{entry.version}  ·  {_STATE_LABEL.get(state, state)}")
+            item = QListWidgetItem(f"{entry.name}  ·  {_STATE_LABEL.get(state, state)}")
             item.setData(Qt.ItemDataRole.UserRole, entry.id)
             item.setToolTip(entry.description[:300])
             self._list.addItem(item)
@@ -214,7 +212,7 @@ class ModBrowserPage(QWidget):
 
     def set_busy(self, busy: bool):
         self._install_btn.setEnabled(not busy and self.selected_entry() is not None)
-        self._remove_btn.setEnabled(not busy and self.selected_status() in ("installed", "update", "unknown"))
+        self._remove_btn.setEnabled(not busy and self.selected_status() in ("installed", "unknown"))
         self._progress.setVisible(busy)
         if busy:
             self._progress.setValue(0)
@@ -258,7 +256,7 @@ class ModBrowserPage(QWidget):
             return
 
         self._detail_name.setText(entry.name)
-        bits = [f"v{entry.version}" if entry.version else "", entry.author, entry.category]
+        bits = [entry.author, entry.category]
         self._detail_meta.setText("  ·  ".join(b for b in bits if b))
         state = self.selected_status()
         self._detail_status.setText(_STATE_LABEL.get(state, state))
@@ -274,9 +272,9 @@ class ModBrowserPage(QWidget):
             deps.append(f"Game version: {entry.game_version}")
         self._detail_deps.setText("\n".join(deps))
 
-        self._install_btn.setText("Update" if state == "update" else "Install")
+        self._install_btn.setText("Reinstall" if state in ("installed", "unknown") else "Install")
         self._install_btn.setEnabled(True)
-        self._remove_btn.setEnabled(state in ("installed", "update", "unknown"))
+        self._remove_btn.setEnabled(state in ("installed", "unknown"))
 
     def _on_install(self):
         entry = self.selected_entry()

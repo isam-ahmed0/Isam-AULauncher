@@ -12,6 +12,10 @@ class ModBrowserMixin:
 
     # ------------------------------------------------------------------ loading
     def _load_mod_catalog(self, force: bool = False):
+        page = getattr(self, "mod_browser", None)
+        if page is not None:
+            page.set_status("Fetching catalog...", "info")
+
         def go():
             try:
                 self.catalog_mgr.fetch(force=force)
@@ -35,8 +39,7 @@ class ModBrowserMixin:
                             "warning" if self.catalog_mgr.offline else "danger")
         else:
             count = len(catalog.mods) if catalog else 0
-            suffix = " (cached)" if self.catalog_mgr.offline else ""
-            page.set_status(f"{count} mod(s) available{suffix}", "info")
+            page.set_status(f"{count} mod(s) available", "info")
         if hasattr(self, "_cb_refresh_mods"):
             self._cb_refresh_mods()
 

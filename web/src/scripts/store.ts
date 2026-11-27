@@ -34,7 +34,6 @@ export interface StoreState {
     auto_update: boolean;
     discord_rpc: boolean;
     create_shortcuts: boolean;
-    auto_check_mod_updates?: boolean;
     active_profile: string;
     gpu_id?: string;
     wine_binary?: string;
@@ -89,7 +88,6 @@ export const store: StoreState = {
     auto_update: true,
     discord_rpc: true,
     create_shortcuts: true,
-    auto_check_mod_updates: true,
     active_profile: "Default",
     gpu_id: "",
     wine_binary: "",

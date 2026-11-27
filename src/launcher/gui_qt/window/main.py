@@ -79,7 +79,6 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ModBrows
         self._workers = []
         self.news_item = None
         self._news_notice_pending = None
-        self._mod_update_notice_pending = None
         self._game_update_notice_pending = None
 
         self._locate_pending = False
@@ -944,7 +943,7 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ModBrows
             ("Enable / Disable", self._cb_toggle_mod, "toolBtn"),
             ("Move Up", lambda: self._cb_move_mod(-1), "toolBtn"),
             ("Move Down", lambda: self._cb_move_mod(1), "toolBtn"),
-            ("Update Selected", self._cb_update_mods, "primaryBtn"),
+            ("Reinstall Selected", self._cb_update_mods, "primaryBtn"),
         ]:
             btn = QPushButton(label)
             btn.setObjectName(obj_name)
@@ -1083,10 +1082,7 @@ class LauncherApp(GameActionsMixin, RegionEditorMixin, ModManagerMixin, ModBrows
                 except Exception:
                     logging.exception("Failed to refresh assets page")
             if label == "Mod Browser":
-                if self.catalog_mgr.catalog is None:
-                    self._load_mod_catalog()
-                else:
-                    self._refresh_mod_browser()
+                self._load_mod_catalog(force=True)
             effective = label if label in self.nav_buttons else "Home"
             for name, btn in self.nav_buttons.items():
                 btn.setChecked(name == effective)

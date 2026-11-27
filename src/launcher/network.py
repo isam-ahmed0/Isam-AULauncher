@@ -36,9 +36,9 @@ class NetworkManager:
         self.session = requests.Session()
         self.session.headers.update({'User-Agent': f'IsamAULauncher/{LAUNCHER_VERSION}'})
 
-    def fetch_text(self, url: str) -> Optional[str]:
+    def fetch_text(self, url: str, headers: dict = None) -> Optional[str]:
         try:
-            r = self.session.get(url, timeout=REQUEST_TIMEOUT)
+            r = self.session.get(url, timeout=REQUEST_TIMEOUT, headers=headers)
             r.raise_for_status()
             return r.text.strip()
         except requests.RequestException as e:
@@ -57,9 +57,13 @@ class NetworkManager:
         SEGMENT_SIZE = 4 * 1024 * 1024  # 4MB per segment (downloaded as chunks within)
 
         try:
-            # HEAD to get total size and check Range support
-            head = self.session.head(url, timeout=REQUEST_TIMEOUT)
-            head.raise_for_status()
+            # HEAD to get total size and check Range support. Some release
+            # hosts reject HEAD; fall back to a plain streaming GET.
+            try:
+                head = self.session.head(url, timeout=REQUEST_TIMEOUT)
+                head.raise_for_status()
+            except requests.RequestException:
+                return self._download_single_thread(url, output_path, 0, progress_callback)
             total = int(head.headers.get("content-length", 0))
             accept_ranges = head.headers.get("accept-ranges", "").lower() == "bytes"
 
