@@ -48,7 +48,14 @@ export interface StoreState {
     log: string;
     default_game_dir: string;
   };
-  system: { gpus: any[]; gpu: string; wine: string };
+  system: {
+    gpus: any[];
+    gpu: string;
+    wine: string;
+    wines: Array<{ name: string; path: string }>;
+    wine_binary: string;
+    prefix: string;
+  };
   status: { text: string; level: string };
   progress: number | null;
   progressLabel: string;
@@ -96,7 +103,7 @@ export const store: StoreState = {
   },
   home: { image: "", note: "", image_data: null },
   paths: { appdata: "", profiles: "", guis: "", log: "", default_game_dir: "" },
-  system: { gpus: [], gpu: "", wine: "" },
+  system: { gpus: [], gpu: "", wine: "", wines: [], wine_binary: "", prefix: "" },
   status: { text: "Starting…", level: "info" },
   progress: null,
   progressLabel: "",

@@ -106,17 +106,19 @@
       </div>
       <div class="setting-row">
         <div class="sr-text">
-          <div class="sr-title">Wine executable</div>
-          <div class="sr-desc">Leave empty to auto-detect; detected: <span id="settings-wine-detected">—</span></div>
+          <div class="sr-title">Wine / Proton build</div>
+          <div class="sr-desc">Auto-detect picks the first available runner; detected: <span id="settings-wine-detected">—</span></div>
         </div>
-        <input class="field wide mono" id="setting-wine-binary" placeholder="Auto" />
+        <select class="field wide" id="setting-wine-binary">
+          <option value="">Auto-detect</option>
+        </select>
       </div>
       <div class="setting-row">
         <div class="sr-text">
           <div class="sr-title">Wine prefix</div>
-          <div class="sr-desc">Used for the game, fixer and itch.io token.</div>
+          <div class="sr-desc">Resolved from $WINEPREFIX or ~/.wine. Advanced override: config.json.</div>
         </div>
-        <input class="field wide mono" id="setting-wine-prefix" placeholder="Auto" />
+        <span class="pill mono truncate" id="setting-wine-prefix" style="max-width:220px;">—</span>
       </div>
       <div class="setting-row">
         <div class="sr-text">

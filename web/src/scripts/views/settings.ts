@@ -35,11 +35,9 @@ export function initSettings(): void {
   ($("setting-gpu") as HTMLSelectElement).addEventListener("change", (e) => {
     void save("gpu_id", (e.target as HTMLSelectElement).value);
   });
-  for (const [id, key] of [["setting-wine-binary", "wine_binary"], ["setting-wine-prefix", "wine_prefix"]]) {
-    ($(id) as HTMLInputElement).addEventListener("change", (e) => {
-      void save(key, (e.target as HTMLInputElement).value.trim());
-    });
-  }
+  ($("setting-wine-binary") as HTMLSelectElement).addEventListener("change", (e) => {
+    void save("wine_binary", (e.target as HTMLSelectElement).value);
+  });
 
   $("settings-open-config").addEventListener("click", () => {
     if (store.paths.appdata) void api("open_path", store.paths.appdata);
@@ -50,7 +48,7 @@ export function initSettings(): void {
     }
   });
 
-  on("system", () => fillGpus());
+  on("system", () => applySystem());
 }
 
 export async function loadSettings(force = false): Promise<void> {
@@ -62,6 +60,12 @@ export async function loadSettings(force = false): Promise<void> {
   }
   values = res.data;
   loaded = true;
+
+  // The startup "system" event may have been missed; read it directly too.
+  const sys = await api<any>("system_info");
+  if (sys.ok && sys.data) {
+    update({ system: { ...store.system, ...sys.data } });
+  }
   applyForm();
 }
 
@@ -77,14 +81,46 @@ function applyForm(): void {
 
   ($("setting-theme") as HTMLSelectElement).value = values.theme || "Forest";
   ($("setting-ui-mode") as HTMLSelectElement).value = values.ui_mode || "web";
-  ($("setting-wine-binary") as HTMLInputElement).value = values.wine_binary || "";
-  ($("setting-wine-prefix") as HTMLInputElement).value = values.wine_prefix || "";
 
   const linux = store.app.platform === "linux";
   $("settings-linux").hidden = !linux;
   $("setting-backend-row").hidden = !linux;
-  $("settings-wine-detected").textContent = store.system.wine || "auto-detected";
+  applySystem();
+}
+
+function applySystem(): void {
   fillGpus();
+  fillWines();
+  $("settings-wine-detected").textContent = store.system.wine || "Not found";
+  $("setting-wine-prefix").textContent = store.system.prefix || "—";
+}
+
+function fillWines(): void {
+  const select = $("setting-wine-binary") as HTMLSelectElement;
+  const current = values.wine_binary || store.system.wine_binary || "";
+  select.replaceChildren();
+
+  const auto = document.createElement("option");
+  auto.value = "";
+  auto.textContent = "Auto-detect";
+  select.appendChild(auto);
+
+  let found = current === "";
+  for (const wine of store.system.wines || []) {
+    const option = document.createElement("option");
+    option.value = wine.path;
+    option.textContent = `${wine.name} — ${wine.path}`;
+    select.appendChild(option);
+    if (wine.path === current) found = true;
+  }
+  if (current && !found) {
+    // Keep an existing configured runner visible even if it is not detected now.
+    const option = document.createElement("option");
+    option.value = current;
+    option.textContent = `Configured: ${current}`;
+    select.appendChild(option);
+  }
+  select.value = current;
 }
 
 function fillGpus(): void {

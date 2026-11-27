@@ -220,9 +220,12 @@ class LauncherApi:
         self.em.emit("update_check", self._game_update)
         self._emit_state()
 
-    def _detect_system(self):
-        """GPU + Wine probe (subprocess heavy) pushed once at startup."""
-        payload = {"gpus": [], "gpu": "", "wine": ""}
+    def system_payload(self):
+        """Local GPU + Wine/Proton snapshot for the Settings page."""
+        payload = {
+            "gpus": [], "gpu": "", "wine": "", "wines": [],
+            "wine_binary": "", "prefix": "",
+        }
         try:
             import graphics
             gpus = graphics.detect_gpus() or []
@@ -233,11 +236,22 @@ class LauncherApi:
             log.debug("gpu detect failed: %s", exc)
         try:
             import graphics as g
-            wine = g.resolve_wine(self.ctx.config.get_wine_binary())
+            payload["wine_binary"] = self.ctx.config.get_wine_binary()
+            payload["wines"] = g.detect_wine_binaries() or []
+            wine = g.resolve_wine(payload["wine_binary"])
             payload["wine"] = g.describe_wine(wine) if wine else ""
-        except Exception:
-            pass
-        self.em.emit("system", payload)
+            payload["prefix"] = str(self.ctx.config.get_wine_prefix())
+        except Exception as exc:
+            log.debug("wine detect failed: %s", exc)
+        return payload
+
+    def _detect_system(self):
+        """Push the startup GPU + Wine probe once the page is ready."""
+        self.em.emit("system", self.system_payload())
+
+    def system_info(self):
+        """Re-read GPU/Wine data when Settings opens (no event dependency)."""
+        return _ok(self.system_payload())
 
     # ------------------------------------------------------------ window
     def win_min(self):
@@ -1164,6 +1178,13 @@ class LauncherApi:
             value = str(value or "").strip().lower()
             if value not in ("", "x11", "wayland"):
                 return _err("Invalid display backend.")
+        elif key == "wine_binary":
+            value = str(value or "").strip()
+            if value:
+                path = Path(value).expanduser()
+                if not path.is_file() or not os.access(str(path), os.X_OK):
+                    return _err("That Wine executable was not found or is not runnable.")
+                value = str(path.resolve())
         elif key == "wine_prefix":
             value = str(value or "").strip()
         with self._lock:
