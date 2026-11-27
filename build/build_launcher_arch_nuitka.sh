@@ -5,6 +5,9 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+# Nuitka bundles src/launcher/resources/, which includes the Web UI.
+bash build/web_assets.sh
+
 mkdir -p dist/linux-nuitka
 
 VERSION="$(grep -m1 '^LAUNCHER_VERSION' src/launcher/config.py | sed -E 's/.*"([^"]*)".*/\1/')"

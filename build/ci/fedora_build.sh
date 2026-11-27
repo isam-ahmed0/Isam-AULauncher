@@ -8,7 +8,7 @@ set -euo pipefail
 
 echo "[ci-fedora] installing build dependencies"
 dnf install -y --setopt=install_weak_deps=False \
-  rpm-build python3 python3-pip python3-devel gcc binutils \
+  rpm-build python3 python3-pip python3-devel gcc binutils nodejs npm \
   mesa-libGL mesa-libEGL libglvnd-egl libglvnd-glx mesa-dri-drivers \
   fontconfig freetype libxkbcommon libxkbcommon-x11 \
   libxcb libX11 libXext libXrender libXi libSM libICE \

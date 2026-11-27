@@ -13,16 +13,7 @@ cd "$(dirname "$0")/.."
 mkdir -p dist/linux
 
 # Web (pywebview) assets are built from the Astro project and are not committed.
-if command -v npm >/dev/null 2>&1; then
-  echo "Building web assets..."
-  (cd web && npm ci && npm run build)
-else
-  echo "npm was not found — using previously built web assets." >&2
-  if [ ! -f src/launcher/resources/web/index.html ]; then
-    echo "ERROR: web/index.html is missing; install Node.js and run 'cd web && npm ci && npm run build'." >&2
-    exit 1
-  fi
-fi
+bash build/web_assets.sh
 
 EXCLUDES=(
   # QtWebEngine/QtWebChannel are kept: pywebview's Qt backend needs them on

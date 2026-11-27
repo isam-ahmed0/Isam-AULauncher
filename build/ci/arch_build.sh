@@ -8,7 +8,7 @@ set -euo pipefail
 
 echo "[ci-arch] installing build dependencies"
 pacman -Syu --noconfirm --needed \
-  base-devel python python-pip \
+  base-devel python python-pip nodejs npm \
   mesa libglvnd fontconfig freetype2 libxkbcommon \
   libxcb libx11 libxext libxrender libxi libsm libice \
   libxrandr libxcursor libxfixes libxdamage libxcomposite xcb-util \
