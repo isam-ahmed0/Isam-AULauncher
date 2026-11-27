@@ -1,0 +1,54 @@
+---
+---
+<section class="view" data-view="updates" id="view-updates">
+  <div class="page-head">
+    <div>
+      <h1>Updates</h1>
+      <p class="sub">Keep the launcher and the game up to date.</p>
+    </div>
+    <div class="head-actions">
+      <button class="btn primary" id="updates-check">
+        <svg class="icon sm"><use href="#i-refresh" /></svg>
+        Check for updates
+      </button>
+    </div>
+  </div>
+
+  <div class="update-stack">
+    <section class="update-card" id="game-update-card">
+      <span class="u-icon"><svg class="icon lg"><use href="#i-gamepad" /></svg></span>
+      <div class="u-body">
+        <h3>Among Us <span class="pill" id="game-update-state" style="margin-left:8px;">—</span></h3>
+        <p id="game-update-detail">Checking the installed version…</p>
+      </div>
+      <div class="u-actions" id="game-update-actions"></div>
+    </section>
+
+    <section class="update-card" id="launcher-update-card">
+      <span class="u-icon"><svg class="icon lg"><use href="#i-download" /></svg></span>
+      <div class="u-body">
+        <h3>CrewLauncher <span class="pill" id="launcher-update-state" style="margin-left:8px;">—</span></h3>
+        <p id="launcher-update-detail">Checking the latest release…</p>
+      </div>
+      <div class="u-actions" id="launcher-update-actions"></div>
+    </section>
+  </div>
+
+  <div class="card" style="margin-top:18px;">
+    <div class="card-title"><svg class="icon sm"><use href="#i-clock" /></svg>Update preferences</div>
+    <div class="setting-row">
+      <div class="sr-text">
+        <div class="sr-title">Automatic game updates</div>
+        <div class="sr-desc">Offer the latest game version when the launcher starts.</div>
+      </div>
+      <button class="switch" id="updates-auto" aria-label="Automatic game updates"></button>
+    </div>
+    <div class="setting-row">
+      <div class="sr-text">
+        <div class="sr-title">Mod update checks</div>
+        <div class="sr-desc">Check installed catalog mods for newer versions at startup.</div>
+      </div>
+      <button class="switch" id="updates-mods" aria-label="Mod update checks"></button>
+    </div>
+  </div>
+</section>

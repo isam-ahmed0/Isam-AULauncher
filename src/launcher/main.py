@@ -5,7 +5,7 @@ Interface selection (first match wins):
 - ``--ui qt|tk|custom:<name>``  explicit choice
 - ``--qt`` / ``--tk`` (``--lite``)  shortcuts
 - config ``ui_mode``            saved preference (Settings > Interface)
-- default                      Qt
+- default                      Web (pywebview)
 
 On Linux the Qt interface automatically picks a working platform (X11 first,
 then Wayland) and falls back to the Lite interface when Qt cannot start at
@@ -59,11 +59,13 @@ def _notice(title, text):
 def _parse_args(argv):
     parser = argparse.ArgumentParser(prog="CrewLauncher", description=APP_NAME)
     parser.add_argument("--ui", default=None,
-                        help="Interface to start: qt, tk or custom:<name>")
+                        help="Interface to start: web, qt, tk or custom:<name>")
     parser.add_argument("--qt", action="store_true",
                         help="Use the Qt interface")
     parser.add_argument("--tk", "--lite", "-tk", "-lite", dest="tk",
                         action="store_true", help="Use the Lite (tkinter) interface")
+    parser.add_argument("--web", dest="web",
+                        action="store_true", help="Use the Web (pywebview) interface")
     parser.add_argument("--ctk", "-ctk", dest="ctk", action="store_true",
                         help=argparse.SUPPRESS)
     parser.add_argument("--gui-2", action="store_true", help=argparse.SUPPRESS)
@@ -99,7 +101,7 @@ def main(argv=None):
 
     if args.gui_2:
         _notice(APP_NAME, "Dear PyGui is no longer supported.\n"
-                          "Please use the default Qt interface.")
+                          "Please use the default Web interface.")
         return 0
 
     from config import Config
@@ -111,13 +113,15 @@ def main(argv=None):
 
     cli_mode = (args.ui or "").strip()
     if not cli_mode:
-        if args.tk:
+        if args.web:
+            cli_mode = "web"
+        elif args.tk:
             cli_mode = "tk"
         elif args.qt:
             cli_mode = "qt"
         elif args.ctk:
             _notice(APP_NAME, "The CustomTkinter interface is not available yet.\n"
-                              "Starting the Qt interface.")
+                              "Starting the Web interface.")
             cli_mode = "qt"
 
     from ui_registry import resolve_mode
@@ -126,6 +130,23 @@ def main(argv=None):
     if mode == "tk":
         from main_lite import main as lite_main
         return lite_main(args.rest, lock_held=True)
+
+    if mode == "web":
+        from gui_web.main import main as web_main
+        try:
+            rc = web_main(args.rest, lock_held=True)
+        except Exception as e:
+            logging.exception("Web interface failed to start")
+            _notice(APP_NAME,
+                    "The web interface could not start.\n\n"
+                    f"{type(e).__name__}: {e}\n\n"
+                    "Starting the Qt interface instead.")
+            rc = 1
+        if rc == 0:
+            return 0
+        # rc 2/3 = pywebview or the built assets are missing; the reason has
+        # already been printed to stderr. Fall through to Qt.
+        mode = "qt"
 
     if mode.startswith("custom:"):
         result = _run_custom(mode, config)

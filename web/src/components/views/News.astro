@@ -1,0 +1,39 @@
+---
+---
+<section class="view" data-view="news" id="view-news">
+  <div class="page-head">
+    <div>
+      <h1>News</h1>
+      <p class="sub">Announcements and patch notes from the CrewLauncher team.</p>
+    </div>
+    <div class="head-actions">
+      <span class="pill" id="news-status">Loading…</span>
+      <button class="btn icon-btn" id="news-refresh" title="Refresh announcements">
+        <svg class="icon sm"><use href="#i-refresh" /></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="notice info" id="news-notice">
+    <svg class="icon"><use href="#i-info" /></svg>
+    <span class="grow" id="news-notice-text"></span>
+  </div>
+
+  <div class="news-grid">
+    <div class="stack" style="gap: 18px;" id="news-list">
+      <div class="card">
+        <div class="empty"><h3>Loading announcements…</h3></div>
+      </div>
+    </div>
+    <aside class="side-note">
+      <div class="card">
+        <div class="card-title"><svg class="icon sm"><use href="#i-info" /></svg>About this feed</div>
+        <div class="kv"><span>Source</span><span>release/message.txt</span></div>
+        <div class="kv"><span>Format</span><span>Markdown</span></div>
+        <div class="kv"><span>Offline cache</span><span id="news-cache-state">—</span></div>
+        <div class="kv"><span>Updated</span><span id="news-identity">—</span></div>
+        <button class="btn block" style="margin-top:12px;" data-goto="settings">Notification settings</button>
+      </div>
+    </aside>
+  </div>
+</section>

@@ -5,6 +5,21 @@ cd /d "%~dp0.."
 
 if not exist "dist" mkdir dist
 
+REM Web assets (Astro) are not committed; build them on demand.
+where npm >nul 2>nul
+if %errorlevel% equ 0 (
+  echo Building web assets...
+  pushd web
+  call npm ci
+  if errorlevel 1 goto :webfail
+  call npm run build
+  if errorlevel 1 goto :webfail
+  popd
+) else (
+  echo npm not found - using previously built web assets. 1>&2
+  if not exist "src\launcher\resources\web\index.html" goto :webmissing
+)
+
 pyinstaller --noconfirm --onedir --windowed --noupx ^
   --name CrewLauncher ^
   --icon src\launcher\resources\icon.ico ^
@@ -12,8 +27,13 @@ pyinstaller --noconfirm --onedir --windowed --noupx ^
   --add-data "src\launcher\resources\splash.png;resources" ^
   --add-data "src\launcher\resources\phosphor-icons;resources\phosphor-icons" ^
   --add-data "src\launcher\resources\login;resources\login" ^
+  --add-data "src\launcher\resources\web;resources\web" ^
   --add-data "DOC;DOC" ^
   --add-data "release\bepmods.zip;." ^
+  --hidden-import webview.platforms ^
+  --hidden-import webview.platforms.winforms ^
+  --hidden-import webview.platforms.edgechromium ^
+  --hidden-import qtpy ^
   --exclude-module PySide6.QtWebEngineCore ^
   --exclude-module PySide6.QtWebEngineWidgets ^
   --exclude-module PySide6.QtWebEngineQuick ^
@@ -47,3 +67,12 @@ pyinstaller --noconfirm --onedir --windowed --noupx ^
 echo.
 echo Built: dist\CrewLauncher\
 pause
+exit /b 0
+
+:webfail
+echo ERROR: web asset build failed (run "cd web && npm ci && npm run build"). 1>&2
+exit /b 1
+
+:webmissing
+echo ERROR: web\index.html is missing; install Node.js and run "cd web && npm ci && npm run build". 1>&2
+exit /b 1

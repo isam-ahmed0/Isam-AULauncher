@@ -12,10 +12,21 @@ cd "$(dirname "$0")/.."
 
 mkdir -p dist/linux
 
+# Web (pywebview) assets are built from the Astro project and are not committed.
+if command -v npm >/dev/null 2>&1; then
+  echo "Building web assets..."
+  (cd web && npm ci && npm run build)
+else
+  echo "npm was not found — using previously built web assets." >&2
+  if [ ! -f src/launcher/resources/web/index.html ]; then
+    echo "ERROR: web/index.html is missing; install Node.js and run 'cd web && npm ci && npm run build'." >&2
+    exit 1
+  fi
+fi
+
 EXCLUDES=(
-  --exclude-module PySide6.QtWebEngineCore
-  --exclude-module PySide6.QtWebEngineWidgets
-  --exclude-module PySide6.QtWebEngineQuick
+  # QtWebEngine/QtWebChannel are kept: pywebview's Qt backend needs them on
+  # Linux when WebKitGTK (gi) is unavailable.
   --exclude-module PySide6.QtQuick
   --exclude-module PySide6.QtQuickWidgets
   --exclude-module PySide6.QtQml
@@ -39,7 +50,6 @@ EXCLUDES=(
   --exclude-module PySide6.QtSensors
   --exclude-module PySide6.QtHelp
   --exclude-module PySide6.QtWebSockets
-  --exclude-module PySide6.QtWebChannel
   --exclude-module dearpygui
 )
 
@@ -65,10 +75,15 @@ pyinstaller --noconfirm --onedir --windowed --noupx \
   --add-data "$PWD/src/launcher/resources/splash.png:resources" \
   --add-data "$PWD/src/launcher/resources/phosphor-icons:resources/phosphor-icons" \
   --add-data "$PWD/src/launcher/resources/login:resources/login" \
+  --add-data "$PWD/src/launcher/resources/web:resources/web" \
   --add-data "$PWD/DOC:DOC" \
   --add-data "$PWD/release/bepmods.zip:." \
   --hidden-import tkinter \
   --hidden-import customtkinter \
+  --hidden-import qtpy \
+  --hidden-import webview.platforms \
+  --hidden-import webview.platforms.gtk \
+  --hidden-import webview.platforms.qt \
   --collect-submodules customtkinter \
   "${EXCLUDES[@]}" \
   "$PWD/src/launcher/main.py"

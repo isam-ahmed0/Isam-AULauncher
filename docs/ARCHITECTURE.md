@@ -1,14 +1,16 @@
 # Architecture
 
 CrewLauncher is a Python 3 desktop app. One **toolkit-free backend** does all
-the real work (downloads, game process, config), and two front-ends sit on top
-of it: a full Qt interface and a lightweight Tk "Lite" interface. Users can also
-supply their own interface as a plain Python file (see
-[../DOC/CUSTOM_GUI.md](../DOC/CUSTOM_GUI.md)).
+the real work (downloads, game process, config), and three front-ends sit on
+top of it: a modern pywebview interface (the default), a full Qt interface and
+a lightweight Tk "Lite" interface. Users can also supply their own interface
+as a plain Python file (see [../DOC/CUSTOM_GUI.md](../DOC/CUSTOM_GUI.md)).
 
 ```text
 src/launcher/main.py            entry point + interface selection
     |
+    +-- gui_web/main.py         Web front-end  -> gui_web/ (pywebview, default)
+    |   +-- web/                Astro + TypeScript UI (built -> resources/web)
     +-- main_qt.py              Qt front-end   -> gui_qt/  (PySide6)
     +-- main_lite.py            Lite front-end -> gui_tk/  (tkinter/ttk)
     +-- ui_registry.py          custom:<name>  -> user's file in <appdata>/guis/
@@ -28,13 +30,18 @@ src/launcher/main.py            entry point + interface selection
 
 ## Entry chain
 
-1. `main.py` parses `--ui qt|tk|custom:<name>`, acquires the single-instance
-   lock, resolves the mode via `ui_registry.resolve_mode()` and dispatches.
-2. `main_qt.py` prepares the Qt platform (`qt_platform.py` picks X11/Wayland
+1. `main.py` parses `--ui web|qt|tk|custom:<name>` (`--web` is shorthand),
+   acquires the single-instance lock, resolves the mode via
+   `ui_registry.resolve_mode()` and dispatches.
+2. `gui_web/main.py` serves the built Astro assets on 127.0.0.1, opens a
+   frameless pywebview window, exposes `LauncherApi` as `window.pywebview.api`
+   and pushes backend events with `window.__clEvent`. Missing assets or an
+   unavailable webview makes `main.py` fall through to Qt.
+3. `main_qt.py` prepares the Qt platform (`qt_platform.py` picks X11/Wayland
    before PySide6 is imported), shows the splash and login gate, then runs
    `gui_qt.window.LauncherApp`.
-3. `main_lite.py` runs `gui_tk.app.LauncherLiteApp`.
-4. Custom GUIs are loaded by `ui_registry.run_custom_gui()` and receive an
+4. `main_lite.py` runs `gui_tk.app.LauncherLiteApp`.
+5. Custom GUIs are loaded by `ui_registry.run_custom_gui()` and receive an
    `AppContext` (config + network + game core). They never import the built-in
    GUIs.
 
@@ -62,6 +69,33 @@ If Qt cannot start on Linux, `main.py` transparently falls back to Lite.
 
 **Rule:** nothing under the backend may import PySide6 or tkinter, so Lite and
 custom GUIs stay lightweight. GUI imports are always inside functions.
+
+## Web interface (`src/launcher/gui_web/` + `web/`)
+
+- `main.py` — pywebview window (frameless, custom drag region), lock, dev-server
+  handling and backend callback wiring.
+- `api.py` — `LauncherApi`: fast JSON envelope calls from JavaScript, worker
+  threads for network/disk work, one lock around shared config/game state.
+- `events.py` — throttled Python → JS event push (queued until the page calls
+  `api.ready()`).
+- `assets.py` — resolves bundled assets and serves them from a loopback HTTP
+  server so ES modules behave the same in dev and in frozen builds.
+- `web/` — Astro 7 project: layouts/components plus vanilla TypeScript
+  (`scripts/bridge.ts`, `store.ts`, `events.ts`, `router.ts`, `views/`). No React,
+  Vue or framework runtime. `npm run build` writes to
+  `src/launcher/resources/web/` (gitignored). `npm run dev` starts Astro at
+  `http://127.0.0.1:4321`; pass `--dev` to load it instead of the build.
+
+The web screens mirror the Qt feature set: Home (install/update/launch/stop,
+progress, version picker, folder inspection, home card), Mods (profiles,
+enable/disable, reorder, import, issue scan), Browse Mods (catalog search,
+categories, install/update/remove), Regions (add/apply/ping/reset), News
+(live feed with offline cache), Account (itch.io OAuth), Settings (web/Qt
+themes, interface choice, Wine/GPU, behavior toggles), Updates (game/launcher
+checks with skip) and About (versions, links, log tail). The Python bridge
+reuses the toolkit-free `gui_qt/profiles.py`, `gui_qt/regions.py` and
+`gui_qt/zipextract.py` helpers; it never imports Qt widgets. The
+AU-Assets-Swapper page is deliberately deferred.
 
 ## Qt interface (`src/launcher/gui_qt/`)
 

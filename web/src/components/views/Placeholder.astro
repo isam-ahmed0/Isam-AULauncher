@@ -1,0 +1,32 @@
+---
+interface Props {
+  view: string;
+  icon: string;
+  title: string;
+  description: string;
+}
+const { view, icon, title, description } = Astro.props;
+---
+<section class="view" data-view={view} id={`view-${view}`}>
+  <div class="page-head">
+    <div>
+      <h1>{title}</h1>
+      <p class="sub">{description}</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="empty">
+      <span class="badge-icon">
+        <svg class="icon lg"><use href={`#${icon}`} /></svg>
+      </span>
+      <h3>{title} arrives next</h3>
+      <p>
+        This screen is part of the staged rollout of the new web interface.
+        The Home screen — install, update, launch, progress and quick actions —
+        is fully live.
+      </p>
+      <button class="btn" data-goto="home">Back to Home</button>
+    </div>
+  </div>
+</section>

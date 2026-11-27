@@ -1,0 +1,87 @@
+/* CrewLauncher web design tokens ------------------------------------------ */
+
+:root {
+  color-scheme: dark;
+
+  /* surfaces */
+  --bg-base: #0e1016;
+  --bg-sunken: #0a0c11;
+  --bg-surface: #14171f;
+  --bg-elevated: #1b1f2a;
+  --bg-hover: #232836;
+  --bg-active: #2b3142;
+
+  /* text */
+  --text: #e7eaf2;
+  --text-strong: #ffffff;
+  --text-muted: #8b93a7;
+  --text-faint: #5f6779;
+
+  /* lines */
+  --border: rgba(255, 255, 255, 0.07);
+  --border-strong: rgba(255, 255, 255, 0.13);
+
+  /* brand */
+  --accent: #6366f1;
+  --accent-hover: #7c7ff5;
+  --accent-soft: rgba(99, 102, 241, 0.16);
+  --accent-2: #22d3ee;
+  --grad-accent: linear-gradient(120deg, #6366f1 0%, #22d3ee 100%);
+  --grad-hero: radial-gradient(1200px 500px at 15% -10%, rgba(99, 102, 241, 0.35), transparent 60%),
+               radial-gradient(900px 420px at 95% 10%, rgba(34, 211, 238, 0.22), transparent 55%),
+               radial-gradient(700px 400px at 50% 120%, rgba(236, 72, 153, 0.12), transparent 60%);
+
+  /* semantic */
+  --success: #34d399;
+  --success-soft: rgba(52, 211, 153, 0.14);
+  --warning: #fbbf24;
+  --warning-soft: rgba(251, 191, 36, 0.14);
+  --danger: #f87171;
+  --danger-soft: rgba(248, 113, 113, 0.14);
+  --info: #60a5fa;
+  --info-soft: rgba(96, 165, 250, 0.14);
+
+  /* shape */
+  --r-lg: 16px;
+  --r-md: 12px;
+  --r-sm: 9px;
+  --r-pill: 999px;
+
+  /* elevation */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 8px 26px rgba(0, 0, 0, 0.32);
+  --shadow-lg: 0 24px 60px rgba(0, 0, 0, 0.45);
+
+  /* layout */
+  --titlebar-h: 40px;
+  --sidebar-w: 232px;
+  --statusbar-h: 30px;
+
+  /* motion */
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --fast: 140ms var(--ease);
+  --slow: 260ms var(--ease);
+
+  --font: "Segoe UI", Inter, system-ui, -apple-system, "Helvetica Neue", Arial,
+    sans-serif;
+  --mono: "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --bg-base: #f4f5f9;
+  --bg-sunken: #e9ebf2;
+  --bg-surface: #ffffff;
+  --bg-elevated: #ffffff;
+  --bg-hover: #eef0f6;
+  --bg-active: #e3e6ef;
+  --text: #1a1d27;
+  --text-strong: #0c0e14;
+  --text-muted: #5f6779;
+  --text-faint: #8b93a7;
+  --border: rgba(12, 14, 20, 0.09);
+  --border-strong: rgba(12, 14, 20, 0.16);
+  --shadow-sm: 0 1px 2px rgba(16, 20, 32, 0.06);
+  --shadow-md: 0 8px 26px rgba(16, 20, 32, 0.1);
+  --shadow-lg: 0 24px 60px rgba(16, 20, 32, 0.16);
+}

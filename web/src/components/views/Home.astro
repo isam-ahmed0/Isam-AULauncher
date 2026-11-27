@@ -1,0 +1,156 @@
+---
+---
+<section class="view active" data-view="home" id="view-home">
+  <div class="page-head">
+    <div>
+      <h1>Home</h1>
+      <p class="sub">Install, update and launch Among Us with your active profile.</p>
+    </div>
+    <div class="head-actions">
+      <span class="pill" id="home-version-pill">v —</span>
+      <button class="btn icon-btn" id="btn-refresh" title="Refresh status">
+        <svg class="icon sm"><use href="#i-refresh" /></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="warn-banner" id="update-banner">
+    <svg class="icon"><use href="#i-alert" /></svg>
+    <span class="grow" id="update-banner-text">A new version is available.</span>
+    <button class="btn" id="update-banner-action">Update</button>
+    <button class="btn ghost" id="update-banner-dismiss">Later</button>
+  </div>
+
+  <div class="grid-2" style="margin-top: 18px;">
+    <div class="stack">
+      <section class="card hero">
+        <div class="hero-bg" aria-hidden="true">
+          <span class="orb a"></span>
+          <span class="orb b"></span>
+          <span class="orb c"></span>
+          <div class="particles" id="particles"></div>
+        </div>
+        <span class="line"></span>
+
+        <div class="hero-content">
+          <div class="hero-top">
+            <span class="pill accent" id="hero-badge">Checking…</span>
+            <span class="pill" id="hero-profile">Default</span>
+            <span class="pill success" id="hero-playing" hidden>
+              <span class="dot success pulse"></span> Playing
+            </span>
+          </div>
+
+          <h2>Among Us</h2>
+          <p class="hero-sub" id="hero-sub">Preparing the launcher…</p>
+
+          <div class="progress-wrap" id="progress-wrap">
+            <div class="progress"><div class="bar" id="progress-bar"></div></div>
+            <div class="progress-meta">
+              <span id="progress-text">Starting…</span>
+              <span id="progress-pct">0%</span>
+            </div>
+          </div>
+
+          <div class="hero-actions">
+            <button class="btn primary big" id="main-action">
+              <svg class="icon lg"><use href="#i-play" /></svg>
+              <span id="main-action-label">INSTALL</span>
+            </button>
+            <button class="btn" id="versions-btn">
+              <svg class="icon sm"><use href="#i-clock" /></svg>
+              Versions
+            </button>
+            <button class="btn ghost" id="locate-btn">
+              <svg class="icon sm"><use href="#i-folder" /></svg>
+              Locate game
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-title">
+          <svg class="icon sm"><use href="#i-tool" /></svg>
+          Quick actions
+        </div>
+        <div class="quick-grid">
+          <button class="quick" data-action="open-folder">
+            <span class="q-icon"><svg class="icon"><use href="#i-folder" /></svg></span>
+            Open folder
+          </button>
+          <button class="quick" data-action="change-location">
+            <span class="q-icon"><svg class="icon"><use href="#i-map" /></svg></span>
+            Change location
+          </button>
+          <button class="quick" data-action="verify">
+            <span class="q-icon"><svg class="icon"><use href="#i-shield" /></svg></span>
+            Verify files
+          </button>
+          <button class="quick" data-action="shortcut">
+            <span class="q-icon"><svg class="icon"><use href="#i-plus" /></svg></span>
+            Create shortcut
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <div class="stack">
+      <section class="card">
+        <div class="card-title">
+          <svg class="icon sm"><use href="#i-info" /></svg>
+          Status
+        </div>
+        <div class="live-status" id="live-status">
+          <span class="dot" id="live-dot"></span>
+          <span id="live-text">Starting…</span>
+        </div>
+        <div class="status-list">
+          <div class="status-row">
+            <span class="k"><svg class="icon sm"><use href="#i-check" /></svg> Version</span>
+            <span class="v" id="st-version">—</span>
+          </div>
+          <div class="status-row">
+            <span class="k"><svg class="icon sm"><use href="#i-download" /></svg> Latest</span>
+            <span class="v" id="st-latest">—</span>
+          </div>
+          <div class="status-row">
+            <span class="k"><svg class="icon sm"><use href="#i-folder" /></svg> Location</span>
+            <span class="v mono" id="st-path" title="">—</span>
+          </div>
+          <div class="status-row">
+            <span class="k"><svg class="icon sm"><use href="#i-puzzle" /></svg> Profile</span>
+            <span class="v" id="st-profile">—</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-title">
+          <svg class="icon sm"><use href="#i-image" /></svg>
+          Your space
+        </div>
+        <div class="home-custom">
+          <div class="home-thumb" id="home-thumb">
+            <img alt="" id="home-img" />
+            <span class="ph"><svg class="icon lg"><use href="#i-image" /></svg></span>
+          </div>
+          <div>
+            <div class="home-note" id="home-note">Add a note or an image to make this launcher yours.</div>
+            <div class="home-actions">
+              <button class="btn" id="home-image-btn">
+                <svg class="icon sm"><use href="#i-image" /></svg>
+                Image
+              </button>
+              <button class="btn" id="home-note-btn">
+                <svg class="icon sm"><use href="#i-edit" /></svg>
+                Note
+              </button>
+              <button class="btn ghost" id="home-clear-btn" hidden>Clear</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</section>

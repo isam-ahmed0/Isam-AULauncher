@@ -1,4 +1,6 @@
 PySide6>=6.5
+pywebview>=6.0
+qtpy>=2.4
 requests
 pypresence
 packaging>=24.0

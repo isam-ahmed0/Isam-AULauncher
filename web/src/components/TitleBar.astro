@@ -1,0 +1,35 @@
+---
+---
+<header class="titlebar">
+  <div class="titlebar-drag pywebview-drag-region" id="titlebar-drag">
+    <div class="brand">
+      <span class="logo">C</span>
+      <span>CrewLauncher</span>
+    </div>
+    <span class="sep"></span>
+    <span class="app-name" id="titlebar-sub">Launcher</span>
+    <div class="drag"></div>
+  </div>
+  <div class="win-controls">
+    <button class="win-btn" id="win-min" title="Minimize" aria-label="Minimize">
+      <svg class="icon sm"><use href="#i-minus" /></svg>
+    </button>
+    <button class="win-btn" id="win-max" title="Maximize" aria-label="Maximize">
+      <svg class="icon sm"><use href="#i-maximize" /></svg>
+    </button>
+    <button class="win-btn close" id="win-close" title="Close" aria-label="Close">
+      <svg class="icon sm"><use href="#i-x" /></svg>
+    </button>
+  </div>
+</header>
+
+<style>
+  .titlebar-drag {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    height: 100%;
+    min-width: 0;
+  }
+</style>

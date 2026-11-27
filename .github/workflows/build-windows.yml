@@ -26,6 +26,12 @@ jobs:
           python-version: "3.14"
           allow-prereleases: true
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
       - name: Resolve version
         shell: pwsh
         run: |
@@ -50,6 +56,12 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r src/launcher/requirements.txt pyinstaller customtkinter
 
+      - name: Build web (Astro) assets
+        working-directory: web
+        run: |
+          npm ci
+          npm run build
+
       - name: Patch embedded version
         run: python build/set_version.py "$env:VERSION"
 
@@ -63,8 +75,13 @@ jobs:
             --add-data "src\launcher\resources\splash.png;resources" ^
             --add-data "src\launcher\resources\phosphor-icons;resources\phosphor-icons" ^
             --add-data "src\launcher\resources\login;resources\login" ^
+            --add-data "src\launcher\resources\web;resources\web" ^
             --add-data "DOC;DOC" ^
             --add-data "release\bepmods.zip;." ^
+            --hidden-import webview.platforms ^
+            --hidden-import webview.platforms.winforms ^
+            --hidden-import webview.platforms.edgechromium ^
+            --hidden-import qtpy ^
             --exclude-module PySide6.QtWebEngineCore ^
             --exclude-module PySide6.QtWebEngineWidgets ^
             --exclude-module PySide6.QtWebEngineQuick ^

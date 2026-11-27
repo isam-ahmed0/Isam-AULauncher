@@ -1,0 +1,54 @@
+---
+---
+<section class="view" data-view="profile" id="view-profile">
+  <div class="page-head">
+    <div>
+      <h1>Account</h1>
+      <p class="sub">Link your itch.io account for the Among Us integration.</p>
+    </div>
+    <div class="head-actions">
+      <button class="btn" id="itch-signout" hidden>Sign out</button>
+      <button class="btn primary" id="itch-signin">
+        <svg class="icon sm"><use href="#i-user" /></svg>
+        Sign in with itch.io
+      </button>
+    </div>
+  </div>
+
+  <div class="account-hero">
+    <div class="account-avatar"><svg class="icon"><use href="#i-user" /></svg></div>
+    <div class="grow">
+      <h2 id="itch-name">Not signed in</h2>
+      <p id="itch-subtitle">Sign in to link the game to your itch.io profile.</p>
+      <div class="mc-tags" style="margin-top:10px;" id="itch-tags"></div>
+    </div>
+    <span class="pill" id="itch-state">No token</span>
+  </div>
+
+  <div class="account-grid">
+    <section class="card">
+      <div class="card-title"><svg class="icon sm"><use href="#i-info" /></svg>Linked identity</div>
+      <div class="kv" style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:12.5px;">
+        <span class="muted">itch.io username</span><span id="itch-username">—</span>
+      </div>
+      <div class="kv" style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:12.5px;">
+        <span class="muted">Among Us name</span><span id="itch-game-name">—</span>
+      </div>
+      <div class="kv" style="display:flex;justify-content:space-between;padding:8px 0;font-size:12.5px;">
+        <span class="muted">Linked platforms</span><span id="itch-platforms">—</span>
+      </div>
+    </section>
+    <section class="card">
+      <div class="card-title"><svg class="icon sm"><use href="#i-tool" /></svg>How sign-in works</div>
+      <p class="muted" style="font-size:13px;line-height:1.65;">
+        A local sign-in page opens in your browser and the launcher receives the
+        token on port 7890. The token is stored where Among Us reads it — on
+        Linux, inside your configured Wine prefix. No password is entered in
+        the launcher.
+      </p>
+      <div class="kv" style="display:flex;justify-content:space-between;padding:8px 0;font-size:12.5px;margin-top:8px;">
+        <span class="muted">Wine prefix</span><span class="mono truncate" id="itch-prefix">—</span>
+      </div>
+    </section>
+  </div>
+</section>

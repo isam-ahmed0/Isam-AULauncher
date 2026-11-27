@@ -2,7 +2,8 @@
 
 Builtin interfaces:
 
-- ``qt``  — full PySide6 interface (default)
+- ``web`` — modern pywebview interface (default)
+- ``qt``  — full PySide6 interface
 - ``tk``  — lightweight tkinter "Lite" interface
 
 Custom interfaces are plain Python files in ``<appdata>/IsamAULauncher/guis/``.
@@ -17,17 +18,15 @@ See ``DOC/CUSTOM_GUI.md`` for the full contract.
 """
 import ast
 import importlib.util
-import json
 import logging
 import os
 import re
 import subprocess
 import sys
 import threading
-import time
 from pathlib import Path
 
-from config import VERSION_URL, GITHUB_REPO, ISAM_CLIENT_URL, LAUNCHER_VERSION, APP_NAME
+from config import VERSION_URL, LAUNCHER_VERSION, APP_NAME
 from file_manager import FileManager
 from platform_utils import IS_LINUX, IS_WINDOWS, default_game_dir, wine_prefix
 try:
@@ -35,24 +34,29 @@ try:
 except Exception:
     platform = None
 try:
+    # ``itch_login``/``clear_itch_token`` live on AppContext (they are built on
+    # ItchOAuthFlow); importing them here would fail and silently disable every
+    # itch.io helper on this context.
     from itch_oauth import (
-        itch_login,
         fetch_itch_profile,
         fetch_itch_username,
         read_itch_token,
         save_itch_token,
-        clear_itch_token,
     )
 except Exception:
-    itch_login = None
     fetch_itch_profile = None
     fetch_itch_username = None
     read_itch_token = None
     save_itch_token = None
-    clear_itch_token = None
 
 
 BUILTIN_GUIS = [
+    {
+        "id": "web",
+        "name": "CrewLauncher (Web)",
+        "description": "Modern pywebview interface",
+        "module": "webview",
+    },
     {
         "id": "qt",
         "name": "CrewLauncher (Qt)",
@@ -256,7 +260,7 @@ def list_guis(config):
 def resolve_mode(cli_mode, config):
     """Pick the interface id to launch.
 
-    Priority: CLI value > config ``ui_mode`` > ``qt``. Legacy values
+    Priority: CLI value > config ``ui_mode`` > ``web``. Legacy values
     (``gui``, ``ctk``) map to ``qt``. Unknown or missing custom GUIs fall
     back to ``qt``.
     """
@@ -269,7 +273,7 @@ def resolve_mode(cli_mode, config):
             logging.warning("Custom GUI %r not found; falling back to Qt", mode)
             return "qt"
         return f"custom:{name}"
-    if mode not in ("qt", "tk"):
+    if mode not in ("qt", "tk", "web"):
         logging.warning("Unknown ui_mode %r; falling back to Qt", mode)
         return "qt"
     return mode
@@ -693,14 +697,71 @@ class AppContext:
             return False
 
     # -- itch.io --------------------------------------------------------
-    def itch_login(self, callback=None):
-        if itch_login is None:
-            return False
+    def _itch_prefix(self):
+        """Wine prefix the token file lives in (Linux only)."""
+        if IS_WINDOWS:
+            return None
         try:
-            return itch_login(callback=callback)
+            return self.config.get_wine_prefix()
+        except Exception:
+            return None
+
+    def itch_login(self, callback=None, on_error=None, open_browser=True):
+        """Start the itch.io OAuth flow.
+
+        Returns the running :class:`itch_oauth.ItchOAuthFlow` (truthy) on
+        success or ``None`` when the callback port (7890) is busy.  On success
+        the token is saved to the same file the game reads and ``callback`` is
+        called with the token.  Callbacks fire from the OAuth server thread.
+        """
+        try:
+            from itch_oauth import ItchOAuthFlow, save_itch_token
         except Exception as e:
-            self.log(f"itch login error: {e}")
-            return False
+            self.log(f"itch login unavailable: {e}")
+            if on_error:
+                on_error(str(e))
+            return None
+
+        prefix = self._itch_prefix()
+        flow = ItchOAuthFlow()
+
+        def _on_token(token):
+            try:
+                save_itch_token(token, prefix)
+            except OSError as e:
+                self.log(f"itch token save failed: {e}")
+                if on_error:
+                    on_error(f"Could not save token: {e}")
+                return
+            self.log("itch.io login successful")
+            if callback:
+                try:
+                    callback(token)
+                except Exception:
+                    pass
+
+        flow.on_token = _on_token
+        if on_error:
+            flow.on_failed = lambda msg: on_error(msg)
+            flow.on_timed_out = lambda: on_error("itch.io login timed out. Try again.")
+
+        try:
+            flow.start()
+        except OSError as e:
+            self.log(f"itch login could not start: {e}")
+            if on_error:
+                on_error(
+                    "itch.io login could not start: port 7890 is in use. "
+                    "Close the Itch Login Fixer and try again.")
+            return None
+
+        if open_browser:
+            import webbrowser
+            try:
+                webbrowser.open(flow.auth_url())
+            except Exception:
+                pass
+        return flow
 
     def get_itch_profile(self, timeout=8.0):
         if fetch_itch_profile is None:
@@ -735,10 +796,11 @@ class AppContext:
             return None
 
     def clear_itch_token(self):
-        if clear_itch_token is None:
-            return False
         try:
-            clear_itch_token()
+            from itch_oauth import itch_token_file
+            target = itch_token_file(self._itch_prefix())
+            if target.exists():
+                target.unlink()
             return True
         except Exception:
             return False

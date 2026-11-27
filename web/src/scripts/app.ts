@@ -1,0 +1,178 @@
+/* CrewLauncher web app entry ------------------------------------------------ */
+
+import { api, isDesktop } from "./bridge";
+import "./events"; // installs window.__clEvent before Python can push
+import { store, update } from "./store";
+import { on } from "./events";
+import { initRouter, onNavigate, currentView } from "./router";
+import { toast } from "./toast";
+import { initHome, render as renderHome } from "./views/home";
+import { initMods, loadProfiles } from "./views/mods";
+import { initBrowse, loadCatalog } from "./views/browse";
+import { initRegions, loadRegions } from "./views/regions";
+import { initNews, loadNews } from "./views/news";
+import { initAccount, loadAccount } from "./views/account";
+import { initSettings, loadSettings, applyWebTheme } from "./views/settings";
+import { initUpdates, loadUpdates } from "./views/updates";
+import { initAbout, loadAbout } from "./views/about";
+
+const $ = <T extends HTMLElement = HTMLElement>(id: string): T =>
+  document.getElementById(id) as T;
+
+function initTitleBar(): void {
+  $("win-min").addEventListener("click", () => void api("win_min"));
+  $("win-max").addEventListener("click", () => void api("win_toggle_max"));
+  $("win-close").addEventListener("click", () => void api("win_close"));
+
+  // Double-click on the drag region toggles maximize (native behavior).
+  $("titlebar-drag").addEventListener("dblclick", () => {
+    void api("win_toggle_max");
+  });
+}
+
+function initKeyboard(): void {
+  window.addEventListener("keydown", (e) => {
+    const target = e.target as HTMLElement | null;
+    const typing =
+      target &&
+      (target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable);
+    if (typing) return;
+
+    if (e.key === "F5" || (e.ctrlKey && e.key.toLowerCase() === "r")) {
+      e.preventDefault();
+      void refresh();
+    }
+  });
+}
+
+async function refresh(): Promise<void> {
+  const res = await api<any>("game_state");
+  if (res.ok && res.data) {
+    update({ game: { ...store.game, ...res.data } });
+    renderHome();
+    toast({ title: "Refreshed", level: "info", timeout: 1800 });
+  }
+}
+
+function wireEvents(): void {
+  on("status", (data) => {
+    const sb = $("sb-status");
+    if (sb && data?.text) sb.textContent = data.text;
+    const dot = $("sb-dot");
+    if (dot) {
+      const level = data?.level ?? "info";
+      dot.className = `dot ${level === "danger" ? "danger" : level === "warning" ? "warning" : level === "success" ? "success" : "info"}`;
+    }
+  });
+
+  on("toast", (data) =>
+    toast({
+      title: data?.title ?? "Launcher",
+      message: data?.message ?? "",
+      level: data?.level ?? "info",
+    }),
+  );
+
+  on("window_state", (data) => {
+    store.maximized = Boolean(data?.maximized);
+    const icon = $("win-max").querySelector("use");
+    if (icon) icon.setAttribute("href", store.maximized ? "#i-minus" : "#i-maximize");
+    $("win-max").title = store.maximized ? "Restore" : "Maximize";
+  });
+
+  on("game_state", (data) => {
+    if (data) {
+      update({ game: { ...store.game, ...data } });
+      renderHome();
+    }
+  });
+}
+
+function applyTheme(): void {
+  applyWebTheme(store.settings.web_theme || "dark");
+}
+
+async function boot(): Promise<void> {
+  applyTheme();
+  initTitleBar();
+  initRouter();
+  initKeyboard();
+  wireEvents();
+  initHome();
+  initMods();
+  initBrowse();
+  initRegions();
+  initNews();
+  initAccount();
+  initSettings();
+  initUpdates();
+  initAbout();
+
+  onNavigate((view) => {
+    if (!isDesktop()) return;
+    if (view === "mods") void loadProfiles();
+    if (view === "browse") void loadCatalog(false);
+    if (view === "regions") void loadRegions();
+    if (view === "news") void loadNews(false);
+    if (view === "profile") void loadAccount();
+    if (view === "settings") void loadSettings(false);
+    if (view === "updates") void loadUpdates();
+    if (view === "about") void loadAbout();
+  });
+
+  if (!isDesktop()) {
+    update({ preview: true, booted: true });
+    $("sb-status").textContent = "Browser preview — Python bridge unavailable";
+    $("hero-badge").textContent = "PREVIEW";
+    $("hero-sub").textContent =
+      "You are viewing the static build. Launch through CrewLauncher for live data.";
+    $("sidebar-version").textContent = "preview";
+    return;
+  }
+
+  const res = await api<any>("bootstrap");
+  if (!res.ok) {
+    $("sb-status").textContent = `Bootstrap failed: ${res.error}`;
+    toast({ title: "Startup error", message: res.error, level: "danger" });
+    update({ booted: true, preview: true });
+    return;
+  }
+
+  const data = res.data ?? {};
+  update({
+    app: data.app ?? store.app,
+    game: { ...store.game, ...(data.state ?? {}) },
+    settings: { ...store.settings, ...(data.settings ?? {}) },
+    home: { ...store.home, ...(data.home ?? {}) },
+    paths: { ...store.paths, ...(data.paths ?? {}) },
+    booted: true,
+  });
+
+  applyTheme();
+  renderHome();
+
+  const sbVersion = $("sb-version");
+  if (sbVersion) {
+    sbVersion.textContent =
+      `Launcher ${store.app.launcher_version} · Game ${store.game.version || "—"}`;
+  }
+
+  // Tell Python the page is up: flush queued events, start background polls.
+  const ready = await api("ready");
+  if (!ready.ok) {
+    console.error("ready() failed", ready.error);
+  }
+
+  onNavigate((view) => {
+    document.title =
+      view === "home" ? "CrewLauncher" : `CrewLauncher — ${view}`;
+  });
+  document.title =
+    currentView() === "home"
+      ? "CrewLauncher"
+      : `CrewLauncher — ${currentView()}`;
+}
+
+void boot();

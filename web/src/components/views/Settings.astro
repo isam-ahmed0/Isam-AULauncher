@@ -1,0 +1,137 @@
+---
+---
+<section class="view" data-view="settings" id="view-settings">
+  <div class="page-head">
+    <div>
+      <h1>Settings</h1>
+      <p class="sub">Make the launcher yours. Changes save instantly.</p>
+    </div>
+    <div class="head-actions">
+      <button class="btn" id="settings-open-config">
+        <svg class="icon sm"><use href="#i-folder" /></svg>
+        Open config folder
+      </button>
+    </div>
+  </div>
+
+  <div class="settings-grid">
+    <section class="card">
+      <div class="card-title"><svg class="icon sm"><use href="#i-image" /></svg>Appearance</div>
+      <div class="setting-row">
+        <div class="sr-text">
+          <div class="sr-title">Web interface theme</div>
+          <div class="sr-desc">Applies only to this interface; Qt keeps its own palette.</div>
+        </div>
+        <div class="seg" id="setting-web-theme">
+          <button data-value="dark">Dark</button>
+          <button data-value="light">Light</button>
+        </div>
+      </div>
+      <div class="setting-row">
+        <div class="sr-text">
+          <div class="sr-title">Qt color theme</div>
+          <div class="sr-desc">Used the next time the full Qt interface starts.</div>
+        </div>
+        <select class="field" id="setting-theme">
+          <option>Forest</option><option>Violet</option><option>Coral</option>
+          <option>Slate</option><option>Ember</option><option>Plum</option>
+          <option>Mono</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-title"><svg class="icon sm"><use href="#i-tool" /></svg>Interface</div>
+      <div class="setting-row">
+        <div class="sr-text">
+          <div class="sr-title">Default interface</div>
+          <div class="sr-desc">Switch between Web, Qt and Lite. Restart to apply.</div>
+        </div>
+        <select class="field" id="setting-ui-mode">
+          <option value="web">Web (default)</option>
+          <option value="qt">Qt (full)</option>
+          <option value="tk">Lite (lightweight)</option>
+        </select>
+      </div>
+      <div class="setting-row" id="setting-backend-row">
+        <div class="sr-text">
+          <div class="sr-title">Qt display backend</div>
+          <div class="sr-desc">Auto usually works; override for X11 or Wayland sessions.</div>
+        </div>
+        <div class="seg" id="setting-backend">
+          <button data-value="">Auto</button>
+          <button data-value="x11">X11</button>
+          <button data-value="wayland">Wayland</button>
+        </div>
+      </div>
+      <button class="btn block" id="settings-restart" style="margin-top:12px;">
+        <svg class="icon sm"><use href="#i-refresh" /></svg>
+        Restart launcher
+      </button>
+    </section>
+
+    <section class="card">
+      <div class="card-title"><svg class="icon sm"><use href="#i-shield" /></svg>Behavior</div>
+      <div class="setting-row">
+        <div class="sr-text">
+          <div class="sr-title">Automatic game updates</div>
+          <div class="sr-desc">Offer new game versions when the launcher starts.</div>
+        </div>
+        <button class="switch" id="setting-auto-update" aria-label="Automatic game updates"></button>
+      </div>
+      <div class="setting-row">
+        <div class="sr-text">
+          <div class="sr-title">Check mod updates</div>
+          <div class="sr-desc">Announce catalog mods that have a newer version.</div>
+        </div>
+        <button class="switch" id="setting-mod-updates" aria-label="Check mod updates"></button>
+      </div>
+      <div class="setting-row">
+        <div class="sr-text">
+          <div class="sr-title">Discord Rich Presence</div>
+          <div class="sr-desc">Show what you are playing in Discord.</div>
+        </div>
+        <button class="switch" id="setting-discord" aria-label="Discord Rich Presence"></button>
+      </div>
+      <div class="setting-row">
+        <div class="sr-text">
+          <div class="sr-title">Create desktop shortcuts</div>
+          <div class="sr-desc">Add launch shortcuts when installing the game.</div>
+        </div>
+        <button class="switch" id="setting-shortcuts" aria-label="Create desktop shortcuts"></button>
+      </div>
+    </section>
+
+    <section class="card" id="settings-linux" hidden>
+      <div class="card-title"><svg class="icon sm"><use href="#i-tool" /></svg>Linux / Wine</div>
+      <div class="setting-row">
+        <div class="sr-text">
+          <div class="sr-title">Graphics adapter</div>
+          <div class="sr-desc" id="settings-gpu-desc">Auto-detected from the system.</div>
+        </div>
+        <select class="field wide" id="setting-gpu"><option value="">System default</option></select>
+      </div>
+      <div class="setting-row">
+        <div class="sr-text">
+          <div class="sr-title">Wine executable</div>
+          <div class="sr-desc">Leave empty to auto-detect; detected: <span id="settings-wine-detected">—</span></div>
+        </div>
+        <input class="field wide mono" id="setting-wine-binary" placeholder="Auto" />
+      </div>
+      <div class="setting-row">
+        <div class="sr-text">
+          <div class="sr-title">Wine prefix</div>
+          <div class="sr-desc">Used for the game, fixer and itch.io token.</div>
+        </div>
+        <input class="field wide mono" id="setting-wine-prefix" placeholder="Auto" />
+      </div>
+      <div class="setting-row">
+        <div class="sr-text">
+          <div class="sr-title">Warn about plain Wine</div>
+          <div class="sr-desc">Show a hint when no optimized Wine build is configured.</div>
+        </div>
+        <button class="switch" id="setting-warn-wine" aria-label="Warn about plain Wine"></button>
+      </div>
+    </section>
+  </div>
+</section>

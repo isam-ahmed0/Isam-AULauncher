@@ -1,0 +1,38 @@
+---
+---
+<section class="view" data-view="regions" id="view-regions">
+  <div class="page-head">
+    <div>
+      <h1>Regions</h1>
+      <p class="sub">Custom server regions for Among Us.</p>
+    </div>
+    <div class="head-actions">
+      <button class="btn" id="regions-reset">
+        <svg class="icon sm"><use href="#i-refresh" /></svg>
+        Reset to official
+      </button>
+      <button class="btn primary" id="regions-add">
+        <svg class="icon sm"><use href="#i-plus" /></svg>
+        Add region
+      </button>
+    </div>
+  </div>
+
+  <div class="notice info" id="regions-info">
+    <svg class="icon"><use href="#i-info" /></svg>
+    <span class="grow" id="regions-path"></span>
+  </div>
+
+  <section class="card">
+    <div class="card-title">
+      <svg class="icon sm"><use href="#i-map" /></svg>
+      Server list
+      <span class="pill" id="regions-count" style="margin-left: auto;">0 regions</span>
+    </div>
+    <div class="region-head">
+      <span>#</span><span>Name</span><span>Ping server</span><span>Server URL</span>
+      <span>Port</span><span style="text-align: right;">Actions</span>
+    </div>
+    <div class="stack" style="gap: 6px;" id="region-list"></div>
+  </section>
+</section>

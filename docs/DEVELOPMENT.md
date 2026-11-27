@@ -12,19 +12,32 @@ pip install -r src/launcher/requirements.txt
 
 Optional for building/packaging: `pip install -r build/requirements.txt`.
 
+The default Web interface needs Node.js 22+ and the built Astro assets:
+
+```bash
+cd web && npm ci && npm run build   # writes ../src/launcher/resources/web/
+```
+
+Assets are gitignored and built on demand; for live editing use `npm run dev`
+in `web/` and launch the app with `--dev`.
+
 ## Running
 
 ```bash
-python src/launcher/main.py                 # default Qt interface
+python src/launcher/main.py                 # default Web interface
+python src/launcher/main.py --ui web --dev  # Web interface + Astro dev server
+python src/launcher/main.py --ui qt         # full Qt interface (unchanged)
 python src/launcher/main.py --ui tk         # lightweight Lite interface
 python src/launcher/main.py --ui custom:mygui
-python src/launcher/main.py --no-splash     # skip splash
+python src/launcher/main.py --no-splash     # skip Qt splash
 python src/launcher/main.py --version
 ```
 
-If Qt cannot start on Linux, the launcher falls back to Lite automatically.
-The interface can also be changed in **Settings > Interface** or via the
-`ui_mode` value in `config.json`.
+If Web assets or pywebview are unavailable, the launcher falls back to Qt; if
+Qt cannot start on Linux, it falls back to Lite. The interface can also be
+changed in **Settings > Interface** or via the `ui_mode` value in
+`config.json`. On Linux pywebview uses WebKitGTK when `gi` is installed,
+otherwise the Qt WebEngine backend (`qtpy` is in `requirements.txt`).
 
 ## Checks
 
@@ -32,14 +45,18 @@ The only automated tests so far cover the mod catalog backend in `tests/`;
 use these before committing:
 
 ```bash
+cd web && npx tsc --noEmit && npm run build  # web types + assets
+cd ..
 ruff check src/launcher                     # lint (config in ruff.toml)
 python -m compileall -q src/launcher        # syntax check
 python src/launcher/main.py --version       # entry point smoke test
 python -m unittest discover -s tests -v     # mod catalog backend tests
 ```
 
-Then run the app and exercise the changed screen in both `--ui qt` and
-`--ui tk` where applicable.
+Then run the app and exercise the changed screen in `--ui web` (and `--ui qt`
+/ `--ui tk` when shared code changes). The web views are plain TypeScript
+modules under `web/src/scripts/views/`; add a matching Astro component in
+`web/src/components/views/` and register the view in `router.ts`.
 
 ## Building
 
@@ -53,6 +70,12 @@ Then run the app and exercise the changed screen in both `--ui qt` and
 | Fixer | `build\build_fixer.bat` | `dist\Itch_Login_Fixer\` |
 | cx_Freeze variant | `build\build_launcher_cx.bat` | `dist\CrewLauncher_cx\` |
 | Installer only | `installer\CrewLauncher.nsi` via `build\just_*_installer.bat` | setup exe |
+
+The main launcher builds (`build_launcher_linux.sh`, `build_launcher.bat`,
+`CrewLauncher.spec`, GitHub Actions and AppVeyor) run `npm ci && npm run build`
+and bundle `src/launcher/resources/web/` automatically. Linux builds exclude
+QtWebEngine/QtWebChannel from the frozen PySide6 payload because pywebview uses
+GTK/WebKit there; Windows builds keep them for other Qt code paths.
 
 CI: Linux jobs run on CircleCI (`.circleci/config.yml`), Windows jobs on
 AppVeyor (`appveyor.yml`); both only build version tags. GitHub Actions
@@ -74,7 +97,7 @@ raw-GitHub doc URLs and runtime downloads depend on those exact paths.
 
 ## News messages
 
-The News page (Qt sidebar / Lite News button) shows the remote announcement
+The News page (Web sidebar / Qt sidebar / Lite News button) shows the remote announcement
 served from `release/message.txt` on the `crew` branch of
 `isam-ahmed0/Isam-AULauncher` (`MESSAGE_URL`; see `src/launcher/news.py`).
 The game-files repo (`jogamerforgames2021/AmongUsLauncherNew`) is not used for

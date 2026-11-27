@@ -87,8 +87,9 @@ class Config:
     def _load_settings(self) -> Dict:
         defaults = {
             "auto_update": True, "create_shortcuts": True,
-            "discord_rpc": True, "ui_mode": "qt", "display_backend": "",
+            "discord_rpc": True, "ui_mode": "web", "display_backend": "",
             "active_profile": "Default", "theme": "Forest",
+            "web_theme": "dark",
             "launch_method": "ask", "warn_plain_wine": True,
             "wine_prefix": "", "lutris_game_ids": {}, "lutris_entries": {},
             "lutris_cmd_override": None,
@@ -148,14 +149,14 @@ class Config:
             logging.error(f"Failed to write game path: {e}")
 
     def get_ui_mode(self) -> str:
-        """Selected user interface: "qt", "tk" or "custom:<name>"."""
+        """Selected user interface: "web", "qt", "tk" or "custom:<name>"."""
         mode = (self.settings.get("ui_mode") or "").strip()
         if not mode or mode in ("gui", "ctk"):
-            return "qt"
+            return "web"
         return mode
 
     def set_ui_mode(self, mode: str):
-        self.settings["ui_mode"] = (mode or "").strip() or "qt"
+        self.settings["ui_mode"] = (mode or "").strip() or "web"
         self.save_settings()
 
     def get_display_backend(self) -> str:

@@ -1,0 +1,41 @@
+---
+---
+<section class="view" data-view="browse" id="view-browse">
+  <div class="page-head">
+    <div>
+      <h1>Mod Browser</h1>
+      <p class="sub">Discover community mods, install in one click.</p>
+    </div>
+    <div class="head-actions">
+      <span class="pill" id="catalog-status">Loading…</span>
+      <button class="btn icon-btn" id="catalog-refresh" title="Refresh catalog">
+        <svg class="icon sm"><use href="#i-refresh" /></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="toolbar" style="margin-bottom: 18px;">
+    <div class="search-field">
+      <svg class="icon sm"><use href="#i-compass" /></svg>
+      <input class="field" id="catalog-search" placeholder="Search mods…" />
+    </div>
+    <select class="field" id="catalog-category">
+      <option value="">All categories</option>
+    </select>
+    <div class="grow"></div>
+    <span class="muted" id="catalog-count"></span>
+  </div>
+
+  <div class="notice warning" id="catalog-error">
+    <svg class="icon"><use href="#i-alert" /></svg>
+    <span class="grow" id="catalog-error-text"></span>
+  </div>
+
+  <div class="catalog-grid" id="catalog-grid">
+    <div class="empty" style="grid-column: 1 / -1;">
+      <span class="badge-icon"><svg class="icon lg"><use href="#i-compass" /></svg></span>
+      <h3>Loading catalog…</h3>
+      <p>Fetching the remote mod manifest.</p>
+    </div>
+  </div>
+</section>

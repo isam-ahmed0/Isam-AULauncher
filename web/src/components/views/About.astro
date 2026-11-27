@@ -1,0 +1,58 @@
+---
+---
+<section class="view" data-view="about" id="view-about">
+  <div class="page-head">
+    <div>
+      <h1>About</h1>
+      <p class="sub">CrewLauncher — a fast, modular home for Among Us.</p>
+    </div>
+    <div class="head-actions">
+      <button class="btn" id="about-check-updates">
+        <svg class="icon sm"><use href="#i-refresh" /></svg>
+        Check for updates
+      </button>
+    </div>
+  </div>
+
+  <div class="about-grid">
+    <section class="card">
+      <div class="card-title"><svg class="icon sm"><use href="#i-info" /></svg>Versions</div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;">
+        <span class="muted">Launcher</span><span class="mono" id="about-launcher">—</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;">
+        <span class="muted">Game</span><span class="mono" id="about-game">—</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:13px;">
+        <span class="muted">Platform</span><span class="mono" id="about-platform">—</span>
+      </div>
+      <p class="muted" style="font-size:12.5px;margin-top:12px;line-height:1.6;">
+        Built with Python, pywebview and Astro. Qt and Lite interfaces remain
+        available from Settings.
+      </p>
+    </section>
+
+    <section class="card">
+      <div class="card-title"><svg class="icon sm"><use href="#i-external" /></svg>Links</div>
+      <a class="about-link" href="https://github.com/isam-ahmed0/Isam-AULauncher" data-external>
+        <svg class="icon sm"><use href="#i-external" /></svg>Source code
+      </a>
+      <a class="about-link" href="https://github.com/isam-ahmed0/Isam-AULauncher/releases" data-external>
+        <svg class="icon sm"><use href="#i-download" /></svg>Releases
+      </a>
+      <a class="about-link" href="https://github.com/isam-ahmed0/Isam-AULauncher/issues" data-external>
+        <svg class="icon sm"><use href="#i-alert" /></svg>Report an issue
+      </a>
+      <div class="card-title" style="margin-top:16px;"><svg class="icon sm"><use href="#i-folder" /></svg>Paths</div>
+      <div class="mono faint" style="font-size:11.5px;line-height:1.7;user-select:text;" id="about-paths"></div>
+    </section>
+
+    <section class="card" style="grid-column: 1 / -1;">
+      <div class="card-title">
+        <svg class="icon sm"><use href="#i-tool" /></svg>Diagnostics
+        <button class="btn ghost" id="about-log-refresh" style="margin-left:auto;height:28px;font-size:12px;">Refresh log</button>
+      </div>
+      <div class="log-view" id="about-log">No log entries.</div>
+    </section>
+  </div>
+</section>
