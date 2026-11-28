@@ -27,7 +27,7 @@ function eventActive(): boolean {
 }
 
 function activeEventName(): string | undefined {
-  return eventActive() ? store.event.name : undefined;
+  return store.event.active && store.event.theme ? store.event.name : undefined;
 }
 
 function eventThemeVisible(id: string): boolean {
@@ -40,11 +40,7 @@ function applyTheme(value: unknown, animate = true): void {
 }
 
 function applyWinter(): void {
-  const active = eventActive();
-  applyWinterFx(
-    active ? values.winter_fx : "off",
-    active ? values.winter_bg : "off",
-  );
+  applyWinterFx(values.winter_fx, values.winter_bg);
 }
 
 function applyEventVisibility(): void {

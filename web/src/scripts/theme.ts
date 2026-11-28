@@ -104,10 +104,7 @@ export function webTheme(id: string): WebTheme {
  */
 export function effectiveWebTheme(value: unknown, eventName?: string): string {
   const eventTheme = eventName ? EVENT_THEMES[eventName] : undefined;
-  if (eventTheme) return eventTheme;
-  const id = normalizeWebTheme(value);
-  // Event-only presets disappear when no event is active.
-  return EVENT_THEME_IDS.has(id) ? DEFAULT_WEB_THEME : id;
+  return eventTheme || normalizeWebTheme(value);
 }
 
 /**

@@ -98,12 +98,10 @@ function wireEvents(): void {
   on("game_state", (data) => applyGameState(data));
 }
 
-function eventFxActive(): boolean {
-  return store.event.active && (store.event.fx || Boolean(store.event.theme));
-}
-
 function applyTheme(animate = false): void {
-  const eventName = eventFxActive() ? store.event.name : undefined;
+  const eventName = store.event.active && store.event.theme
+    ? store.event.name
+    : undefined;
   // Event themes are temporary: never mirror them over the saved preference.
   applyWebTheme(
     effectiveWebTheme(store.settings.web_theme, eventName),
@@ -113,12 +111,7 @@ function applyTheme(animate = false): void {
 }
 
 function applyWinter(animate = false): void {
-  const active = eventFxActive();
-  applyWinterFx(
-    active ? store.settings.winter_fx : "off",
-    active ? store.settings.winter_bg : "off",
-    animate,
-  );
+  applyWinterFx(store.settings.winter_fx, store.settings.winter_bg, animate);
 }
 
 async function syncEvent(): Promise<void> {

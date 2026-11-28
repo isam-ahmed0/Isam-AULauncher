@@ -35,7 +35,6 @@ import AboutView from "../components/views/About.astro";
         root.style.setProperty("--winter-bg-image", "url('./winter-bg.svg')");
         const legacy = { dark: "aurora", light: "aurora-light" };
         const eventThemes = { winter: "winter" };
-        const eventOnly = ["winter"];
         const valid = [
           "aurora", "aurora-light", "forest", "violet", "ember", "slate",
           "mono", "winter",
@@ -51,17 +50,16 @@ import AboutView from "../components/views/About.astro";
         try {
           const forced = (new URLSearchParams(location.search).get("event") || "")
             .toLowerCase();
-          // Only events.txt/--event can paint Winter on the first frame.
           const eventTheme = eventThemes[forced] || "";
           let id = eventTheme;
           if (!id) {
             const saved = localStorage.getItem("cl-web-theme");
             id = saved ? (legacy[saved] || saved) : "";
-            if (eventOnly.includes(id)) id = "aurora";
           }
           if (valid.includes(id)) root.dataset.theme = id;
 
-          if (eventTheme === "winter" && !storageOff("cl-winter-fx")) {
+          // "auto" effects follow Winter; an explicit off still wins.
+          if (id === "winter" && !storageOff("cl-winter-fx")) {
             root.dataset.winter = "1";
             if (!storageOff("cl-winter-bg")) root.dataset.winterBg = "1";
           }
