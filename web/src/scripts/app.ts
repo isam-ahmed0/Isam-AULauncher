@@ -2,7 +2,7 @@
 
 import { api, bridgeAvailable, isDesktop } from "./bridge";
 import "./events"; // installs window.__clEvent before Python can push
-import { store, update } from "./store";
+import { store, update, type EventState } from "./store";
 import { on } from "./events";
 import { initRouter, onNavigate, currentView } from "./router";
 import { toast } from "./toast";
@@ -14,7 +14,8 @@ import { initRegions, loadRegions } from "./views/regions";
 import { initNews, loadNews } from "./views/news";
 import { initAccount, loadAccount } from "./views/account";
 import { initSettings, loadSettings } from "./views/settings";
-import { applyWebTheme } from "./theme";
+import { applyWebTheme, effectiveWebTheme } from "./theme";
+import { applyWinterFx, initWinterFx } from "./winter";
 import { initUpdates, loadUpdates } from "./views/updates";
 import { initAbout, loadAbout } from "./views/about";
 
@@ -98,11 +99,33 @@ function wireEvents(): void {
 }
 
 function applyTheme(animate = false): void {
-  applyWebTheme(store.settings.web_theme, animate);
+  const eventName = store.event.active ? store.event.name : undefined;
+  // Event themes are temporary: never mirror them over the saved preference.
+  applyWebTheme(
+    effectiveWebTheme(store.settings.web_theme, eventName),
+    animate,
+    !eventName,
+  );
+}
+
+function applyWinter(animate = false): void {
+  applyWinterFx(store.settings.winter_fx, store.settings.winter_bg, animate);
+}
+
+async function syncEvent(): Promise<void> {
+  if (!isDesktop()) return;
+  const res = await api<EventState>("event_info");
+  if (res.ok && res.data) {
+    update({ event: { ...store.event, ...res.data } });
+    applyTheme();
+    applyWinter();
+  }
 }
 
 async function boot(): Promise<void> {
+  initWinterFx();
   applyTheme();
+  applyWinter();
   initTitleBar();
   initRouter();
   initKeyboard();
@@ -148,6 +171,8 @@ async function boot(): Promise<void> {
     console.error("ready() failed", ready.error);
   }
 
+  await syncEvent();
+
   const res = await api<any>("bootstrap");
   let bootstrapped = false;
   if (res.ok && res.data) {
@@ -166,6 +191,7 @@ async function boot(): Promise<void> {
     update({ booted: true });
   }
   applyTheme();
+  applyWinter();
 
   // Re-read local state after bootstrap. If the first bridge call was lost,
   // this still paints the correct installed version on the first screen.

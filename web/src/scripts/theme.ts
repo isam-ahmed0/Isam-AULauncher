@@ -63,7 +63,19 @@ export const WEB_THEMES: WebTheme[] = [
     description: "Hard-edged terminal outline style.",
     swatch: ["#08090b", "#e8eaed", "#9aa0a8"],
   },
+  {
+    id: "winter",
+    label: "Winter",
+    mode: "dark",
+    description: "Frosted ice, slow snowfall and a snowy backdrop.",
+    swatch: ["#0b1d2b", "#bfe9ff", "#7dd3fc"],
+  },
 ];
+
+/** Event name -> web preset forced while that event is active. */
+export const EVENT_THEMES: Record<string, string> = {
+  winter: "winter",
+};
 
 export const DEFAULT_WEB_THEME = "aurora";
 
@@ -86,20 +98,35 @@ export function webTheme(id: string): WebTheme {
 }
 
 /**
+ * Seasonal events win over the saved preset while active; the saved value
+ * returns automatically once the event ends.
+ */
+export function effectiveWebTheme(value: unknown, eventName?: string): string {
+  const eventTheme = eventName ? EVENT_THEMES[eventName] : undefined;
+  return eventTheme || normalizeWebTheme(value);
+}
+
+/**
  * Apply a preset immediately. `animate` is false at boot so the first paint
  * never flashes a transition; later picker changes cross-fade gently.
  */
-export function applyWebTheme(value: unknown, animate = true): WebTheme {
+export function applyWebTheme(
+  value: unknown,
+  animate = true,
+  persist = true,
+): WebTheme {
   const id = normalizeWebTheme(value);
   const theme = webTheme(id);
   const root = document.documentElement;
   const changed = root.dataset.theme !== id;
 
   root.dataset.theme = id;
-  try {
-    localStorage.setItem("cl-web-theme", id);
-  } catch (_) {
-    /* hardened webviews may deny storage; the bridge value still wins */
+  if (persist) {
+    try {
+      localStorage.setItem("cl-web-theme", id);
+    } catch (_) {
+      /* hardened webviews may deny storage; the bridge value still wins */
+    }
   }
 
   if (animate && changed) {

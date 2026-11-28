@@ -3,6 +3,8 @@
  * the handful of DOM nodes that depend on it.
  */
 
+import type { WinterChoice } from "./winter";
+
 export interface GameState {
   installed: boolean;
   version: string;
@@ -21,6 +23,16 @@ export interface SystemRunner {
   name: string;
   path: string;
   kind: "wine" | "proton" | string;
+}
+
+export interface EventState {
+  name: string;
+  active: boolean;
+  end_date: string;
+  forced: boolean;
+  source: string;
+  theme: string;
+  fx: boolean;
 }
 
 export interface StoreState {
@@ -45,6 +57,8 @@ export interface StoreState {
     wine_binary?: string;
     wine_prefix?: string;
     warn_plain_wine?: boolean;
+    winter_fx: WinterChoice;
+    winter_bg: WinterChoice;
   };
   home: { image: string; note: string; image_data: string | null };
   paths: {
@@ -65,6 +79,7 @@ export interface StoreState {
     wine_binary: string;
     prefix: string;
   };
+  event: EventState;
   status: { text: string; level: string };
   progress: number | null;
   progressLabel: string;
@@ -109,12 +124,18 @@ export const store: StoreState = {
     wine_binary: "",
     wine_prefix: "",
     warn_plain_wine: true,
+    winter_fx: "auto",
+    winter_bg: "auto",
   },
   home: { image: "", note: "", image_data: null },
   paths: { appdata: "", profiles: "", guis: "", log: "", default_game_dir: "" },
   system: {
     gpus: [], gpu: "", wine: "", wines: [], runners: [], runner: "",
     runner_kind: "", wine_binary: "", prefix: "",
+  },
+  event: {
+    name: "", active: false, end_date: "", forced: false,
+    source: "inactive", theme: "", fx: false,
   },
   status: { text: "Starting…", level: "info" },
   progress: null,

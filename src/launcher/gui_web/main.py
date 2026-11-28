@@ -18,6 +18,7 @@ import subprocess
 import sys
 import time
 import urllib.request
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from config import APP_NAME
 
@@ -30,6 +31,18 @@ def _acquire_lock():
     from config import Config
     from single_instance import ensure_single_instance
     return ensure_single_instance(Config())
+
+
+def _with_event_query(url, event):
+    """Mirror the resolved event into the URL for the first CSS paint."""
+    if not event.active:
+        return url
+    parts = urlsplit(url)
+    query = dict(parse_qsl(parts.query, keep_blank_values=True))
+    query["event"] = event.name
+    return urlunsplit((
+        parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment
+    ))
 
 
 def _url_ready(url, timeout=0.6):
@@ -125,6 +138,8 @@ def main(argv=None, lock_held=False):
                         help="Load the Astro dev server instead of the build")
     parser.add_argument("--dev-url", default=DEV_URL_DEFAULT,
                         help="Dev server URL (default: %(default)s)")
+    parser.add_argument("--event", default=None, metavar="NAME",
+                        help="Force a seasonal event on (e.g. winter; 'none' disables)")
     args, _ = parser.parse_known_args(argv)
 
     try:
@@ -150,9 +165,14 @@ def main(argv=None, lock_held=False):
             print(assets.missing_build_message(), file=sys.stderr)
         return 3
 
+    from seasonal_events import load_event
+
     ctx = AppContext(config)
+    event = load_event(config, getattr(ctx, "network", None), args.event)
     emitter = Emitter()
     api = LauncherApi(ctx, emitter)
+    api.set_event(event)
+    url = _with_event_query(url, event)
 
     # GameCore callbacks fire from worker threads -> they only push events.
     game = ctx.game

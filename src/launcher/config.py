@@ -39,6 +39,8 @@ LAUNCHER_VERSION = "1.0"
 
 VERSION_URL = "https://raw.githubusercontent.com/jogamerforgames2021/BootstrapperTEST/main/Version.txt"
 MESSAGE_URL = "https://raw.githubusercontent.com/isam-ahmed0/Isam-AULauncher/crew/release/message.txt"
+EVENTS_URL = "https://raw.githubusercontent.com/isam-ahmed0/Isam-AULauncher/crew/release/events.txt"
+EVENT_FETCH_TIMEOUT = 2.0
 PATCHES_URL = "https://raw.githubusercontent.com/jogamerforgames2021/AmongUsLauncherNew/refs/heads/main/Patches.xml"
 SOURCE_CODE_URL = "https://github.com/isam-ahmed0/Isam-AULauncher"
 DOCS_BASE_URL = f"{SOURCE_CODE_URL}/blob/main/DOC"
@@ -89,6 +91,8 @@ class Config:
             "discord_rpc": True, "ui_mode": "web", "display_backend": "",
             "active_profile": "Default", "theme": "Forest",
             "web_theme": "aurora",
+            "events_cache": "",
+            "winter_fx": "auto", "winter_bg": "auto",
             "launch_method": "ask", "warn_plain_wine": True,
             "wine_prefix": "", "lutris_game_ids": {}, "lutris_entries": {},
             "lutris_cmd_override": None,

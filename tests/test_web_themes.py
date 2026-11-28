@@ -27,6 +27,14 @@ class WebThemeTests(unittest.TestCase):
         self.assertEqual(
             self._load({"web_theme": "violet"})["web_theme"], "violet"
         )
+        self.assertEqual(
+            self._load({"web_theme": "winter"})["web_theme"], "winter"
+        )
+
+    def test_winter_toggles_default_to_auto(self):
+        loaded = self._load({})
+        self.assertEqual(loaded["winter_fx"], "auto")
+        self.assertEqual(loaded["winter_bg"], "auto")
 
 
 if __name__ == "__main__":

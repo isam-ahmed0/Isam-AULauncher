@@ -176,6 +176,23 @@
 }
 
 /* theme gallery ------------------------------------------------------------ */
+.event-row {
+  margin: 10px 0 2px;
+  padding: 9px 11px;
+  border-radius: var(--r-control);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
+}
+
+.event-row .sr-desc {
+  color: var(--accent-hover);
+  line-height: 1.4;
+}
+
+.event-row .pill {
+  flex: none;
+}
+
 .theme-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(158px, 1fr));

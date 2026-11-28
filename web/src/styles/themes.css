@@ -751,6 +751,209 @@
   --progress-inset: inset 0 1px 2px rgba(0, 0, 0, 0.6);
 }
 
+/* Frosted seasonal preset — its own icy recipe, not a recolor. ------------- */
+[data-theme="winter"],
+[data-preview-theme="winter"] {
+  color-scheme: dark;
+  --bg-base: #0b1d2b;
+  --bg-sunken: #071724;
+  --bg-surface: #102a3c;
+  --bg-elevated: #16364a;
+  --bg-hover: #1e455d;
+  --bg-active: #28566f;
+  --text: #e8f6ff;
+  --text-strong: #ffffff;
+  --text-muted: #a9cadd;
+  --text-faint: #7297ab;
+  --border: rgba(186, 230, 253, 0.12);
+  --border-strong: rgba(224, 242, 254, 0.26);
+  --accent: #7dd3fc;
+  --accent-hover: #bae6fd;
+  --accent-soft: rgba(125, 211, 252, 0.16);
+  --accent-2: #e0f2fe;
+  --accent-border: rgba(125, 211, 252, 0.32);
+  --accent-border-strong: rgba(224, 242, 254, 0.5);
+  --grad-accent: linear-gradient(120deg, #7dd3fc 0%, #e0f2fe 100%);
+  --grad-hero: radial-gradient(1100px 500px at 14% -12%, rgba(125, 211, 252, 0.3), transparent 60%),
+               radial-gradient(860px 430px at 92% 8%, rgba(224, 242, 254, 0.18), transparent 55%),
+               radial-gradient(700px 380px at 50% 120%, rgba(99, 179, 237, 0.16), transparent 60%);
+  --success: #6ee7b7;
+  --success-soft: rgba(110, 231, 183, 0.14);
+  --success-border: rgba(110, 231, 183, 0.35);
+  --warning: #fde68a;
+  --warning-soft: rgba(253, 230, 138, 0.13);
+  --warning-border: rgba(253, 230, 138, 0.36);
+  --danger: #fda4af;
+  --danger-soft: rgba(253, 164, 175, 0.13);
+  --info: #bae6fd;
+  --info-soft: rgba(186, 230, 253, 0.14);
+  --r-lg: 18px;
+  --r-md: 14px;
+  --r-sm: 10px;
+  --r-btn: 12px;
+  --r-control: 8px;
+  --shadow-sm: 0 1px 3px rgba(2, 14, 24, 0.3);
+  --shadow-md: 0 10px 30px rgba(2, 14, 24, 0.38);
+  --shadow-lg: 0 26px 68px rgba(2, 14, 24, 0.55);
+  --btn-bg: rgba(22, 54, 74, 0.72);
+  --btn-border: rgba(186, 230, 253, 0.24);
+  --btn-text: var(--text);
+  --btn-hover-bg: rgba(30, 69, 93, 0.88);
+  --btn-hover-border: rgba(224, 242, 254, 0.46);
+  --btn-active-transform: translateY(0);
+  --btn-primary-bg: linear-gradient(120deg, rgba(125, 211, 252, 0.94), rgba(224, 242, 254, 0.94));
+  --btn-primary-hover-bg: linear-gradient(120deg, #7dd3fc, #f0f9ff);
+  --btn-primary-border: rgba(255, 255, 255, 0.6);
+  --btn-primary-text: #082033;
+  --btn-primary-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 8px 24px rgba(125, 211, 252, 0.24);
+  --btn-primary-hover-filter: none;
+  --btn-primary-hover-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75), 0 12px 30px rgba(186, 230, 253, 0.32);
+  --btn-primary-hover-transform: translateY(-1px);
+  --btn-ghost-bg: rgba(125, 211, 252, 0.06);
+  --btn-danger-bg: var(--danger-soft);
+  --btn-danger-border: rgba(253, 164, 175, 0.22);
+  --btn-danger-text: var(--danger);
+  --btn-warning-bg: var(--warning-soft);
+  --btn-warning-border: rgba(253, 230, 138, 0.22);
+  --btn-warning-text: var(--warning);
+  --seg-on-bg: rgba(125, 211, 252, 0.92);
+  --seg-on-text: #082033;
+  --seg-on-shadow: 0 4px 14px rgba(125, 211, 252, 0.28);
+  --switch-on-bg: #7dd3fc;
+  --switch-knob: #082033;
+  --switch-knob-off: var(--text-muted);
+  --mini-text: var(--text-muted);
+  --mini-hover-text: #ffffff;
+  --quick-icon-hover-bg: var(--grad-accent);
+  --quick-icon-hover-text: #082033;
+  --quick-hover-transform: translateY(-1px);
+  --badge-icon-bg: linear-gradient(140deg, rgba(125, 211, 252, 0.9), rgba(186, 230, 253, 0.55));
+  --badge-icon-text: #082033;
+  --logo-text: #082033;
+  --logo-shadow: 0 3px 14px rgba(125, 211, 252, 0.42);
+  --win-close-bg: #fda4af;
+  --win-close-text: #082033;
+  --nav-marker-bg: linear-gradient(90deg, #7dd3fc, #e0f2fe);
+  --nav-marker-left: -12px;
+  --nav-marker-right: auto;
+  --nav-marker-top: 6px;
+  --nav-marker-bottom: 6px;
+  --nav-marker-w: 3px;
+  --nav-marker-h: auto;
+  --nav-marker-radius: 0 3px 3px 0;
+  --modal-backdrop: rgba(3, 16, 27, 0.7);
+  --scrollbar-thumb: rgba(186, 230, 253, 0.22);
+  --scrollbar-thumb-hover: rgba(224, 242, 254, 0.42);
+  --particle: rgba(240, 249, 255, 0.82);
+  --hero-title-shadow: 0 2px 22px rgba(2, 14, 24, 0.45);
+  --hero-orb-a: #7dd3fc;
+  --hero-orb-b: #e0f2fe;
+  --hero-orb-c: #60a5fa;
+  --progress-track: rgba(224, 242, 254, 0.1);
+  --progress-inset: inset 0 1px 3px rgba(2, 14, 24, 0.42);
+  --winter-frost: rgba(191, 233, 255, 0.12);
+  --winter-ice: rgba(224, 242, 254, 0.38);
+  --winter-glow: rgba(125, 211, 252, 0.28);
+  --winter-bg-image: url("/winter-bg.svg");
+}
+
+/* Layerable winter effects (can be used with any preset) ------------------- */
+html[data-winter="1"] {
+  --fast: 220ms var(--ease);
+  --slow: 460ms var(--ease);
+}
+
+.winter-snow {
+  display: none;
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--slow);
+}
+
+html[data-winter="1"] .winter-snow {
+  display: block;
+  opacity: 0.82;
+}
+
+html[data-winter="1"] .shell {
+  background-color: var(--bg-base);
+  transition: background-image var(--slow), background-color var(--slow);
+}
+
+html[data-winter="1"][data-winter-bg="1"] .shell {
+  background-image:
+    linear-gradient(180deg, rgba(5, 20, 32, 0.7), rgba(5, 20, 32, 0.86)),
+    var(--winter-bg-image);
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+html[data-winter="1"] .titlebar,
+html[data-winter="1"] .sidebar,
+html[data-winter="1"] .statusbar {
+  background: rgba(9, 30, 46, 0.64);
+  backdrop-filter: blur(14px) saturate(1.15);
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+}
+
+html[data-winter="1"] .card,
+html[data-winter="1"] .mod-card,
+html[data-winter="1"] .asset-item,
+html[data-winter="1"] .hero,
+html[data-winter="1"] .update-card,
+html[data-winter="1"] .modal {
+  background:
+    linear-gradient(180deg, var(--winter-frost), transparent 46%),
+    var(--bg-surface);
+  border-color: var(--winter-ice);
+  box-shadow: inset 0 1px 0 var(--winter-ice), var(--shadow-md);
+  backdrop-filter: blur(9px);
+  -webkit-backdrop-filter: blur(9px);
+}
+
+html[data-winter="1"] .hero::after {
+  content: "";
+  position: absolute;
+  inset: -40% -60%;
+  background: linear-gradient(110deg, transparent 42%, rgba(224, 242, 254, 0.1) 50%, transparent 58%);
+  animation: winter-sweep 18s linear infinite;
+  pointer-events: none;
+}
+
+html[data-winter="1"] .hero-bg .orb {
+  animation-duration: 26s;
+}
+
+html[data-winter="1"] .progress .bar {
+  animation-duration: 3.6s;
+}
+
+html[data-winter="1"] .nav-item,
+html[data-winter="1"] .btn,
+html[data-winter="1"] .quick,
+html[data-winter="1"] .theme-card {
+  transition-duration: 220ms;
+}
+
+@keyframes winter-sweep {
+  from { transform: translateX(-30%); }
+  to { transform: translateX(30%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-winter="1"] .hero::after,
+  html[data-winter="1"] .hero-bg .orb,
+  html[data-winter="1"] .progress .bar {
+    animation: none;
+  }
+}
+
 /* Theme switch cross-fade -------------------------------------------------- */
 html.theme-shift .shell {
   opacity: 0.96;

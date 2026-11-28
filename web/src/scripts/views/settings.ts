@@ -7,11 +7,11 @@ import { confirmModal } from "../modal";
 import { store, update } from "../store";
 import {
   WEB_THEMES,
-  applyWebTheme as applyTheme,
+  applyWebTheme,
+  effectiveWebTheme,
   normalizeWebTheme,
 } from "../theme";
-
-export { applyWebTheme } from "../theme";
+import { applyWinterFx, normalizeWinterChoice } from "../winter";
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string): T =>
   document.getElementById(id) as T;
@@ -19,6 +19,19 @@ const $ = <T extends HTMLElement = HTMLElement>(id: string): T =>
 type Settings = Record<string, any>;
 let values: Settings = {};
 let loaded = false;
+
+function activeEventName(): string | undefined {
+  return store.event.active ? store.event.name : undefined;
+}
+
+function applyTheme(value: unknown, animate = true): void {
+  const eventName = activeEventName();
+  applyWebTheme(effectiveWebTheme(value, eventName), animate, !eventName);
+}
+
+function applyWinter(): void {
+  applyWinterFx(values.winter_fx, values.winter_bg);
+}
 
 export function initSettings(): void {
   renderThemeCards();
@@ -28,6 +41,8 @@ export function initSettings(): void {
   wireSwitch("setting-discord", "discord_rpc");
   wireSwitch("setting-shortcuts", "create_shortcuts");
   wireSwitch("setting-warn-wine", "warn_plain_wine");
+  wireWinterSwitch("setting-winter-fx", "winter_fx");
+  wireWinterSwitch("setting-winter-bg", "winter_bg");
 
   ($("setting-theme") as HTMLSelectElement).addEventListener("change", (e) => {
     void save("theme", (e.target as HTMLSelectElement).value);
@@ -74,13 +89,17 @@ export async function loadSettings(force = false): Promise<void> {
 
 function applyForm(): void {
   applyTheme(values.web_theme);
-  setThemeCards(normalizeWebTheme(values.web_theme));
+  setThemeCards(effectiveWebTheme(values.web_theme, activeEventName()));
+  applyWinter();
+  applyEventBadge();
 
   setSegmented("setting-backend", values.display_backend || "");
   setSwitch("setting-auto-update", values.auto_update !== false);
   setSwitch("setting-discord", values.discord_rpc !== false);
   setSwitch("setting-shortcuts", values.create_shortcuts !== false);
   setSwitch("setting-warn-wine", values.warn_plain_wine !== false);
+  setSwitch("setting-winter-fx", normalizeWinterChoice(values.winter_fx) !== "off");
+  setSwitch("setting-winter-bg", normalizeWinterChoice(values.winter_bg) !== "off");
 
   ($("setting-theme") as HTMLSelectElement).value = values.theme || "Forest";
   ($("setting-ui-mode") as HTMLSelectElement).value = values.ui_mode || "web";
@@ -89,6 +108,18 @@ function applyForm(): void {
   $("settings-linux").hidden = !linux;
   $("setting-backend-row").hidden = !linux;
   applySystem();
+}
+
+function applyEventBadge(): void {
+  const row = $("winter-event-row");
+  const badge = $("winter-event-badge");
+  const desc = $("winter-event-desc");
+  const active = store.event.active && (store.event.fx || Boolean(store.event.theme));
+  row.hidden = !active;
+  if (!active) return;
+  badge.textContent = store.event.forced ? "Test" : "Active";
+  const when = store.event.end_date ? ` until ${store.event.end_date}` : "";
+  desc.textContent = `${store.event.forced ? "Forced with --event" : "Seasonal event"}${when}. Winter is the default theme; its snow and frost are on automatically and can also be layered on any preset.`;
 }
 
 function applySystem(): void {
@@ -161,7 +192,11 @@ async function save(key: string, value: unknown): Promise<boolean> {
     return false;
   }
   update({ settings: { ...store.settings, [key]: value } as typeof store.settings });
-  if (key === "web_theme") applyTheme(String(value));
+  if (key === "web_theme") {
+    applyTheme(value, false);
+    setThemeCards(effectiveWebTheme(value, activeEventName()));
+  }
+  if (key === "winter_fx" || key === "winter_bg") applyWinter();
   return true;
 }
 
@@ -239,7 +274,8 @@ function setThemeCards(id: string): void {
 async function chooseTheme(id: string): Promise<void> {
   const value = normalizeWebTheme(id);
   setThemeCards(value);
-  applyTheme(value);
+  applyWebTheme(value);
+  applyWinter();
   if (!isDesktop()) {
     toast({
       title: "Preview only",
@@ -267,6 +303,15 @@ function wireSwitch(id: string, key: string): void {
     const next = !$(id).classList.contains("on");
     setSwitch(id, next);
     void save(key, next);
+  });
+}
+
+// "auto" shows as on; switching it off then on makes it an explicit layer.
+function wireWinterSwitch(id: string, key: string): void {
+  $(id).addEventListener("click", () => {
+    const next = !$(id).classList.contains("on");
+    setSwitch(id, next);
+    void save(key, next ? "on" : "off");
   });
 }
 

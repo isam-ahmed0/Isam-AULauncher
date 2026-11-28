@@ -4,6 +4,7 @@ Interface selection (first match wins):
 
 - ``--ui qt|tk|custom:<name>``  explicit choice
 - ``--qt`` / ``--tk`` (``--lite``)  shortcuts
+- ``--event winter``            force a seasonal event on for testing
 - config ``ui_mode``            saved preference (Settings > Interface)
 - default                      Web (pywebview)
 
@@ -72,6 +73,8 @@ def _parse_args(argv):
     parser.add_argument("--no-splash", action="store_true", help="Skip splash screen")
     parser.add_argument("--splash-2", action="store_true",
                         help="Use animated WebM video splash")
+    parser.add_argument("--event", default=None, metavar="NAME",
+                        help="Force a seasonal event on (e.g. winter; 'none' disables)")
     parser.add_argument("--version", action="store_true",
                         help="Print version and exit")
     args, rest = parser.parse_known_args(argv)
@@ -133,8 +136,11 @@ def main(argv=None):
 
     if mode == "web":
         from gui_web.main import main as web_main
+        web_argv = list(args.rest)
+        if args.event is not None:
+            web_argv += ["--event", args.event]
         try:
-            rc = web_main(args.rest, lock_held=True)
+            rc = web_main(web_argv, lock_held=True)
         except Exception as e:
             logging.exception("Web interface failed to start")
             _notice(APP_NAME,

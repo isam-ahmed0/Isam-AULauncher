@@ -64,6 +64,7 @@ If Qt cannot start on Linux, `main.py` transparently falls back to Lite.
 | `itch_auth.py` | Qt adapter kept for compatibility (`gui_qt.login`, `window/itch_profile`) |
 | `single_instance.py` | Cross-platform advisory lock in the app data dir |
 | `news.py` | Remote announcement (`MESSAGE_URL`): fetch, change detection via seen-hash/`<!-- id -->` marker, offline cache, Markdown→plain text for Tk |
+| `seasonal_events.py` | Generic `release/events.txt` parser (`name: YYYY-MM-DD`), date/CLI resolution, cached offline fallback and effective event theme |
 | `app_restart.py` | Re-exec the launcher (used after UI/theme changes) |
 | `qt_platform.py` | Chooses/persists the Qt display backend, distro hints for missing libs |
 | `ui_registry.py` | Builtin GUI list, custom GUI discovery/loading, `AppContext` |
@@ -88,11 +89,18 @@ custom GUIs stay lightweight. GUI imports are always inside functions.
   `http://127.0.0.1:4321`; pass `--dev` to load it instead of the build.
 
 `web/src/styles/tokens.css` holds the base design tokens and `themes.css`
-defines seven self-contained presets (Aurora, Aurora Light, Forest, Violet,
-Ember, Slate and Mono), each with its own button recipes rather than a single
-shared style. `web/src/scripts/theme.ts` owns the registry, maps legacy
+defines eight self-contained presets (Aurora, Aurora Light, Forest, Violet,
+Ember, Slate, Mono and Winter), each with its own button recipes rather than a
+single shared style. `web/src/scripts/theme.ts` owns the registry, maps legacy
 `dark`/`light` values and writes `data-theme` on `<html>`; Settings renders a
 live gallery and persists through `settings_set("web_theme", id)`.
+
+`release/events.txt` can force a seasonal preset for everyone while it is
+active. `--event winter` overrides the date for testing. Winter's snow canvas
+(`scripts/winter.ts`), frost CSS and background image are separate from the
+preset. The Settings switches default to `auto`: they turn on with the Winter
+preset/event, and switching one off then on makes it an explicit layer over any
+other preset (`on`); `off` disables it everywhere.
 
 The web screens mirror the Qt feature set: Home (install/update/launch/stop,
 progress, version picker, folder inspection, home card), Mods (profiles,

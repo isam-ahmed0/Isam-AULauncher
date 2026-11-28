@@ -133,6 +133,32 @@ messages.
   `<!-- id: some-new-id -->`.
 - The launcher caches the last message, so the News page still works offline.
 
+## Seasonal events
+
+`release/events.txt` uses the same raw-GitHub hosting pattern as
+`message.txt`. Each active row is `name: YYYY-MM-DD`, where the date is the
+last day the event is active (inclusive):
+
+```txt
+# name: last active day
+winter: 2026-12-31
+```
+
+While an event is active its theme becomes the default for everyone; the saved
+theme stays in config and returns when the event ends. Only registered event
+names affect the UI (currently `winter`). Add new rows here as future events
+are implemented, and register their theme/effects in
+`src/launcher/seasonal_events.py` plus `web/src/scripts/theme.ts`.
+
+For local testing, `python src/launcher/main.py --ui web --event winter`
+forces the event on regardless of the date. `--event none` forces it off.
+The launcher also falls back to the checkout's `release/events.txt` when the
+remote fetch fails, and caches the last successful copy for offline launches.
+Winter's snow, frost and background default to `auto`: they turn on
+automatically with the Winter preset/event, but do not silently affect other
+presets. In Settings, switching one off then on again makes it an explicit
+layer over any web preset; switching it off disables it everywhere.
+
 ## Custom GUIs
 
 Starter templates live in `src/launcher/resources/custom_gui_*.py` and are

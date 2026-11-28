@@ -119,6 +119,12 @@
   --progress-track: rgba(255, 255, 255, 0.09);
   --progress-inset: inset 0 1px 3px rgba(0, 0, 0, 0.35);
 
+  /* winter overlay */
+  --winter-frost: rgba(191, 233, 255, 0.1);
+  --winter-ice: rgba(224, 242, 254, 0.32);
+  --winter-glow: rgba(125, 211, 252, 0.26);
+  --winter-bg-image: none;
+
   /* layout */
   --titlebar-h: 40px;
   --sidebar-w: 232px;

@@ -10,6 +10,7 @@ import "../styles/pages.css";
 import TitleBar from "../components/TitleBar.astro";
 import Sidebar from "../components/Sidebar.astro";
 import StatusBar from "../components/StatusBar.astro";
+import WinterFx from "../components/WinterFx.astro";
 import HomeView from "../components/views/Home.astro";
 import ModsView from "../components/views/Mods.astro";
 import AssetsView from "../components/views/Assets.astro";
@@ -29,15 +30,41 @@ import AboutView from "../components/views/About.astro";
       (() => {
         // Apply the last chosen preset before CSS paints. Python remains the
         // authoritative source; app.ts reconciles this once the bridge is up.
+        const root = document.documentElement;
+        // Keep the background relative to index.html (works from file:// too).
+        root.style.setProperty("--winter-bg-image", "url('./winter-bg.svg')");
         const legacy = { dark: "aurora", light: "aurora-light" };
+        const eventThemes = { winter: "winter" };
         const valid = [
-          "aurora", "aurora-light", "forest", "violet", "ember", "slate", "mono",
+          "aurora", "aurora-light", "forest", "violet", "ember", "slate",
+          "mono", "winter",
         ];
+        const storageOff = (key) => {
+          try {
+            const value = (localStorage.getItem(key) || "").toLowerCase();
+            return value === "0" || value === "false" || value === "off" || value === "no";
+          } catch (_) {
+            return false;
+          }
+        };
         try {
-          const saved = localStorage.getItem("cl-web-theme");
-          if (!saved) return;
-          const id = legacy[saved] || saved;
-          if (valid.includes(id)) document.documentElement.dataset.theme = id;
+          const forced = (new URLSearchParams(location.search).get("event") || "")
+            .toLowerCase();
+          let id = "";
+          if (eventThemes[forced]) {
+            // The launcher forces the seasonal preset on every launch.
+            id = eventThemes[forced];
+          } else {
+            const saved = localStorage.getItem("cl-web-theme");
+            id = saved ? (legacy[saved] || saved) : "";
+          }
+          if (valid.includes(id)) root.dataset.theme = id;
+
+          // "auto" effects follow the Winter preset; an explicit off wins.
+          if (id === "winter" && !storageOff("cl-winter-fx")) {
+            root.dataset.winter = "1";
+            if (!storageOff("cl-winter-bg")) root.dataset.winterBg = "1";
+          }
         } catch (_) {
           /* localStorage can be unavailable in hardened webviews. */
         }
@@ -101,6 +128,7 @@ import AboutView from "../components/views/About.astro";
       <StatusBar />
     </div>
 
+    <WinterFx />
     <div class="toasts" id="toasts"></div>
     <div id="modal-root"></div>
 

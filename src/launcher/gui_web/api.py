@@ -35,6 +35,7 @@ _MAX_IMAGE_BYTES = 12 * 1024 * 1024
 # Aurora instead of leaving the page in an undefined state.
 WEB_THEME_IDS = (
     "aurora", "aurora-light", "forest", "violet", "ember", "slate", "mono",
+    "winter",
 )
 
 
@@ -57,6 +58,7 @@ class LauncherApi:
         self._busy = False
         self._stop = threading.Event()
         self._started = False
+        self.event = None
         self._latest_version = None
         self._game_update = {"needed": False, "latest": None}
         self._releases = None
@@ -69,6 +71,18 @@ class LauncherApi:
     # ------------------------------------------------------------ plumbing
     def attach(self, window):
         self._window = window
+
+    def set_event(self, event):
+        """Store the resolved seasonal event for this launch."""
+        self.event = event
+
+    def event_info(self):
+        """Active seasonal event (or an inactive payload) for the web UI."""
+        if self.event is None:
+            return _ok({"name": "", "active": False, "end_date": "",
+                        "forced": False, "source": "inactive",
+                        "theme": "", "fx": False})
+        return _ok(self.event.as_dict())
 
     def set_maximized(self, value):
         """Track frameless-window maximize state (pywebview has no getter)."""
@@ -1449,19 +1463,30 @@ class LauncherApi:
     # ------------------------------------------------------------ settings
     SETTING_KEYS = (
         "theme", "web_theme", "ui_mode", "display_backend", "auto_update",
-        "discord_rpc", "create_shortcuts",
+        "discord_rpc", "create_shortcuts", "winter_fx", "winter_bg",
         "active_profile", "gpu_id", "wine_binary", "wine_prefix",
         "warn_plain_wine", "home_note",
     )
 
     def settings_get(self):
         s = self.ctx.config.settings
+        from seasonal_events import (
+            effective_web_theme, normalize_winter_choice,
+            wants_winter_bg, wants_winter_fx,
+        )
+
         payload = {key: s.get(key, "") for key in self.SETTING_KEYS}
-        payload["web_theme"] = s.get("web_theme", "aurora") or "aurora"
+        payload["web_theme"] = effective_web_theme(
+            s.get("web_theme", "aurora"), self.event
+        )
         payload["ui_mode"] = s.get("ui_mode", "web") or "web"
         for key in ("auto_update", "discord_rpc", "create_shortcuts",
                     "warn_plain_wine"):
             payload[key] = bool(s.get(key, True))
+        for key in ("winter_fx", "winter_bg"):
+            payload[key] = normalize_winter_choice(s.get(key))
+        payload["winter_fx_enabled"] = wants_winter_fx(s, self.event)
+        payload["winter_bg_enabled"] = wants_winter_bg(s, self.event)
         payload["active_profile"] = self.ctx.config.get_active_profile()
         return _ok(payload)
 
@@ -1472,6 +1497,9 @@ class LauncherApi:
             value = str(value or "").strip().lower()
             if value not in WEB_THEME_IDS:
                 value = "aurora"
+        elif key in ("winter_fx", "winter_bg"):
+            from seasonal_events import normalize_winter_choice
+            value = normalize_winter_choice(value)
         elif key == "ui_mode":
             value = str(value or "web").strip() or "web"
         elif key == "display_backend":
