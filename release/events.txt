@@ -1,5 +1,6 @@
 # Seasonal events — one row per event
-# Format: name: YYYY-MM-DD (the last day the event is active, inclusive)
-# Lines starting with # are ignored. Add future events below when they are ready.
-
-winter: 2026-12-31
+# Published to the raw GitHub URL in config.EVENTS_URL, exactly like message.txt.
+# Format: name: YYYY-MM-DD (the last day the event is active, inclusive).
+# Lines starting with # are ignored. This checkout copy is only a template.
+# Example:
+# winter: YYYY-MM-DD

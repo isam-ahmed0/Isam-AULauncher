@@ -95,12 +95,11 @@ single shared style. `web/src/scripts/theme.ts` owns the registry, maps legacy
 `dark`/`light` values and writes `data-theme` on `<html>`; Settings renders a
 live gallery and persists through `settings_set("web_theme", id)`.
 
-`release/events.txt` can force a seasonal preset for everyone while it is
-active. `--event winter` overrides the date for testing. Winter's snow canvas
-(`scripts/winter.ts`), frost CSS and background image are separate from the
-preset. The Settings switches default to `auto`: they turn on with the Winter
-preset/event, and switching one off then on makes it an explicit layer over any
-other preset (`on`); `off` disables it everywhere.
+The remote `EVENTS_URL` (the same raw-GitHub host as `message.txt`) is the only
+event source; the checkout's `release/events.txt` is a date-free template.
+`--event winter` overrides the hosted file for testing. Event-only presets and
+all Winter UI (card, snow canvas, frost CSS, background and Settings switches)
+are hidden and inactive unless the event is currently active.
 
 The web screens mirror the Qt feature set: Home (install/update/launch/stop,
 progress, version picker, folder inspection, home card), Mods (profiles,

@@ -77,6 +77,7 @@ export const EVENT_THEMES: Record<string, string> = {
   winter: "winter",
 };
 
+export const EVENT_THEME_IDS = new Set(Object.values(EVENT_THEMES));
 export const DEFAULT_WEB_THEME = "aurora";
 
 const LEGACY: Record<string, string> = {
@@ -103,7 +104,10 @@ export function webTheme(id: string): WebTheme {
  */
 export function effectiveWebTheme(value: unknown, eventName?: string): string {
   const eventTheme = eventName ? EVENT_THEMES[eventName] : undefined;
-  return eventTheme || normalizeWebTheme(value);
+  if (eventTheme) return eventTheme;
+  const id = normalizeWebTheme(value);
+  // Event-only presets disappear when no event is active.
+  return EVENT_THEME_IDS.has(id) ? DEFAULT_WEB_THEME : id;
 }
 
 /**

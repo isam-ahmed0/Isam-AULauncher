@@ -98,8 +98,12 @@ function wireEvents(): void {
   on("game_state", (data) => applyGameState(data));
 }
 
+function eventFxActive(): boolean {
+  return store.event.active && (store.event.fx || Boolean(store.event.theme));
+}
+
 function applyTheme(animate = false): void {
-  const eventName = store.event.active ? store.event.name : undefined;
+  const eventName = eventFxActive() ? store.event.name : undefined;
   // Event themes are temporary: never mirror them over the saved preference.
   applyWebTheme(
     effectiveWebTheme(store.settings.web_theme, eventName),
@@ -109,7 +113,12 @@ function applyTheme(animate = false): void {
 }
 
 function applyWinter(animate = false): void {
-  applyWinterFx(store.settings.winter_fx, store.settings.winter_bg, animate);
+  const active = eventFxActive();
+  applyWinterFx(
+    active ? store.settings.winter_fx : "off",
+    active ? store.settings.winter_bg : "off",
+    animate,
+  );
 }
 
 async function syncEvent(): Promise<void> {
@@ -124,8 +133,6 @@ async function syncEvent(): Promise<void> {
 
 async function boot(): Promise<void> {
   initWinterFx();
-  applyTheme();
-  applyWinter();
   initTitleBar();
   initRouter();
   initKeyboard();
@@ -155,6 +162,8 @@ async function boot(): Promise<void> {
   });
 
   if (!(await bridgeAvailable())) {
+    applyTheme();
+    applyWinter();
     update({ preview: true, booted: true });
     $("sb-status").textContent = "Browser preview — Python bridge unavailable";
     $("hero-badge").textContent = "PREVIEW";

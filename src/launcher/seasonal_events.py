@@ -3,17 +3,16 @@
 The hosting repo serves a tiny text file next to ``release/message.txt``::
 
     # name: last active day (YYYY-MM-DD, inclusive)
-    winter: 2026-12-31
+    winter: YYYY-MM-DD
 
 Events are generic; only names with a registered visual theme or effect affect
-the UI. ``--event <name>`` forces an event on for testing, and ``--event none``
-forces every event off.
+the UI. The remote file is the only event source; ``--event <name>`` forces an
+event on for testing, and ``--event none`` forces every event off.
 """
 import datetime as _dt
 import logging
 import re
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from config import EVENTS_URL, EVENT_FETCH_TIMEOUT
@@ -24,8 +23,11 @@ _ROW_RE = re.compile(
 )
 _DISABLED = {"", "none", "off", "false", "0"}
 
+DEFAULT_WEB_THEME = "aurora"
+
 # Event name -> web theme used while that event is active.
 EVENT_THEMES = {"winter": "winter"}
+EVENT_THEME_IDS = frozenset(EVENT_THEMES.values())
 
 # Events whose effects can be layered on top of any web theme.
 FX_EVENTS = {"winter"}
@@ -126,10 +128,9 @@ def normalize_winter_choice(value: Any) -> str:
     return "off"
 
 
-def winter_preset_active(settings: Any, event: Optional[SeasonEvent] = None) -> bool:
-    """True when Winter is the effective preset (event or saved choice)."""
-    value = settings if isinstance(settings, dict) else {"web_theme": settings}
-    return effective_web_theme(value.get("web_theme"), event) == "winter"
+def winter_preset_active(settings: Any = None, event: Optional[SeasonEvent] = None) -> bool:
+    """True only while the Winter event is actually active."""
+    return bool(event and event.active and EVENT_THEMES.get(event.name) == "winter")
 
 
 def resolve_winter_choice(value: Any, winter_active: bool) -> bool:
@@ -138,19 +139,22 @@ def resolve_winter_choice(value: Any, winter_active: bool) -> bool:
     return choice == "on" or (choice == "auto" and winter_active)
 
 
-def wants_winter_fx(settings: Any, event: Optional[SeasonEvent] = None) -> bool:
-    """Whether snow and frost should run for these settings."""
+def wants_winter_fx(settings: Any = None, event: Optional[SeasonEvent] = None) -> bool:
+    """Winter effects exist only while its event/CLI override is active."""
+    if not winter_preset_active(event=event):
+        return False
     value = settings if isinstance(settings, dict) else {"winter_fx": settings}
-    return resolve_winter_choice(value.get("winter_fx"), winter_preset_active(value, event))
+    return resolve_winter_choice(value.get("winter_fx"), True)
 
 
-def wants_winter_bg(settings: Any, event: Optional[SeasonEvent] = None) -> bool:
-    """Whether the snowy backdrop should show (requires effects as well)."""
+def wants_winter_bg(settings: Any = None, event: Optional[SeasonEvent] = None) -> bool:
+    """The snowy backdrop also requires the Winter event to be active."""
+    if not winter_preset_active(event=event):
+        return False
     value = settings if isinstance(settings, dict) else {"winter_bg": settings}
-    winter = winter_preset_active(value, event)
     return (
-        resolve_winter_choice(value.get("winter_fx"), winter)
-        and resolve_winter_choice(value.get("winter_bg"), winter)
+        resolve_winter_choice(value.get("winter_fx"), True)
+        and resolve_winter_choice(value.get("winter_bg"), True)
     )
 
 
@@ -165,11 +169,15 @@ def effective_web_theme(value: Any, event: Optional[SeasonEvent] = None) -> str:
         if theme:
             return theme
     raw = str(value or "").strip().lower()
-    return {"dark": "aurora", "light": "aurora-light"}.get(raw, raw or "aurora")
+    theme_id = {"dark": "aurora", "light": "aurora-light"}.get(raw, raw)
+    # Event-only presets are unavailable once the event ends.
+    if not theme_id or theme_id in EVENT_THEME_IDS:
+        return DEFAULT_WEB_THEME
+    return theme_id
 
 
 def fetch_events_text(network: Any = None) -> str:
-    """Fetch the remote event file; failures simply mean "no event"."""
+    """Fetch events.txt from the same raw GitHub host as message.txt only."""
     try:
         if network is not None and hasattr(network, "session"):
             response = network.session.get(EVENTS_URL, timeout=EVENT_FETCH_TIMEOUT)
@@ -180,13 +188,6 @@ def fetch_events_text(network: Any = None) -> str:
         return (response.text or "").strip()
     except Exception as exc:
         logging.debug("Seasonal events fetch failed: %s", exc)
-
-    # Local source checkouts use the same file as the hosting repo. Installed
-    # builds simply use the fetched/cached copy above.
-    local = Path(__file__).resolve().parents[2] / "release" / "events.txt"
-    try:
-        return local.read_text(encoding="utf-8").strip()
-    except Exception:
         return ""
 
 

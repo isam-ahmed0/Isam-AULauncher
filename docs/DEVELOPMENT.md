@@ -135,29 +135,34 @@ messages.
 
 ## Seasonal events
 
-`release/events.txt` uses the same raw-GitHub hosting pattern as
-`message.txt`. Each active row is `name: YYYY-MM-DD`, where the date is the
-last day the event is active (inclusive):
+The launcher only reads `EVENTS_URL` in `src/launcher/config.py`, using the
+same raw-GitHub hosting pattern as `message.txt`. The checked-in
+`release/events.txt` is just a template: it has no active rows or hardcoded
+event dates. Publish the real file to the hosting repo to start an event.
+
+Each active row is `name: YYYY-MM-DD`, where the date is the last day the event
+is active (inclusive):
 
 ```txt
 # name: last active day
-winter: 2026-12-31
+winter: YYYY-MM-DD
 ```
 
+Only registered event names affect the UI (currently `winter`). Add new rows
+to the hosted file as future events are implemented, and register their
+theme/effects in `src/launcher/seasonal_events.py` plus
+`web/src/scripts/theme.ts`.
+
 While an event is active its theme becomes the default for everyone; the saved
-theme stays in config and returns when the event ends. Only registered event
-names affect the UI (currently `winter`). Add new rows here as future events
-are implemented, and register their theme/effects in
-`src/launcher/seasonal_events.py` plus `web/src/scripts/theme.ts`.
+theme stays in config and returns when the event ends. Event-only presets are
+hidden and ignored outside their event. Winter's card, snow, frost, background
+and event status are all hidden unless the remote event or `--event` says the
+event is active. A saved `winter` theme is ignored once the event ends.
 
 For local testing, `python src/launcher/main.py --ui web --event winter`
-forces the event on regardless of the date. `--event none` forces it off.
-The launcher also falls back to the checkout's `release/events.txt` when the
-remote fetch fails, and caches the last successful copy for offline launches.
-Winter's snow, frost and background default to `auto`: they turn on
-automatically with the Winter preset/event, but do not silently affect other
-presets. In Settings, switching one off then on again makes it an explicit
-layer over any web preset; switching it off disables it everywhere.
+forces the event on regardless of the hosted file. `--event none` forces it
+off. There is no local-file fallback; offline launches use the last successful
+remote fetch cached in config.
 
 ## Custom GUIs
 

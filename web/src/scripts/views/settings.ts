@@ -4,8 +4,9 @@ import { api, isDesktop } from "../bridge";
 import { on } from "../events";
 import { toast } from "../toast";
 import { confirmModal } from "../modal";
-import { store, update } from "../store";
+import { store, subscribe, update } from "../store";
 import {
+  EVENT_THEME_IDS,
   WEB_THEMES,
   applyWebTheme,
   effectiveWebTheme,
@@ -19,9 +20,18 @@ const $ = <T extends HTMLElement = HTMLElement>(id: string): T =>
 type Settings = Record<string, any>;
 let values: Settings = {};
 let loaded = false;
+let lastEvent = store.event;
+
+function eventActive(): boolean {
+  return store.event.active && (store.event.fx || Boolean(store.event.theme));
+}
 
 function activeEventName(): string | undefined {
-  return store.event.active ? store.event.name : undefined;
+  return eventActive() ? store.event.name : undefined;
+}
+
+function eventThemeVisible(id: string): boolean {
+  return store.event.active && store.event.theme === id;
 }
 
 function applyTheme(value: unknown, animate = true): void {
@@ -30,12 +40,24 @@ function applyTheme(value: unknown, animate = true): void {
 }
 
 function applyWinter(): void {
-  applyWinterFx(values.winter_fx, values.winter_bg);
+  const active = eventActive();
+  applyWinterFx(
+    active ? values.winter_fx : "off",
+    active ? values.winter_bg : "off",
+  );
+}
+
+function applyEventVisibility(): void {
+  const active = eventActive();
+  for (const id of ["winter-event-row", "winter-fx-row", "winter-bg-row"]) {
+    $(id).hidden = !active;
+  }
 }
 
 export function initSettings(): void {
+  applyEventVisibility();
   renderThemeCards();
-  setThemeCards(normalizeWebTheme(store.settings.web_theme));
+  setThemeCards(effectiveWebTheme(store.settings.web_theme, activeEventName()));
   wireSegmented("setting-backend", "display_backend");
   wireSwitch("setting-auto-update", "auto_update");
   wireSwitch("setting-discord", "discord_rpc");
@@ -67,6 +89,20 @@ export function initSettings(): void {
   });
 
   on("system", () => applySystem());
+
+  // Event state arrives after the page boots; show/hide event-only UI then.
+  subscribe(() => {
+    if (lastEvent === store.event) return;
+    lastEvent = store.event;
+    applyEventVisibility();
+    renderThemeCards();
+    setThemeCards(effectiveWebTheme(
+      loaded ? values.web_theme : store.settings.web_theme,
+      activeEventName(),
+    ));
+    applyWinter();
+    applyEventBadge();
+  });
 }
 
 export async function loadSettings(force = false): Promise<void> {
@@ -88,6 +124,8 @@ export async function loadSettings(force = false): Promise<void> {
 }
 
 function applyForm(): void {
+  applyEventVisibility();
+  renderThemeCards();
   applyTheme(values.web_theme);
   setThemeCards(effectiveWebTheme(values.web_theme, activeEventName()));
   applyWinter();
@@ -111,12 +149,9 @@ function applyForm(): void {
 }
 
 function applyEventBadge(): void {
-  const row = $("winter-event-row");
+  if (!eventActive()) return;
   const badge = $("winter-event-badge");
   const desc = $("winter-event-desc");
-  const active = store.event.active && (store.event.fx || Boolean(store.event.theme));
-  row.hidden = !active;
-  if (!active) return;
   badge.textContent = store.event.forced ? "Test" : "Active";
   const when = store.event.end_date ? ` until ${store.event.end_date}` : "";
   desc.textContent = `${store.event.forced ? "Forced with --event" : "Seasonal event"}${when}. Winter is the default theme; its snow and frost are on automatically and can also be layered on any preset.`;
@@ -216,6 +251,7 @@ function renderThemeCards(): void {
   host.replaceChildren();
 
   for (const theme of WEB_THEMES) {
+    if (EVENT_THEME_IDS.has(theme.id) && !eventThemeVisible(theme.id)) continue;
     const card = document.createElement("button");
     card.type = "button";
     card.className = "theme-card";
