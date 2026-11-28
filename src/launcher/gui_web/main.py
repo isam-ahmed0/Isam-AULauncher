@@ -35,11 +35,17 @@ def _acquire_lock():
 
 def _with_event_query(url, event):
     """Mirror the resolved event into the URL for the first CSS paint."""
-    if not event.active:
-        return url
     parts = urlsplit(url)
     query = dict(parse_qsl(parts.query, keep_blank_values=True))
-    query["event"] = event.name
+    if event.active:
+        query["event"] = event.name
+    elif getattr(event, "source", "") == "disabled":
+        # --event none must suppress a saved Winter theme on first paint too.
+        query["event"] = "none"
+    else:
+        query.pop("event", None)
+    if not query and not parts.query:
+        return url
     return urlunsplit((
         parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment
     ))

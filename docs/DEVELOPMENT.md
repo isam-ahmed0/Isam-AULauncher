@@ -155,11 +155,11 @@ theme/effects in `src/launcher/seasonal_events.py` plus
 
 While an event is active its theme becomes the default for everyone and its
 effects turn on; the saved theme stays in config and returns when the event
-ends. Winter's card, event status, effects and background switches are hidden
-from Settings when the event is not active, disabled with `--event none`, or
-ended. That is visibility only: the effects still follow the saved
-`auto`/`on`/`off` choices and the effective theme, so a saved Winter preset
-keeps its snow and frost.
+ends. Outside that window the event preset, Winter card, event status, effects
+and background switches are hidden **and inert**: a saved Winter theme paints
+as Aurora, and saved `auto`/`on`/`off` choices never start snow, frost or the
+backdrop. `--event none` suppresses them for that launch without erasing the
+saved config; a normal launch restores it.
 
 For local testing, `python src/launcher/main.py --ui web --event winter`
 forces the event on regardless of the hosted file. `--event none` forces it

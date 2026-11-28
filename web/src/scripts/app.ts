@@ -14,8 +14,8 @@ import { initRegions, loadRegions } from "./views/regions";
 import { initNews, loadNews } from "./views/news";
 import { initAccount, loadAccount } from "./views/account";
 import { initSettings, loadSettings } from "./views/settings";
-import { applyWebTheme, effectiveWebTheme } from "./theme";
-import { applyWinterFx, initWinterFx } from "./winter";
+import { applyWebTheme, effectiveWebTheme, forcedEventName } from "./theme";
+import { WINTER_EVENT, applyWinterFx, initWinterFx } from "./winter";
 import { initUpdates, loadUpdates } from "./views/updates";
 import { initAbout, loadAbout } from "./views/about";
 
@@ -98,10 +98,21 @@ function wireEvents(): void {
   on("game_state", (data) => applyGameState(data));
 }
 
+function activeEventName(): string | undefined {
+  if (store.event.active) {
+    return store.event.theme ? store.event.name : undefined;
+  }
+  // Static preview with ?event=<name> still follows the CLI/event rule.
+  return forcedEventName();
+}
+
+function eventVisualsActive(): boolean {
+  if (store.event.active) return Boolean(store.event.theme || store.event.fx);
+  return activeEventName() === WINTER_EVENT;
+}
+
 function applyTheme(animate = false): void {
-  const eventName = store.event.active && store.event.theme
-    ? store.event.name
-    : undefined;
+  const eventName = activeEventName();
   // Event themes are temporary: never mirror them over the saved preference.
   applyWebTheme(
     effectiveWebTheme(store.settings.web_theme, eventName),
@@ -111,7 +122,12 @@ function applyTheme(animate = false): void {
 }
 
 function applyWinter(animate = false): void {
-  applyWinterFx(store.settings.winter_fx, store.settings.winter_bg, animate);
+  applyWinterFx(
+    store.settings.winter_fx,
+    store.settings.winter_bg,
+    eventVisualsActive(),
+    animate,
+  );
 }
 
 async function syncEvent(): Promise<void> {

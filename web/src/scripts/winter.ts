@@ -1,10 +1,13 @@
 /* Winter effects -----------------------------------------------------------
- * The two Settings switches are auto/on/off: "auto" follows the effective
- * Winter preset (or event), "on" layers the effect over any preset and "off"
- * disables it. Snow is a capped canvas loop that pauses when hidden.
+ * Event-only visuals: snow/frost/background run only while a resolved event
+ * says they may. The auto/on/off switches fine-tune that window; they cannot
+ * reveal or start the effects outside it. Snow is a capped canvas loop that
+ * pauses when hidden.
  */
 
 export type WinterChoice = "auto" | "on" | "off";
+
+export const WINTER_EVENT = "winter";
 
 const FX_KEY = "cl-winter-fx";
 const BG_KEY = "cl-winter-bg";
@@ -32,6 +35,7 @@ let fxChoice: WinterChoice = "auto";
 let bgChoice: WinterChoice = "auto";
 let active = false;
 let background = false;
+let eventGate = false;
 let reduceMotion = false;
 
 /** Legacy booleans from saved configs still make sense. */
@@ -61,9 +65,17 @@ function writeChoice(key: string, value: WinterChoice): void {
   }
 }
 
-/** Auto follows Winter; on layers anywhere; off always wins. */
+/** Fine-tuning inside an active event; the event gate is checked by refresh(). */
 function resolve(choice: WinterChoice, winterTheme: boolean): boolean {
   return choice === "on" || (choice === "auto" && winterTheme);
+}
+
+function forcedByUrl(): boolean {
+  try {
+    return (new URLSearchParams(location.search).get("event") || "") === WINTER_EVENT;
+  } catch (_) {
+    return false;
+  }
 }
 
 function seedFlakes(): void {
@@ -153,8 +165,8 @@ function syncDom(): void {
 }
 
 function refresh(): void {
-  const winterTheme = document.documentElement.dataset.theme === "winter";
-  active = resolve(fxChoice, winterTheme);
+  const winterTheme = eventGate && document.documentElement.dataset.theme === "winter";
+  active = eventGate && resolve(fxChoice, winterTheme);
   background = active && resolve(bgChoice, winterTheme);
   syncDom();
   if (!active) {
@@ -195,21 +207,24 @@ function setup(): void {
   });
 }
 
-/** Set up the canvas once, then follow the current theme and saved choices. */
-export function initWinterFx(): void {
+/** Set up the canvas once; saved choices stay inert until an event allows them. */
+export function initWinterFx(eventActive = forcedByUrl()): void {
   if (initialized) return;
+  eventGate = eventActive;
   fxChoice = readChoice(FX_KEY);
   bgChoice = readChoice(BG_KEY);
   setup();
   refresh();
 }
 
-/** Apply the layerable Winter effect and background immediately. */
+/** Apply Winter effects only while the resolved event is active. */
 export function applyWinterFx(
   fx: unknown,
   bg: unknown,
+  eventActive = eventGate,
   _animate = true,
 ): void {
+  eventGate = Boolean(eventActive);
   fxChoice = normalizeWinterChoice(fx);
   bgChoice = normalizeWinterChoice(bg);
   if (!initialized) setup();

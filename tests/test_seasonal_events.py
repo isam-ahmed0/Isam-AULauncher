@@ -49,6 +49,12 @@ summer: 2026-06-01
         self.assertFalse(event.active)
         self.assertFalse(event.forced)
 
+    def test_suppressed_event_marks_first_paint_suppression(self):
+        disabled = seasonal_events.resolve_event(self.RAW, "none")
+        payload = disabled.as_dict()
+        self.assertTrue(payload["suppressed"])
+        self.assertFalse(payload["active"])
+
     def test_event_overrides_saved_theme_only_while_active(self):
         winter = seasonal_events.resolve_event(self.RAW, "winter")
         self.assertEqual(
@@ -59,10 +65,10 @@ summer: 2026-06-01
             seasonal_events.effective_web_theme("violet", inactive), "violet"
         )
         self.assertEqual(
-            seasonal_events.effective_web_theme("winter", inactive), "winter"
+            seasonal_events.effective_web_theme("winter", inactive), "aurora"
         )
 
-    def test_winter_switches_auto_follow_the_effective_theme(self):
+    def test_winter_switches_only_run_during_the_event(self):
         winter = seasonal_events.resolve_event("", "winter")
         settings = {
             "web_theme": "forest", "winter_fx": "auto", "winter_bg": "auto",
@@ -73,20 +79,25 @@ summer: 2026-06-01
         self.assertTrue(seasonal_events.wants_winter_fx(settings, winter))
         self.assertTrue(seasonal_events.wants_winter_bg(settings, winter))
 
+        # A saved event preset stays invisible and inert once the event ends.
         settings["web_theme"] = "winter"
-        self.assertTrue(seasonal_events.wants_winter_fx(settings))
-        self.assertTrue(seasonal_events.wants_winter_bg(settings))
+        self.assertFalse(seasonal_events.wants_winter_fx(settings))
+        self.assertFalse(seasonal_events.wants_winter_bg(settings))
+        self.assertTrue(seasonal_events.wants_winter_fx(settings, winter))
 
-    def test_winter_switch_can_layer_over_other_themes(self):
+    def test_winter_switch_can_layer_only_during_the_event(self):
+        winter = seasonal_events.resolve_event("", "winter")
         settings = {
             "web_theme": "forest", "winter_fx": "on", "winter_bg": "on",
         }
-        self.assertTrue(seasonal_events.wants_winter_fx(settings))
-        self.assertTrue(seasonal_events.wants_winter_bg(settings))
-
-        settings["winter_fx"] = "off"
         self.assertFalse(seasonal_events.wants_winter_fx(settings))
         self.assertFalse(seasonal_events.wants_winter_bg(settings))
+        self.assertTrue(seasonal_events.wants_winter_fx(settings, winter))
+        self.assertTrue(seasonal_events.wants_winter_bg(settings, winter))
+
+        settings["winter_fx"] = "off"
+        self.assertFalse(seasonal_events.wants_winter_fx(settings, winter))
+        self.assertFalse(seasonal_events.wants_winter_bg(settings, winter))
 
     def test_unregistered_event_does_not_auto_layer_winter(self):
         settings = {

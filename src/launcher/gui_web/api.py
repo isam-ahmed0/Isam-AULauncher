@@ -1497,6 +1497,9 @@ class LauncherApi:
             value = str(value or "").strip().lower()
             if value not in WEB_THEME_IDS:
                 value = "aurora"
+            from seasonal_events import EVENT_THEME_IDS, event_visuals_active
+            if value in EVENT_THEME_IDS and not event_visuals_active(self.event):
+                value = "aurora"
         elif key in ("winter_fx", "winter_bg"):
             from seasonal_events import normalize_winter_choice
             value = normalize_winter_choice(value)

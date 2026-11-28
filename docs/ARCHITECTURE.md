@@ -97,10 +97,12 @@ live gallery and persists through `settings_set("web_theme", id)`.
 
 The remote `EVENTS_URL` (the same raw-GitHub host as `message.txt`) is the only
 event source; the checkout's `release/events.txt` is a date-free template.
-`--event winter` overrides the hosted file for testing. The Winter preset card,
-event status and effects/background switches are hidden from Settings unless
-the event is currently active. The snow canvas, frost CSS and background image
-still follow the effective theme and saved `auto`/`on`/`off` choices.
+`--event winter` overrides the hosted file for testing; `--event none` suppresses
+all event visuals for that launch. The Winter preset card, event status and
+effects/background switches are hidden from Settings unless an event is active.
+Outside an event the snow canvas, frost CSS and background are inert: saved
+choices are retained but never paint or animate without `events.txt` or
+`--event <name>`.
 
 The web screens mirror the Qt feature set: Home (install/update/launch/stop,
 progress, version picker, folder inspection, home card), Mods (profiles,

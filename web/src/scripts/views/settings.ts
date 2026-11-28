@@ -10,9 +10,10 @@ import {
   WEB_THEMES,
   applyWebTheme,
   effectiveWebTheme,
+  forcedEventName,
   normalizeWebTheme,
 } from "../theme";
-import { applyWinterFx, normalizeWinterChoice } from "../winter";
+import { WINTER_EVENT, applyWinterFx, normalizeWinterChoice } from "../winter";
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string): T =>
   document.getElementById(id) as T;
@@ -22,16 +23,20 @@ let values: Settings = {};
 let loaded = false;
 let lastEvent = store.event;
 
-function eventActive(): boolean {
-  return store.event.active && (store.event.fx || Boolean(store.event.theme));
+function activeEventName(): string | undefined {
+  if (store.event.active) {
+    return store.event.theme ? store.event.name : undefined;
+  }
+  return forcedEventName();
 }
 
-function activeEventName(): string | undefined {
-  return store.event.active && store.event.theme ? store.event.name : undefined;
+function eventActive(): boolean {
+  if (store.event.active) return Boolean(store.event.fx || store.event.theme);
+  return activeEventName() === WINTER_EVENT;
 }
 
 function eventThemeVisible(id: string): boolean {
-  return store.event.active && store.event.theme === id;
+  return activeEventName() === id;
 }
 
 function applyTheme(value: unknown, animate = true): void {
@@ -40,7 +45,7 @@ function applyTheme(value: unknown, animate = true): void {
 }
 
 function applyWinter(): void {
-  applyWinterFx(values.winter_fx, values.winter_bg);
+  applyWinterFx(values.winter_fx, values.winter_bg, eventActive());
 }
 
 function applyEventVisibility(): void {
@@ -150,7 +155,7 @@ function applyEventBadge(): void {
   const desc = $("winter-event-desc");
   badge.textContent = store.event.forced ? "Test" : "Active";
   const when = store.event.end_date ? ` until ${store.event.end_date}` : "";
-  desc.textContent = `${store.event.forced ? "Forced with --event" : "Seasonal event"}${when}. Winter is the default theme; its snow and frost are on automatically and can also be layered on any preset.`;
+  desc.textContent = `${store.event.forced ? "Forced with --event" : "Seasonal event"}${when}. Winter is the default theme; snow, frost and the backdrop are available only while this event lasts.`;
 }
 
 function applySystem(): void {
@@ -306,7 +311,7 @@ function setThemeCards(id: string): void {
 async function chooseTheme(id: string): Promise<void> {
   const value = normalizeWebTheme(id);
   setThemeCards(value);
-  applyWebTheme(value);
+  applyWebTheme(value, true, !activeEventName());
   applyWinter();
   if (!isDesktop()) {
     toast({

@@ -98,13 +98,28 @@ export function webTheme(id: string): WebTheme {
   return WEB_THEMES.find((theme) => theme.id === id) || WEB_THEMES[0];
 }
 
+/** CLI/remote events are mirrored into the URL for the first paint. */
+export function forcedEventName(): string | undefined {
+  try {
+    const forced = (new URLSearchParams(location.search).get("event") || "")
+      .trim()
+      .toLowerCase();
+    return EVENT_THEMES[forced] ? forced : undefined;
+  } catch (_) {
+    return undefined;
+  }
+}
+
 /**
- * Seasonal events win over the saved preset while active; the saved value
- * returns automatically once the event ends.
+ * Seasonal events win over the saved preset while active. Event-only presets
+ * are hidden and inert outside their event, so only normal presets paint then.
  */
 export function effectiveWebTheme(value: unknown, eventName?: string): string {
   const eventTheme = eventName ? EVENT_THEMES[eventName] : undefined;
-  return eventTheme || normalizeWebTheme(value);
+  if (eventTheme) return eventTheme;
+  const id = normalizeWebTheme(value);
+  // Event-only presets are inert outside their event.
+  return EVENT_THEME_IDS.has(id) ? DEFAULT_WEB_THEME : id;
 }
 
 /**

@@ -31,6 +31,7 @@ export interface EventState {
   end_date: string;
   forced: boolean;
   source: string;
+  suppressed: boolean;
   theme: string;
   fx: boolean;
 }
@@ -135,7 +136,7 @@ export const store: StoreState = {
   },
   event: {
     name: "", active: false, end_date: "", forced: false,
-    source: "inactive", theme: "", fx: false,
+    source: "inactive", suppressed: false, theme: "", fx: false,
   },
   status: { text: "Starting…", level: "info" },
   progress: null,

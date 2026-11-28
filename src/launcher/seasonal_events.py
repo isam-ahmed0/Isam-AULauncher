@@ -27,6 +27,7 @@ DEFAULT_WEB_THEME = "aurora"
 
 # Event name -> web theme used while that event is active.
 EVENT_THEMES = {"winter": "winter"}
+EVENT_THEME_IDS = frozenset(EVENT_THEMES.values())
 
 # Events whose effects can be layered on top of any web theme.
 FX_EVENTS = {"winter"}
@@ -49,6 +50,7 @@ class SeasonEvent:
             "end_date": self.end_date,
             "forced": self.forced,
             "source": self.source,
+            "suppressed": self.source == "disabled",
             "theme": EVENT_THEMES.get(self.name, ""),
             "fx": self.name in FX_EVENTS,
         }
@@ -111,9 +113,9 @@ def resolve_event(
 def normalize_winter_choice(value: Any) -> str:
     """Winter switches are ``auto`` / ``on`` / ``off``.
 
-    ``auto`` means "on when Winter is the effective preset"; ``on`` is an
-    explicit layer over any other preset and ``off`` disables it everywhere.
-    Booleans from older configs and the UI map to ``on``/``off``.
+    ``auto`` means "on while the Winter event is active"; ``on`` keeps it on
+    for that event, and ``off`` disables it. Booleans from older configs and
+    the UI map to ``on``/``off``.
     """
     if value is None:
         return "auto"
@@ -127,12 +129,17 @@ def normalize_winter_choice(value: Any) -> str:
     return "off"
 
 
+def event_visuals_active(event: Optional[SeasonEvent] = None) -> bool:
+    """True only when a resolved event supplies a theme or effects."""
+    if not event or not event.active:
+        return False
+    return bool(EVENT_THEMES.get(event.name) or event.name in FX_EVENTS)
+
+
 def winter_preset_active(settings: Any = None, event: Optional[SeasonEvent] = None) -> bool:
-    """True when Winter is the effective preset (event or saved choice)."""
-    value = settings if isinstance(settings, dict) else {}
-    return bool(event and event.active and EVENT_THEMES.get(event.name) == "winter") or (
-        effective_web_theme(value.get("web_theme"), event) == "winter"
-    )
+    """True only while the Winter event is active, never for a saved preset."""
+    _ = settings  # retained for callers that pass the settings dict
+    return bool(event and event.active and EVENT_THEMES.get(event.name) == "winter")
 
 
 def resolve_winter_choice(value: Any, winter_active: bool) -> bool:
@@ -142,7 +149,7 @@ def resolve_winter_choice(value: Any, winter_active: bool) -> bool:
 
 
 def wants_winter_fx(settings: Any = None, event: Optional[SeasonEvent] = None) -> bool:
-    """Whether snow and frost should run for these settings."""
+    """Whether snow and frost run (only during the Winter event)."""
     value = settings if isinstance(settings, dict) else {}
     return resolve_winter_choice(
         value.get("winter_fx"), winter_preset_active(value, event)
@@ -150,7 +157,7 @@ def wants_winter_fx(settings: Any = None, event: Optional[SeasonEvent] = None) -
 
 
 def wants_winter_bg(settings: Any = None, event: Optional[SeasonEvent] = None) -> bool:
-    """Whether the snowy backdrop should show (requires effects as well)."""
+    """Whether the snowy backdrop shows (only during the Winter event)."""
     value = settings if isinstance(settings, dict) else {}
     winter = winter_preset_active(value, event)
     return (
@@ -170,7 +177,12 @@ def effective_web_theme(value: Any, event: Optional[SeasonEvent] = None) -> str:
         if theme:
             return theme
     raw = str(value or "").strip().lower()
-    return {"dark": "aurora", "light": "aurora-light"}.get(raw, raw or DEFAULT_WEB_THEME)
+    theme_id = {"dark": "aurora", "light": "aurora-light"}.get(raw, raw or DEFAULT_WEB_THEME)
+    # Event-only presets are inert outside their event; a saved value must not
+    # reveal or enable them.
+    if theme_id in EVENT_THEME_IDS:
+        return DEFAULT_WEB_THEME
+    return theme_id
 
 
 def fetch_events_text(network: Any = None) -> str:
