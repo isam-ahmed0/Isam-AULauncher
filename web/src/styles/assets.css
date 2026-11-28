@@ -40,7 +40,7 @@
 }
 
 .asset-item.selected {
-  border-color: rgba(99, 102, 241, 0.45);
+  border-color: var(--accent-border-strong);
   background: var(--accent-soft);
 }
 
@@ -55,8 +55,8 @@
 }
 
 .asset-item.selected .a-icon {
-  background: var(--grad-accent);
-  color: #fff;
+  background: var(--badge-icon-bg);
+  color: var(--badge-icon-text);
 }
 
 .asset-item .a-name {

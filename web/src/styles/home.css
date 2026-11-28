@@ -33,7 +33,7 @@
   height: 220px;
   left: -50px;
   top: -80px;
-  background: #6366f1;
+  background: var(--hero-orb-a);
 }
 
 .hero-bg .orb.b {
@@ -41,7 +41,7 @@
   height: 180px;
   right: 6%;
   top: -60px;
-  background: #22d3ee;
+  background: var(--hero-orb-b);
   animation-delay: -5s;
 }
 
@@ -50,7 +50,7 @@
   height: 160px;
   right: 32%;
   bottom: -90px;
-  background: #ec4899;
+  background: var(--hero-orb-c);
   animation-delay: -9s;
   opacity: 0.32;
 }
@@ -66,7 +66,7 @@
   width: 3px;
   height: 3px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.75);
+  background: var(--particle);
   animation: rise linear infinite;
   opacity: 0;
 }
@@ -111,7 +111,7 @@
   font-weight: 800;
   letter-spacing: -0.03em;
   color: var(--text-strong);
-  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.4);
+  text-shadow: var(--hero-title-shadow);
 }
 
 .hero .hero-sub {
@@ -143,9 +143,9 @@
 .progress {
   height: 9px;
   border-radius: var(--r-pill);
-  background: rgba(255, 255, 255, 0.09);
+  background: var(--progress-track);
   overflow: hidden;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--progress-inset);
 }
 
 .progress .bar {
@@ -251,7 +251,7 @@
 .quick:hover {
   background: var(--bg-hover);
   border-color: var(--border-strong);
-  transform: translateY(-2px);
+  transform: var(--quick-hover-transform);
 }
 
 .quick:active {
@@ -270,8 +270,8 @@
 }
 
 .quick:hover .q-icon {
-  background: var(--grad-accent);
-  color: #fff;
+  background: var(--quick-icon-hover-bg);
+  color: var(--quick-icon-hover-text);
 }
 
 /* custom home card --------------------------------------------------------- */

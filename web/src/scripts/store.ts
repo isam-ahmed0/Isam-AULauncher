@@ -98,7 +98,7 @@ export const store: StoreState = {
   game: emptyGame,
   settings: {
     theme: "Forest",
-    web_theme: "dark",
+    web_theme: "aurora",
     ui_mode: "web",
     display_backend: "",
     auto_update: true,

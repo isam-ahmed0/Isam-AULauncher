@@ -109,7 +109,7 @@
 }
 
 .mod-row.update {
-  border-color: rgba(251, 191, 36, 0.4);
+  border-color: var(--warning-border);
 }
 
 .mod-info {
@@ -168,18 +168,18 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: var(--text-muted);
+  background: var(--switch-knob-off);
   transition: transform var(--fast), background var(--fast);
 }
 
 .switch.on {
-  background: var(--accent);
+  background: var(--switch-on-bg);
   border-color: transparent;
 }
 
 .switch.on::after {
   transform: translateX(16px);
-  background: #fff;
+  background: var(--switch-knob);
 }
 
 /* icon-only mini buttons --------------------------------------------------- */
@@ -188,14 +188,14 @@
   height: 28px;
   display: grid;
   place-items: center;
-  border-radius: 7px;
-  color: var(--text-muted);
+  border-radius: var(--r-control);
+  color: var(--mini-text);
   transition: background var(--fast), color var(--fast);
 }
 
 .mini:hover:not(:disabled) {
   background: var(--bg-hover);
-  color: var(--text-strong);
+  color: var(--mini-hover-text);
 }
 
 .mini:disabled {
@@ -244,8 +244,8 @@
   border-radius: 11px;
   display: grid;
   place-items: center;
-  background: var(--grad-accent);
-  color: #fff;
+  background: var(--badge-icon-bg);
+  color: var(--badge-icon-text);
   flex: none;
 }
 
@@ -326,7 +326,7 @@
 
 .region-row.active {
   background: var(--accent-soft);
-  border: 1px solid rgba(99, 102, 241, 0.3);
+  border: 1px solid var(--accent-border);
 }
 
 .region-row .r-index {

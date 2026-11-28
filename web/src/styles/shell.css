@@ -34,10 +34,10 @@
   background: var(--grad-accent);
   display: grid;
   place-items: center;
-  color: #fff;
+  color: var(--logo-text);
   font-size: 11px;
   font-weight: 800;
-  box-shadow: 0 3px 10px rgba(99, 102, 241, 0.45);
+  box-shadow: var(--logo-shadow);
 }
 
 .titlebar .sep {
@@ -81,8 +81,8 @@
 }
 
 .win-btn.close:hover {
-  background: #e81123;
-  color: #fff;
+  background: var(--win-close-bg);
+  color: var(--win-close-text);
 }
 
 /* ---------------------------------------------------------------- body */
@@ -141,12 +141,14 @@
 .nav-item.active::before {
   content: "";
   position: absolute;
-  left: -12px;
-  top: 8px;
-  bottom: 8px;
-  width: 3px;
-  border-radius: 0 3px 3px 0;
-  background: var(--grad-accent);
+  left: var(--nav-marker-left);
+  right: var(--nav-marker-right);
+  top: var(--nav-marker-top);
+  bottom: var(--nav-marker-bottom);
+  width: var(--nav-marker-w);
+  height: var(--nav-marker-h);
+  border-radius: var(--nav-marker-radius);
+  background: var(--nav-marker-bg);
 }
 
 .nav-item .soon {
@@ -319,7 +321,7 @@
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(6, 8, 12, 0.62);
+  background: var(--modal-backdrop);
   backdrop-filter: blur(3px);
   display: grid;
   place-items: center;

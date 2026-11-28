@@ -1,5 +1,6 @@
 ---
 import "../styles/tokens.css";
+import "../styles/themes.css";
 import "../styles/base.css";
 import "../styles/shell.css";
 import "../styles/home.css";
@@ -22,8 +23,26 @@ import AboutView from "../components/views/About.astro";
 ---
 
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="aurora">
   <head>
+    <script is:inline>
+      (() => {
+        // Apply the last chosen preset before CSS paints. Python remains the
+        // authoritative source; app.ts reconciles this once the bridge is up.
+        const legacy = { dark: "aurora", light: "aurora-light" };
+        const valid = [
+          "aurora", "aurora-light", "forest", "violet", "ember", "slate", "mono",
+        ];
+        try {
+          const saved = localStorage.getItem("cl-web-theme");
+          if (!saved) return;
+          const id = legacy[saved] || saved;
+          if (valid.includes(id)) document.documentElement.dataset.theme = id;
+        } catch (_) {
+          /* localStorage can be unavailable in hardened webviews. */
+        }
+      })();
+    </script>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />

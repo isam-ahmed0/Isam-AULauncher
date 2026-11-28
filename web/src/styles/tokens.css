@@ -26,6 +26,8 @@
   --accent-hover: #7c7ff5;
   --accent-soft: rgba(99, 102, 241, 0.16);
   --accent-2: #22d3ee;
+  --accent-border: rgba(99, 102, 241, 0.3);
+  --accent-border-strong: rgba(99, 102, 241, 0.45);
   --grad-accent: linear-gradient(120deg, #6366f1 0%, #22d3ee 100%);
   --grad-hero: radial-gradient(1200px 500px at 15% -10%, rgba(99, 102, 241, 0.35), transparent 60%),
                radial-gradient(900px 420px at 95% 10%, rgba(34, 211, 238, 0.22), transparent 55%),
@@ -34,8 +36,10 @@
   /* semantic */
   --success: #34d399;
   --success-soft: rgba(52, 211, 153, 0.14);
+  --success-border: rgba(52, 211, 153, 0.35);
   --warning: #fbbf24;
   --warning-soft: rgba(251, 191, 36, 0.14);
+  --warning-border: rgba(251, 191, 36, 0.4);
   --danger: #f87171;
   --danger-soft: rgba(248, 113, 113, 0.14);
   --info: #60a5fa;
@@ -46,11 +50,74 @@
   --r-md: 12px;
   --r-sm: 9px;
   --r-pill: 999px;
+  --r-btn: var(--r-sm);
+  --r-control: 7px;
 
   /* elevation */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
   --shadow-md: 0 8px 26px rgba(0, 0, 0, 0.32);
   --shadow-lg: 0 24px 60px rgba(0, 0, 0, 0.45);
+
+  /* interaction recipes — theme presets override these wholesale */
+  --btn-bg: var(--bg-elevated);
+  --btn-border: var(--border);
+  --btn-text: var(--text);
+  --btn-hover-bg: var(--bg-hover);
+  --btn-hover-border: var(--border-strong);
+  --btn-active-transform: translateY(1px);
+  --btn-primary-bg: var(--grad-accent);
+  --btn-primary-hover-bg: var(--grad-accent);
+  --btn-primary-border: transparent;
+  --btn-primary-text: #ffffff;
+  --btn-primary-shadow: 0 6px 18px rgba(99, 102, 241, 0.32);
+  --btn-primary-hover-filter: brightness(1.08);
+  --btn-primary-hover-shadow: var(--btn-primary-shadow);
+  --btn-primary-hover-transform: none;
+  --btn-ghost-bg: transparent;
+  --btn-danger-bg: var(--danger-soft);
+  --btn-danger-border: transparent;
+  --btn-danger-text: var(--danger);
+  --btn-warning-bg: var(--warning-soft);
+  --btn-warning-border: transparent;
+  --btn-warning-text: var(--warning);
+
+  --seg-on-bg: var(--accent);
+  --seg-on-text: #ffffff;
+  --seg-on-shadow: var(--shadow-sm);
+  --switch-on-bg: var(--accent);
+  --switch-knob: #ffffff;
+  --switch-knob-off: var(--text-muted);
+  --mini-text: var(--text-muted);
+  --mini-hover-text: var(--text-strong);
+  --quick-icon-hover-bg: var(--grad-accent);
+  --quick-icon-hover-text: #ffffff;
+  --quick-hover-transform: translateY(-2px);
+  --badge-icon-bg: var(--grad-accent);
+  --badge-icon-text: #ffffff;
+  --logo-text: #ffffff;
+  --logo-shadow: 0 3px 10px rgba(99, 102, 241, 0.45);
+  --win-close-bg: #e81123;
+  --win-close-text: #ffffff;
+  --nav-marker-bg: var(--grad-accent);
+  --nav-marker-left: -12px;
+  --nav-marker-right: auto;
+  --nav-marker-top: 8px;
+  --nav-marker-bottom: 8px;
+  --nav-marker-w: 3px;
+  --nav-marker-h: auto;
+  --nav-marker-radius: 0 3px 3px 0;
+  --modal-backdrop: rgba(6, 8, 12, 0.62);
+
+  /* decorative details */
+  --scrollbar-thumb: rgba(140, 150, 175, 0.28);
+  --scrollbar-thumb-hover: rgba(140, 150, 175, 0.5);
+  --particle: rgba(255, 255, 255, 0.75);
+  --hero-title-shadow: 0 2px 24px rgba(0, 0, 0, 0.4);
+  --hero-orb-a: #6366f1;
+  --hero-orb-b: #22d3ee;
+  --hero-orb-c: #ec4899;
+  --progress-track: rgba(255, 255, 255, 0.09);
+  --progress-inset: inset 0 1px 3px rgba(0, 0, 0, 0.35);
 
   /* layout */
   --titlebar-h: 40px;
@@ -67,6 +134,8 @@
   --mono: "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
 }
 
+/* Legacy alias: old configs using `light` still paint the current light look.
+   New configs use `aurora-light`, defined in themes.css. */
 [data-theme="light"] {
   color-scheme: light;
   --bg-base: #f4f5f9;

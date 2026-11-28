@@ -87,6 +87,13 @@ custom GUIs stay lightweight. GUI imports are always inside functions.
   `src/launcher/resources/web/` (gitignored). `npm run dev` starts Astro at
   `http://127.0.0.1:4321`; pass `--dev` to load it instead of the build.
 
+`web/src/styles/tokens.css` holds the base design tokens and `themes.css`
+defines seven self-contained presets (Aurora, Aurora Light, Forest, Violet,
+Ember, Slate and Mono), each with its own button recipes rather than a single
+shared style. `web/src/scripts/theme.ts` owns the registry, maps legacy
+`dark`/`light` values and writes `data-theme` on `<html>`; Settings renders a
+live gallery and persists through `settings_set("web_theme", id)`.
+
 The web screens mirror the Qt feature set: Home (install/update/launch/stop,
 progress, version picker, folder inspection, home card), Mods (profiles,
 enable/disable, reorder, import, issue scan), Browse Mods (catalog search,

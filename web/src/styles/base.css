@@ -69,14 +69,14 @@ a:hover {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(140, 150, 175, 0.28);
+  background: var(--scrollbar-thumb);
   border-radius: 8px;
   border: 2px solid transparent;
   background-clip: padding-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(140, 150, 175, 0.5);
+  background: var(--scrollbar-thumb-hover);
   background-clip: padding-box;
 }
 
@@ -144,10 +144,10 @@ a:hover {
   gap: 8px;
   height: 36px;
   padding: 0 15px;
-  border-radius: var(--r-sm);
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  color: var(--text);
+  border-radius: var(--r-btn);
+  background: var(--btn-bg);
+  border: 1px solid var(--btn-border);
+  color: var(--btn-text);
   font-size: 13.5px;
   font-weight: 600;
   white-space: nowrap;
@@ -156,12 +156,12 @@ a:hover {
 }
 
 .btn:hover:not(:disabled) {
-  background: var(--bg-hover);
-  border-color: var(--border-strong);
+  background: var(--btn-hover-bg);
+  border-color: var(--btn-hover-border);
 }
 
 .btn:active:not(:disabled) {
-  transform: translateY(1px);
+  transform: var(--btn-active-transform);
 }
 
 .btn:disabled {
@@ -170,31 +170,34 @@ a:hover {
 }
 
 .btn.primary {
-  background: var(--grad-accent);
-  border-color: transparent;
-  color: #fff;
-  box-shadow: 0 6px 18px rgba(99, 102, 241, 0.32);
+  background: var(--btn-primary-bg);
+  border-color: var(--btn-primary-border);
+  color: var(--btn-primary-text);
+  box-shadow: var(--btn-primary-shadow);
 }
 
 .btn.primary:hover:not(:disabled) {
-  filter: brightness(1.08);
-  background: var(--grad-accent);
+  filter: var(--btn-primary-hover-filter);
+  background: var(--btn-primary-hover-bg);
+  border-color: var(--btn-primary-border);
+  box-shadow: var(--btn-primary-hover-shadow);
+  transform: var(--btn-primary-hover-transform);
 }
 
 .btn.ghost {
-  background: transparent;
+  background: var(--btn-ghost-bg);
 }
 
 .btn.danger {
-  background: var(--danger-soft);
-  border-color: transparent;
-  color: var(--danger);
+  background: var(--btn-danger-bg);
+  border-color: var(--btn-danger-border);
+  color: var(--btn-danger-text);
 }
 
 .btn.warning {
-  background: var(--warning-soft);
-  border-color: transparent;
-  color: var(--warning);
+  background: var(--btn-warning-bg);
+  border-color: var(--btn-warning-border);
+  color: var(--btn-warning-text);
 }
 
 .btn.block {
@@ -213,7 +216,7 @@ a:hover {
   width: 34px;
   height: 34px;
   padding: 0;
-  border-radius: var(--r-sm);
+  border-radius: var(--r-btn);
 }
 
 /* pills / badges ----------------------------------------------------------- */

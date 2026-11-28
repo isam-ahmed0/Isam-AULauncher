@@ -88,7 +88,7 @@ class Config:
             "auto_update": True, "create_shortcuts": True,
             "discord_rpc": True, "ui_mode": "web", "display_backend": "",
             "active_profile": "Default", "theme": "Forest",
-            "web_theme": "dark",
+            "web_theme": "aurora",
             "launch_method": "ask", "warn_plain_wine": True,
             "wine_prefix": "", "lutris_game_ids": {}, "lutris_entries": {},
             "lutris_cmd_override": None,
@@ -104,6 +104,12 @@ class Config:
                     settings.update(json.load(f))
         except Exception as e:
             logging.error(f"Failed to load settings: {e}")
+
+        # Web themes used to be a binary dark/light switch. Those values now
+        # name the two classic presets that preserve the original look.
+        _legacy_web_themes = {"dark": "aurora", "light": "aurora-light"}
+        _web_theme = settings.get("web_theme") or "aurora"
+        settings["web_theme"] = _legacy_web_themes.get(_web_theme, _web_theme)
 
         # A previously selected Proton bin/wine should now use the Proton
         # wrapper itself (it sets up the prefix and Steam environment).

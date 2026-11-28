@@ -13,7 +13,8 @@ import { initBrowse, loadCatalog } from "./views/browse";
 import { initRegions, loadRegions } from "./views/regions";
 import { initNews, loadNews } from "./views/news";
 import { initAccount, loadAccount } from "./views/account";
-import { initSettings, loadSettings, applyWebTheme } from "./views/settings";
+import { initSettings, loadSettings } from "./views/settings";
+import { applyWebTheme } from "./theme";
 import { initUpdates, loadUpdates } from "./views/updates";
 import { initAbout, loadAbout } from "./views/about";
 
@@ -96,8 +97,8 @@ function wireEvents(): void {
   on("game_state", (data) => applyGameState(data));
 }
 
-function applyTheme(): void {
-  applyWebTheme(store.settings.web_theme || "dark");
+function applyTheme(animate = false): void {
+  applyWebTheme(store.settings.web_theme, animate);
 }
 
 async function boot(): Promise<void> {

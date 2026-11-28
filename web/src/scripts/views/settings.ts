@@ -1,10 +1,17 @@
 /* Settings view: persisted preferences, interfaces and Linux tuning --------- */
 
-import { api } from "../bridge";
+import { api, isDesktop } from "../bridge";
 import { on } from "../events";
 import { toast } from "../toast";
 import { confirmModal } from "../modal";
 import { store, update } from "../store";
+import {
+  WEB_THEMES,
+  applyWebTheme as applyTheme,
+  normalizeWebTheme,
+} from "../theme";
+
+export { applyWebTheme } from "../theme";
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string): T =>
   document.getElementById(id) as T;
@@ -13,13 +20,9 @@ type Settings = Record<string, any>;
 let values: Settings = {};
 let loaded = false;
 
-/** Applied at boot and whenever the web-theme preference changes. */
-export function applyWebTheme(theme: string): void {
-  document.documentElement.dataset.theme = theme === "light" ? "light" : "dark";
-}
-
 export function initSettings(): void {
-  wireSegmented("setting-web-theme", "web_theme");
+  renderThemeCards();
+  setThemeCards(normalizeWebTheme(store.settings.web_theme));
   wireSegmented("setting-backend", "display_backend");
   wireSwitch("setting-auto-update", "auto_update");
   wireSwitch("setting-discord", "discord_rpc");
@@ -70,9 +73,9 @@ export async function loadSettings(force = false): Promise<void> {
 }
 
 function applyForm(): void {
-  applyWebTheme(values.web_theme || "dark");
+  applyTheme(values.web_theme);
+  setThemeCards(normalizeWebTheme(values.web_theme));
 
-  setSegmented("setting-web-theme", values.web_theme || "dark");
   setSegmented("setting-backend", values.display_backend || "");
   setSwitch("setting-auto-update", values.auto_update !== false);
   setSwitch("setting-discord", values.discord_rpc !== false);
@@ -158,7 +161,7 @@ async function save(key: string, value: unknown): Promise<boolean> {
     return false;
   }
   update({ settings: { ...store.settings, [key]: value } as typeof store.settings });
-  if (key === "web_theme") applyWebTheme(String(value));
+  if (key === "web_theme") applyTheme(String(value));
   return true;
 }
 
@@ -171,6 +174,82 @@ async function changeInterface(mode: string): Promise<void> {
   );
   if (restart) await api("app_restart");
   else toast({ title: "Saved", message: "Restart to apply the new interface.", level: "info" });
+}
+
+function renderThemeCards(): void {
+  const host = $("setting-web-theme");
+  host.replaceChildren();
+
+  for (const theme of WEB_THEMES) {
+    const card = document.createElement("button");
+    card.type = "button";
+    card.className = "theme-card";
+    card.dataset.themeId = theme.id;
+    card.setAttribute("aria-pressed", "false");
+
+    const top = document.createElement("span");
+    top.className = "tc-top";
+    const swatches = document.createElement("span");
+    swatches.className = "tc-swatches";
+    for (const color of theme.swatch) {
+      const swatch = document.createElement("i");
+      swatch.style.setProperty("--sw", color);
+      swatches.appendChild(swatch);
+    }
+    const name = document.createElement("span");
+    name.className = "tc-name";
+    name.textContent = theme.label;
+    const mode = document.createElement("span");
+    mode.className = "tc-mode";
+    mode.textContent = theme.mode;
+    top.append(swatches, name, mode);
+
+    const desc = document.createElement("span");
+    desc.className = "tc-desc";
+    desc.textContent = theme.description;
+
+    // Scoped preset tokens paint a real miniature of that theme's buttons.
+    const sample = document.createElement("span");
+    sample.className = "tc-sample";
+    sample.dataset.previewTheme = theme.id;
+    const primary = document.createElement("span");
+    primary.className = "tc-btn";
+    primary.textContent = "Play";
+    const ghost = document.createElement("span");
+    ghost.className = "tc-btn ghost";
+    ghost.textContent = "Ghost";
+    sample.append(primary, ghost);
+
+    card.append(top, desc, sample);
+    card.addEventListener("click", () => void chooseTheme(theme.id));
+    host.appendChild(card);
+  }
+}
+
+function setThemeCards(id: string): void {
+  for (const card of $("setting-web-theme").querySelectorAll<HTMLButtonElement>(
+    ".theme-card",
+  )) {
+    const on = card.dataset.themeId === id;
+    card.classList.toggle("on", on);
+    card.setAttribute("aria-pressed", String(on));
+  }
+}
+
+async function chooseTheme(id: string): Promise<void> {
+  const value = normalizeWebTheme(id);
+  setThemeCards(value);
+  applyTheme(value);
+  if (!isDesktop()) {
+    toast({
+      title: "Preview only",
+      message: "Theme applied here, but browser preview cannot save it.",
+      level: "info",
+      timeout: 2200,
+    });
+    return;
+  }
+  await save("web_theme", value);
 }
 
 function setSwitch(id: string, on: boolean): void {

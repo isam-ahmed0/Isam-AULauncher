@@ -31,6 +31,12 @@ _MIME = {
 }
 _MAX_IMAGE_BYTES = 12 * 1024 * 1024
 
+# Mirrors WEB_THEMES in web/src/scripts/theme.ts. Unknown values fall back to
+# Aurora instead of leaving the page in an undefined state.
+WEB_THEME_IDS = (
+    "aurora", "aurora-light", "forest", "violet", "ember", "slate", "mono",
+)
+
 
 def _ok(data=None):
     return {"ok": True, "data": data}
@@ -1451,7 +1457,7 @@ class LauncherApi:
     def settings_get(self):
         s = self.ctx.config.settings
         payload = {key: s.get(key, "") for key in self.SETTING_KEYS}
-        payload["web_theme"] = s.get("web_theme", "dark") or "dark"
+        payload["web_theme"] = s.get("web_theme", "aurora") or "aurora"
         payload["ui_mode"] = s.get("ui_mode", "web") or "web"
         for key in ("auto_update", "discord_rpc", "create_shortcuts",
                     "warn_plain_wine"):
@@ -1463,7 +1469,9 @@ class LauncherApi:
         if key not in self.SETTING_KEYS:
             return _err(f"Unknown setting: {key}")
         if key == "web_theme":
-            value = "light" if value == "light" else "dark"
+            value = str(value or "").strip().lower()
+            if value not in WEB_THEME_IDS:
+                value = "aurora"
         elif key == "ui_mode":
             value = str(value or "web").strip() or "web"
         elif key == "display_backend":
