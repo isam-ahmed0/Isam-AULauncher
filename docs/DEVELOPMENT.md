@@ -81,8 +81,9 @@ Actions uses `actions/setup-node`. Linux builds keep QtWebEngine/QtWebChannel
 for pywebview's Qt backend; Windows builds exclude them and use WebView2.
 
 CI: Linux jobs run on CircleCI (`.circleci/config.yml`), Windows jobs on
-AppVeyor (`appveyor.yml`); both only build version tags. GitHub Actions
-workflows in `.github/workflows/` are the older pipeline. See
+AppVeyor (`appveyor.yml`); both only build version tags. CircleCI also has
+manual `test_target` workflows that build packages without publishing. GitHub
+Actions workflows in `.github/workflows/` are the older pipeline. See
 [CICD_MIGRATION.md](CICD_MIGRATION.md) for details.
 
 ## Release process

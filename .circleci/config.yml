@@ -5,6 +5,10 @@ version: 2.1
 #   curl -X POST -H "Circle-Token: $CIRCLECI_TOKEN" -H "Content-Type: application/json" \
 #     -d '{"branch":"crew","parameters":{"build_manually":true,"version":"1.0-beta.4"}}' \
 #     https://circleci.com/api/v2/project/gh/isam-ahmed0/Isam-AULauncher/pipeline
+# Test builds (no GitHub release): set test_target to all|arch|ubuntu|fedora, e.g.
+#   curl -X POST -H "Circle-Token: $CIRCLECI_TOKEN" -H "Content-Type: application/json" \
+#     -d '{"branch":"crew","parameters":{"test_target":"arch","run_release":false}}' \
+#     https://circleci.com/api/v2/project/gh/isam-ahmed0/Isam-AULauncher/pipeline
 # (The web UI "Trigger Pipeline" button also works.)
 
 parameters:
@@ -24,6 +28,11 @@ parameters:
     type: boolean
     default: false
     description: "Run Nuitka-only workflow (default false - disabled)."
+  test_target:
+    type: enum
+    enum: ["none", "all", "arch", "ubuntu", "fedora"]
+    default: "none"
+    description: "Test-build Linux packages without publishing (none = off)."
 
 executors:
   ubuntu:
@@ -237,15 +246,12 @@ workflows:
               ignore: /.*/
       - build-arch:
           filters: *tag-only
-      - build-arch-nuitka:
-          filters: *tag-only
       - build-fedora:
           filters: *tag-only
       - release:
           requires:
             - build-ubuntu
             - build-arch
-            - build-arch-nuitka
             - build-fedora
           filters: *tag-only
 
@@ -259,14 +265,41 @@ workflows:
     jobs:
       - build-ubuntu
       - build-arch
-      - build-arch-nuitka
       - build-fedora
       - release:
           requires:
             - build-ubuntu
             - build-arch
-            - build-arch-nuitka
             - build-fedora
+
+  # No-release test builds. Trigger with test_target=<target>; the default
+  # "none" means regular branch pushes and tag releases are unaffected.
+  # Packages are only stored as CircleCI artifacts (no GitHub release).
+  test-all:
+    when:
+      equal: [<< pipeline.parameters.test_target >>, "all"]
+    jobs:
+      - build-ubuntu
+      - build-arch
+      - build-fedora
+
+  test-arch:
+    when:
+      equal: [<< pipeline.parameters.test_target >>, "arch"]
+    jobs:
+      - build-arch
+
+  test-ubuntu:
+    when:
+      equal: [<< pipeline.parameters.test_target >>, "ubuntu"]
+    jobs:
+      - build-ubuntu
+
+  test-fedora:
+    when:
+      equal: [<< pipeline.parameters.test_target >>, "fedora"]
+    jobs:
+      - build-fedora
 
   # Nuitka-only workflow: runs only when run_nuitka=true, run_release=false
   nuitka-only:

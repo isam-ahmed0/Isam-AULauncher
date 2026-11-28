@@ -65,6 +65,33 @@ default branch is `crew`.
 
 * **AppVeyor** — Project -> **New build** -> select the tag.
 
+## Test builds (no release)
+
+CircleCI can build packages without publishing them. Trigger a pipeline with
+`test_target` set to one of:
+
+| `test_target` | Builds |
+| --- | --- |
+| `all` | Ubuntu + Arch + Fedora |
+| `arch` | Arch only |
+| `ubuntu` | Ubuntu only |
+| `fedora` | Fedora only |
+
+```bash
+curl -X POST \
+  -H "Circle-Token: $CIRCLECI_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"branch":"crew","parameters":{"test_target":"arch","run_release":false}}' \
+  https://circleci.com/api/v2/project/gh/isam-ahmed0/Isam-AULauncher/pipeline
+```
+
+The `test-*` workflows contain no `release` job, so packages are only stored
+as CircleCI artifacts (workflow -> job -> **Artifacts**); no GitHub release is
+created and `GITHUB_TOKEN` is not needed. `version` is optional and only
+changes the embedded version string; blank falls back to
+`src/launcher/config.py`. `test_target` defaults to `none`, so tag pushes still
+run only the normal `build-and-release` workflow.
+
 ## 1. CircleCI setup
 
 1. Go to <https://app.circleci.com> -> **Projects** -> **Set Up Project** for
