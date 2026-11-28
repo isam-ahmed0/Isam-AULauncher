@@ -4,3 +4,4 @@
 # Lines starting with # are ignored. This checkout copy is only a template.
 # Example:
 # winter: YYYY-MM-DD
+winter: 2027-01-20
