@@ -30,6 +30,7 @@ pyinstaller --noconfirm --onedir --windowed --noupx ^
   --add-data "src\launcher\resources\web;resources\web" ^
   --add-data "DOC;DOC" ^
   --add-data "release\bepmods.zip;." ^
+  --hidden-import webview ^
   --hidden-import webview.platforms ^
   --hidden-import webview.platforms.winforms ^
   --hidden-import webview.platforms.edgechromium ^
@@ -74,5 +75,5 @@ echo ERROR: web asset build failed (run "cd web && npm ci && npm run build"). 1>
 exit /b 1
 
 :webmissing
-echo ERROR: web\index.html is missing; install Node.js and run "cd web && npm ci && npm run build". 1>&2
+echo ERROR: src\launcher\resources\web\index.html is missing; install Node.js and run "cd web && npm ci && npm run build". 1>&2
 exit /b 1

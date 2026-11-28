@@ -151,6 +151,19 @@ def _module_available(module):
         return False
 
 
+def _web_available():
+    """Return ``(available, reason)`` for the built-in Web interface."""
+    if not _module_available("webview"):
+        return False, "missing pywebview"
+    try:
+        from gui_web import assets
+        if not assets.index_exists():
+            return False, "web assets not built"
+    except Exception:
+        return False, "web assets unavailable"
+    return True, ""
+
+
 def gui_display_name(path):
     """Read ``GUI_NAME`` from a custom GUI file without executing it."""
     try:
@@ -209,7 +222,10 @@ def list_guis(config):
     for entry in BUILTIN_GUIS:
         item = dict(entry)
         item["builtin"] = True
-        item["available"] = _module_available(entry.get("module"))
+        if entry.get("id") == "web":
+            item["available"], item["reason"] = _web_available()
+        else:
+            item["available"] = _module_available(entry.get("module"))
         guis.append(item)
 
     seen = set()

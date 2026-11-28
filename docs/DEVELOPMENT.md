@@ -73,11 +73,12 @@ modules under `web/src/scripts/views/`; add a matching Astro component in
 
 All launcher builds generate the Web assets before packaging. Linux builds call
 `build/web_assets.sh`, which runs `npm ci && npm run build` and verifies the
-gitignored `src/launcher/resources/web/index.html`. CircleCI installs a supported
-Node.js in all three Linux jobs (Fedora uses NodeSource 24); AppVeyor installs
-Node via Chocolatey; GitHub Actions uses `actions/setup-node`. Linux builds exclude
-QtWebEngine/QtWebChannel from the frozen PySide6 payload because pywebview uses
-GTK/WebKit there; Windows builds keep them for other Qt code paths.
+gitignored `src/launcher/resources/web/index.html`. Linux CI jobs install
+`src/launcher/requirements.txt` (including `pywebview` and `qtpy`) before
+packaging. CircleCI installs a supported Node.js in all three Linux jobs
+(Fedora uses NodeSource 24); AppVeyor installs Node via Chocolatey; GitHub
+Actions uses `actions/setup-node`. Linux builds keep QtWebEngine/QtWebChannel
+for pywebview's Qt backend; Windows builds exclude them and use WebView2.
 
 CI: Linux jobs run on CircleCI (`.circleci/config.yml`), Windows jobs on
 AppVeyor (`appveyor.yml`); both only build version tags. GitHub Actions

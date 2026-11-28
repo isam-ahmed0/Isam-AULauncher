@@ -52,8 +52,15 @@ elif command -v python3 >/dev/null 2>&1; then
 fi
 
 $PYTHON_BIN - <<'PY'
+import importlib.util
 import tkinter
 import customtkinter  # noqa: F401
+
+for name in ("webview", "qtpy", "packaging"):
+    if importlib.util.find_spec(name) is None:
+        raise SystemExit(
+            f"missing {name}; pip install -r src/launcher/requirements.txt"
+        )
 PY
 
 pyinstaller --noconfirm --onedir --windowed --noupx \
@@ -72,9 +79,13 @@ pyinstaller --noconfirm --onedir --windowed --noupx \
   --hidden-import tkinter \
   --hidden-import customtkinter \
   --hidden-import qtpy \
+  --hidden-import webview \
   --hidden-import webview.platforms \
   --hidden-import webview.platforms.gtk \
   --hidden-import webview.platforms.qt \
+  --hidden-import PySide6.QtWebEngineCore \
+  --hidden-import PySide6.QtWebEngineWidgets \
+  --hidden-import PySide6.QtWebChannel \
   --collect-submodules customtkinter \
   "${EXCLUDES[@]}" \
   "$PWD/src/launcher/main.py"

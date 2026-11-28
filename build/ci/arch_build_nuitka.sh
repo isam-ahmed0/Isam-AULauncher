@@ -17,7 +17,7 @@ pacman -Syu --noconfirm --needed \
 
 echo "[ci-arch-nuitka] installing Python packages"
 python -m pip install --break-system-packages --upgrade pip
-python -m pip install --break-system-packages PySide6 requests pypresence pillow customtkinter nuitka
+python -m pip install --break-system-packages -r /work/src/launcher/requirements.txt pillow customtkinter nuitka
 
 echo "[ci-arch-nuitka] creating unprivileged builder (makepkg refuses to run as root)"
 id -u builder &>/dev/null || useradd -m builder

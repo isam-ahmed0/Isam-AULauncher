@@ -78,6 +78,7 @@ jobs:
             --add-data "src\launcher\resources\web;resources\web" ^
             --add-data "DOC;DOC" ^
             --add-data "release\bepmods.zip;." ^
+            --hidden-import webview ^
             --hidden-import webview.platforms ^
             --hidden-import webview.platforms.winforms ^
             --hidden-import webview.platforms.edgechromium ^

@@ -17,7 +17,7 @@ dnf install -y --setopt=install_weak_deps=False \
 
 # Fedora's nodejs package can lag Astro's minimum (22.23.4), so use NodeSource.
 echo "[ci-fedora] installing Node.js 24"
-dnf install -y curl ca-certificates gnupg
+dnf install -y curl ca-certificates gnupg2
 curl -fsSL https://rpm.nodesource.com/setup_24.x | bash -
 dnf install -y nodejs
 node --version
@@ -28,7 +28,7 @@ ln -sf /usr/bin/python3 /usr/bin/python
 
 echo "[ci-fedora] installing Python packages"
 python3 -m pip install --upgrade pip
-python3 -m pip install PySide6 requests pypresence pyinstaller pillow customtkinter
+python3 -m pip install -r /work/src/launcher/requirements.txt pyinstaller pillow customtkinter
 
 echo "[ci-fedora] building launcher + RPM package"
 cd /work
