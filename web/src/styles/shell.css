@@ -253,6 +253,14 @@
   flex: 1;
 }
 
+.statusbar .item.fixed {
+  flex: 0 0 auto;
+}
+
+.statusbar .item.fixed .sb-text {
+  overflow: visible;
+}
+
 .statusbar .sb-text {
   overflow: hidden;
   text-overflow: ellipsis;

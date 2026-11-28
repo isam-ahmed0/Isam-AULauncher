@@ -1,0 +1,1077 @@
+/* CrewLauncher web theme presets ------------------------------------------
+ * Every preset is self-contained: surfaces, accents, component recipes and
+ * decorative details. `:root` in tokens.css holds the Aurora defaults so the
+ * first paint matches the classic look before JavaScript runs.
+ *
+ * `[data-preview-theme]` lets the Settings gallery render a real miniature of
+ * a preset while the app itself stays in the currently active theme.
+ */
+
+/* Start every preview from the classic defaults, then let the preset below
+ * override only what makes it unique. Prevents a preview nested in, say, Mono
+ * from inheriting Mono's hard edges.
+ */
+[data-preview-theme] {
+  color-scheme: dark;
+  --bg-base: #0e1016;
+  --bg-sunken: #0a0c11;
+  --bg-surface: #14171f;
+  --bg-elevated: #1b1f2a;
+  --bg-hover: #232836;
+  --bg-active: #2b3142;
+  --text: #e7eaf2;
+  --text-strong: #ffffff;
+  --text-muted: #8b93a7;
+  --text-faint: #5f6779;
+  --border: rgba(255, 255, 255, 0.07);
+  --border-strong: rgba(255, 255, 255, 0.13);
+  --accent: #6366f1;
+  --accent-hover: #7c7ff5;
+  --accent-soft: rgba(99, 102, 241, 0.16);
+  --accent-2: #22d3ee;
+  --accent-border: rgba(99, 102, 241, 0.3);
+  --accent-border-strong: rgba(99, 102, 241, 0.45);
+  --grad-accent: linear-gradient(120deg, #6366f1 0%, #22d3ee 100%);
+  --grad-hero: radial-gradient(1200px 500px at 15% -10%, rgba(99, 102, 241, 0.35), transparent 60%),
+               radial-gradient(900px 420px at 95% 10%, rgba(34, 211, 238, 0.22), transparent 55%),
+               radial-gradient(700px 400px at 50% 120%, rgba(236, 72, 153, 0.12), transparent 60%);
+  --success: #34d399;
+  --success-soft: rgba(52, 211, 153, 0.14);
+  --success-border: rgba(52, 211, 153, 0.35);
+  --warning: #fbbf24;
+  --warning-soft: rgba(251, 191, 36, 0.14);
+  --warning-border: rgba(251, 191, 36, 0.4);
+  --danger: #f87171;
+  --danger-soft: rgba(248, 113, 113, 0.14);
+  --info: #60a5fa;
+  --info-soft: rgba(96, 165, 250, 0.14);
+  --r-lg: 16px;
+  --r-md: 12px;
+  --r-sm: 9px;
+  --r-pill: 999px;
+  --r-btn: var(--r-sm);
+  --r-control: 7px;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 8px 26px rgba(0, 0, 0, 0.32);
+  --shadow-lg: 0 24px 60px rgba(0, 0, 0, 0.45);
+  --btn-bg: var(--bg-elevated);
+  --btn-border: var(--border);
+  --btn-text: var(--text);
+  --btn-hover-bg: var(--bg-hover);
+  --btn-hover-border: var(--border-strong);
+  --btn-active-transform: translateY(1px);
+  --btn-primary-bg: var(--grad-accent);
+  --btn-primary-hover-bg: var(--grad-accent);
+  --btn-primary-border: transparent;
+  --btn-primary-text: #ffffff;
+  --btn-primary-shadow: 0 6px 18px rgba(99, 102, 241, 0.32);
+  --btn-primary-hover-filter: brightness(1.08);
+  --btn-primary-hover-shadow: var(--btn-primary-shadow);
+  --btn-primary-hover-transform: none;
+  --btn-ghost-bg: transparent;
+  --btn-danger-bg: var(--danger-soft);
+  --btn-danger-border: transparent;
+  --btn-danger-text: var(--danger);
+  --btn-warning-bg: var(--warning-soft);
+  --btn-warning-border: transparent;
+  --btn-warning-text: var(--warning);
+  --seg-on-bg: var(--accent);
+  --seg-on-text: #ffffff;
+  --seg-on-shadow: var(--shadow-sm);
+  --switch-on-bg: var(--accent);
+  --switch-knob: #ffffff;
+  --switch-knob-off: var(--text-muted);
+  --mini-text: var(--text-muted);
+  --mini-hover-text: var(--text-strong);
+  --quick-icon-hover-bg: var(--grad-accent);
+  --quick-icon-hover-text: #ffffff;
+  --quick-hover-transform: translateY(-2px);
+  --badge-icon-bg: var(--grad-accent);
+  --badge-icon-text: #ffffff;
+  --logo-text: #ffffff;
+  --logo-shadow: 0 3px 10px rgba(99, 102, 241, 0.45);
+  --win-close-bg: #e81123;
+  --win-close-text: #ffffff;
+  --nav-marker-bg: var(--grad-accent);
+  --nav-marker-left: -12px;
+  --nav-marker-right: auto;
+  --nav-marker-top: 8px;
+  --nav-marker-bottom: 8px;
+  --nav-marker-w: 3px;
+  --nav-marker-h: auto;
+  --nav-marker-radius: 0 3px 3px 0;
+  --modal-backdrop: rgba(6, 8, 12, 0.62);
+  --scrollbar-thumb: rgba(140, 150, 175, 0.28);
+  --scrollbar-thumb-hover: rgba(140, 150, 175, 0.5);
+  --particle: rgba(255, 255, 255, 0.75);
+  --hero-title-shadow: 0 2px 24px rgba(0, 0, 0, 0.4);
+  --hero-orb-a: #6366f1;
+  --hero-orb-b: #22d3ee;
+  --hero-orb-c: #ec4899;
+  --progress-track: rgba(255, 255, 255, 0.09);
+  --progress-inset: inset 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+/* The classic look — kept exactly as it was. ------------------------------ */
+[data-theme="aurora"],
+[data-preview-theme="aurora"] {
+  color-scheme: dark;
+  --bg-base: #0e1016;
+  --bg-sunken: #0a0c11;
+  --bg-surface: #14171f;
+  --bg-elevated: #1b1f2a;
+  --bg-hover: #232836;
+  --bg-active: #2b3142;
+  --text: #e7eaf2;
+  --text-strong: #ffffff;
+  --text-muted: #8b93a7;
+  --text-faint: #5f6779;
+  --border: rgba(255, 255, 255, 0.07);
+  --border-strong: rgba(255, 255, 255, 0.13);
+  --accent: #6366f1;
+  --accent-hover: #7c7ff5;
+  --accent-soft: rgba(99, 102, 241, 0.16);
+  --accent-2: #22d3ee;
+  --accent-border: rgba(99, 102, 241, 0.3);
+  --accent-border-strong: rgba(99, 102, 241, 0.45);
+  --grad-accent: linear-gradient(120deg, #6366f1 0%, #22d3ee 100%);
+  --grad-hero: radial-gradient(1200px 500px at 15% -10%, rgba(99, 102, 241, 0.35), transparent 60%),
+               radial-gradient(900px 420px at 95% 10%, rgba(34, 211, 238, 0.22), transparent 55%),
+               radial-gradient(700px 400px at 50% 120%, rgba(236, 72, 153, 0.12), transparent 60%);
+  --success: #34d399;
+  --success-soft: rgba(52, 211, 153, 0.14);
+  --success-border: rgba(52, 211, 153, 0.35);
+  --warning: #fbbf24;
+  --warning-soft: rgba(251, 191, 36, 0.14);
+  --warning-border: rgba(251, 191, 36, 0.4);
+  --danger: #f87171;
+  --danger-soft: rgba(248, 113, 113, 0.14);
+  --info: #60a5fa;
+  --info-soft: rgba(96, 165, 250, 0.14);
+  --r-lg: 16px;
+  --r-md: 12px;
+  --r-sm: 9px;
+  --r-btn: var(--r-sm);
+  --r-control: 7px;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 8px 26px rgba(0, 0, 0, 0.32);
+  --shadow-lg: 0 24px 60px rgba(0, 0, 0, 0.45);
+  --btn-primary-bg: var(--grad-accent);
+  --btn-primary-hover-bg: var(--grad-accent);
+  --btn-primary-border: transparent;
+  --btn-primary-text: #ffffff;
+  --btn-primary-shadow: 0 6px 18px rgba(99, 102, 241, 0.32);
+  --btn-primary-hover-filter: brightness(1.08);
+  --btn-primary-hover-shadow: var(--btn-primary-shadow);
+  --btn-primary-hover-transform: none;
+  --btn-active-transform: translateY(1px);
+  --quick-hover-transform: translateY(-2px);
+  --seg-on-bg: var(--accent);
+  --seg-on-text: #ffffff;
+  --switch-on-bg: var(--accent);
+  --switch-knob: #ffffff;
+  --badge-icon-bg: var(--grad-accent);
+  --badge-icon-text: #ffffff;
+  --logo-text: #ffffff;
+  --logo-shadow: 0 3px 10px rgba(99, 102, 241, 0.45);
+  --nav-marker-bg: var(--grad-accent);
+  --nav-marker-left: -12px;
+  --nav-marker-right: auto;
+  --nav-marker-top: 8px;
+  --nav-marker-bottom: 8px;
+  --nav-marker-w: 3px;
+  --nav-marker-h: auto;
+  --nav-marker-radius: 0 3px 3px 0;
+  --modal-backdrop: rgba(6, 8, 12, 0.62);
+  --scrollbar-thumb: rgba(140, 150, 175, 0.28);
+  --scrollbar-thumb-hover: rgba(140, 150, 175, 0.5);
+  --particle: rgba(255, 255, 255, 0.75);
+  --hero-title-shadow: 0 2px 24px rgba(0, 0, 0, 0.4);
+  --hero-orb-a: #6366f1;
+  --hero-orb-b: #22d3ee;
+  --hero-orb-c: #ec4899;
+  --progress-track: rgba(255, 255, 255, 0.09);
+  --progress-inset: inset 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+/* The original light look — now a named preset of its own. ---------------- */
+[data-theme="aurora-light"],
+[data-preview-theme="aurora-light"],
+[data-theme="light"] {
+  color-scheme: light;
+  --bg-base: #f4f5f9;
+  --bg-sunken: #e9ebf2;
+  --bg-surface: #ffffff;
+  --bg-elevated: #ffffff;
+  --bg-hover: #eef0f6;
+  --bg-active: #e3e6ef;
+  --text: #1a1d27;
+  --text-strong: #0c0e14;
+  --text-muted: #5f6779;
+  --text-faint: #8b93a7;
+  --border: rgba(12, 14, 20, 0.09);
+  --border-strong: rgba(12, 14, 20, 0.16);
+  --shadow-sm: 0 1px 2px rgba(16, 20, 32, 0.06);
+  --shadow-md: 0 8px 26px rgba(16, 20, 32, 0.1);
+  --shadow-lg: 0 24px 60px rgba(16, 20, 32, 0.16);
+  /* Reset the recipe too: previews must not inherit another preset's shape. */
+  --accent: #6366f1;
+  --accent-hover: #7c7ff5;
+  --accent-soft: rgba(99, 102, 241, 0.16);
+  --accent-2: #22d3ee;
+  --accent-border: rgba(99, 102, 241, 0.3);
+  --accent-border-strong: rgba(99, 102, 241, 0.45);
+  --grad-accent: linear-gradient(120deg, #6366f1 0%, #22d3ee 100%);
+  --grad-hero: radial-gradient(1200px 500px at 15% -10%, rgba(99, 102, 241, 0.35), transparent 60%),
+               radial-gradient(900px 420px at 95% 10%, rgba(34, 211, 238, 0.22), transparent 55%),
+               radial-gradient(700px 400px at 50% 120%, rgba(236, 72, 153, 0.12), transparent 60%);
+  --success: #34d399;
+  --success-soft: rgba(52, 211, 153, 0.14);
+  --success-border: rgba(52, 211, 153, 0.35);
+  --warning: #fbbf24;
+  --warning-soft: rgba(251, 191, 36, 0.14);
+  --warning-border: rgba(251, 191, 36, 0.4);
+  --danger: #f87171;
+  --danger-soft: rgba(248, 113, 113, 0.14);
+  --info: #60a5fa;
+  --info-soft: rgba(96, 165, 250, 0.14);
+  --r-lg: 16px;
+  --r-md: 12px;
+  --r-sm: 9px;
+  --r-btn: var(--r-sm);
+  --r-control: 7px;
+  --r-pill: 999px;
+  --btn-bg: var(--bg-elevated);
+  --btn-border: var(--border);
+  --btn-text: var(--text);
+  --btn-hover-bg: var(--bg-hover);
+  --btn-hover-border: var(--border-strong);
+  --btn-active-transform: translateY(1px);
+  --btn-primary-bg: var(--grad-accent);
+  --btn-primary-hover-bg: var(--grad-accent);
+  --btn-primary-border: transparent;
+  --btn-primary-text: #ffffff;
+  --btn-primary-hover-filter: brightness(1.08);
+  --btn-primary-hover-transform: none;
+  --btn-ghost-bg: transparent;
+  --btn-danger-bg: var(--danger-soft);
+  --btn-danger-border: transparent;
+  --btn-danger-text: var(--danger);
+  --btn-warning-bg: var(--warning-soft);
+  --btn-warning-border: transparent;
+  --btn-warning-text: var(--warning);
+  --seg-on-bg: var(--accent);
+  --seg-on-text: #ffffff;
+  --seg-on-shadow: var(--shadow-sm);
+  --switch-on-bg: var(--accent);
+  --switch-knob: #ffffff;
+  --switch-knob-off: var(--text-muted);
+  --mini-text: var(--text-muted);
+  --mini-hover-text: var(--text-strong);
+  --quick-icon-hover-bg: var(--grad-accent);
+  --quick-icon-hover-text: #ffffff;
+  --quick-hover-transform: translateY(-2px);
+  --badge-icon-bg: var(--grad-accent);
+  --badge-icon-text: #ffffff;
+  --logo-text: #ffffff;
+  --win-close-bg: #e81123;
+  --win-close-text: #ffffff;
+  --nav-marker-bg: var(--grad-accent);
+  --nav-marker-left: -12px;
+  --nav-marker-right: auto;
+  --nav-marker-top: 8px;
+  --nav-marker-bottom: 8px;
+  --nav-marker-w: 3px;
+  --nav-marker-h: auto;
+  --nav-marker-radius: 0 3px 3px 0;
+  --hero-orb-a: #6366f1;
+  --hero-orb-b: #22d3ee;
+  --hero-orb-c: #ec4899;
+  --btn-primary-shadow: 0 6px 16px rgba(99, 102, 241, 0.22);
+  --btn-primary-hover-shadow: 0 8px 20px rgba(99, 102, 241, 0.26);
+  --logo-shadow: 0 3px 10px rgba(99, 102, 241, 0.3);
+  --modal-backdrop: rgba(20, 24, 36, 0.34);
+  --scrollbar-thumb: rgba(95, 103, 121, 0.28);
+  --scrollbar-thumb-hover: rgba(95, 103, 121, 0.5);
+  --particle: rgba(255, 255, 255, 0.9);
+  --hero-title-shadow: none;
+  --progress-track: rgba(12, 14, 20, 0.08);
+  --progress-inset: inset 0 1px 3px rgba(16, 20, 32, 0.08);
+}
+
+/* Flat, organic green — solid fills, tight corners, no glow. -------------- */
+[data-theme="forest"],
+[data-preview-theme="forest"] {
+  color-scheme: dark;
+  --bg-base: #07110c;
+  --bg-sunken: #050b08;
+  --bg-surface: #0d1812;
+  --bg-elevated: #122118;
+  --bg-hover: #192c20;
+  --bg-active: #213a2a;
+  --text: #e6f2ea;
+  --text-strong: #ffffff;
+  --text-muted: #8fb09a;
+  --text-faint: #5c7967;
+  --border: rgba(74, 222, 128, 0.1);
+  --border-strong: rgba(74, 222, 128, 0.2);
+  --accent: #4ade80;
+  --accent-hover: #6ee89a;
+  --accent-soft: rgba(74, 222, 128, 0.16);
+  --accent-2: #a3e635;
+  --accent-border: rgba(74, 222, 128, 0.3);
+  --accent-border-strong: rgba(74, 222, 128, 0.45);
+  --grad-accent: linear-gradient(120deg, #4ade80 0%, #a3e635 100%);
+  --grad-hero: radial-gradient(1100px 480px at 12% -10%, rgba(74, 222, 128, 0.24), transparent 60%),
+               radial-gradient(800px 400px at 92% 8%, rgba(163, 230, 53, 0.16), transparent 55%),
+               radial-gradient(650px 380px at 50% 120%, rgba(20, 184, 166, 0.14), transparent 60%);
+  --success: #4ade80;
+  --success-soft: rgba(74, 222, 128, 0.14);
+  --success-border: rgba(74, 222, 128, 0.35);
+  --warning: #facc15;
+  --warning-soft: rgba(250, 204, 21, 0.14);
+  --warning-border: rgba(250, 204, 21, 0.4);
+  --danger: #fb7185;
+  --danger-soft: rgba(251, 113, 133, 0.14);
+  --info: #38bdf8;
+  --info-soft: rgba(56, 189, 248, 0.14);
+  --r-lg: 12px;
+  --r-md: 9px;
+  --r-sm: 6px;
+  --r-btn: 5px;
+  --r-control: 5px;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.36);
+  --shadow-lg: 0 24px 56px rgba(0, 0, 0, 0.48);
+  --btn-primary-bg: var(--accent);
+  --btn-primary-hover-bg: var(--accent-hover);
+  --btn-primary-border: rgba(255, 255, 255, 0.18);
+  --btn-primary-text: #06120b;
+  --btn-primary-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+  --btn-primary-hover-filter: none;
+  --btn-primary-hover-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+  --btn-primary-hover-transform: none;
+  --btn-active-transform: translateY(0);
+  --quick-hover-transform: translateY(-1px);
+  --seg-on-bg: var(--accent);
+  --seg-on-text: #06120b;
+  --seg-on-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+  --switch-on-bg: var(--accent);
+  --switch-knob: #06120b;
+  --mini-text: #8fb09a;
+  --mini-hover-text: #ffffff;
+  --quick-icon-hover-bg: var(--accent);
+  --quick-icon-hover-text: #06120b;
+  --badge-icon-bg: var(--accent);
+  --badge-icon-text: #06120b;
+  --logo-text: #06120b;
+  --logo-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+  --win-close-bg: #e81123;
+  --nav-marker-bg: var(--accent);
+  --nav-marker-left: -12px;
+  --nav-marker-right: auto;
+  --nav-marker-top: 6px;
+  --nav-marker-bottom: 6px;
+  --nav-marker-w: 3px;
+  --nav-marker-h: auto;
+  --nav-marker-radius: 0 3px 3px 0;
+  --modal-backdrop: rgba(2, 10, 6, 0.66);
+  --scrollbar-thumb: rgba(74, 222, 128, 0.22);
+  --scrollbar-thumb-hover: rgba(74, 222, 128, 0.42);
+  --particle: rgba(190, 255, 210, 0.7);
+  --hero-title-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
+  --hero-orb-a: #22c55e;
+  --hero-orb-b: #a3e635;
+  --hero-orb-c: #14b8a6;
+  --progress-track: rgba(255, 255, 255, 0.08);
+  --progress-inset: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+/* Neon glass — sharp corners, translucent fills, bright edges. ------------ */
+[data-theme="violet"],
+[data-preview-theme="violet"] {
+  color-scheme: dark;
+  --bg-base: #0d0a18;
+  --bg-sunken: #090714;
+  --bg-surface: #15102a;
+  --bg-elevated: #1d1638;
+  --bg-hover: #271e4a;
+  --bg-active: #332759;
+  --text: #f0ebff;
+  --text-strong: #ffffff;
+  --text-muted: #a99cc9;
+  --text-faint: #756a91;
+  --border: rgba(167, 139, 250, 0.14);
+  --border-strong: rgba(196, 181, 253, 0.28);
+  --accent: #a78bfa;
+  --accent-hover: #c4b5fd;
+  --accent-soft: rgba(167, 139, 250, 0.18);
+  --accent-2: #f472b6;
+  --accent-border: rgba(167, 139, 250, 0.38);
+  --accent-border-strong: rgba(196, 181, 253, 0.55);
+  --grad-accent: linear-gradient(120deg, #8b5cf6 0%, #f472b6 100%);
+  --grad-hero: radial-gradient(1100px 500px at 14% -12%, rgba(139, 92, 246, 0.34), transparent 60%),
+               radial-gradient(850px 430px at 92% 8%, rgba(244, 114, 182, 0.24), transparent 55%),
+               radial-gradient(700px 380px at 50% 120%, rgba(99, 102, 241, 0.18), transparent 60%);
+  --success: #34d399;
+  --success-soft: rgba(52, 211, 153, 0.14);
+  --success-border: rgba(52, 211, 153, 0.35);
+  --warning: #fbbf24;
+  --warning-soft: rgba(251, 191, 36, 0.14);
+  --warning-border: rgba(251, 191, 36, 0.4);
+  --danger: #fb7185;
+  --danger-soft: rgba(251, 113, 133, 0.14);
+  --info: #93c5fd;
+  --info-soft: rgba(147, 197, 253, 0.14);
+  --r-lg: 18px;
+  --r-md: 10px;
+  --r-sm: 5px;
+  --r-btn: 4px;
+  --r-control: 4px;
+  --shadow-sm: 0 1px 2px rgba(4, 2, 12, 0.4);
+  --shadow-md: 0 8px 28px rgba(76, 29, 149, 0.32);
+  --shadow-lg: 0 24px 64px rgba(4, 2, 12, 0.6);
+  --btn-bg: rgba(29, 22, 56, 0.72);
+  --btn-border: rgba(196, 181, 253, 0.25);
+  --btn-text: var(--text);
+  --btn-hover-bg: rgba(39, 30, 74, 0.88);
+  --btn-hover-border: rgba(196, 181, 253, 0.5);
+  --btn-primary-bg: linear-gradient(120deg, rgba(139, 92, 246, 0.92), rgba(244, 114, 182, 0.92));
+  --btn-primary-hover-bg: linear-gradient(120deg, rgba(167, 139, 250, 1), rgba(249, 168, 212, 1));
+  --btn-primary-border: rgba(221, 214, 254, 0.5);
+  --btn-primary-text: #ffffff;
+  --btn-primary-shadow: 0 0 0 1px rgba(196, 181, 253, 0.25), 0 6px 22px rgba(167, 139, 250, 0.35);
+  --btn-primary-hover-filter: brightness(1.12);
+  --btn-primary-hover-shadow: 0 0 0 1px rgba(221, 214, 254, 0.5), 0 10px 28px rgba(244, 114, 182, 0.4);
+  --btn-primary-hover-transform: none;
+  --btn-active-transform: translateY(0);
+  --quick-hover-transform: translateY(-2px);
+  --seg-on-bg: rgba(167, 139, 250, 0.9);
+  --seg-on-text: #ffffff;
+  --seg-on-shadow: 0 0 14px rgba(167, 139, 250, 0.45);
+  --switch-on-bg: #a78bfa;
+  --switch-knob: #ffffff;
+  --mini-text: #a99cc9;
+  --mini-hover-text: #ffffff;
+  --quick-icon-hover-bg: var(--grad-accent);
+  --quick-icon-hover-text: #ffffff;
+  --badge-icon-bg: var(--grad-accent);
+  --badge-icon-text: #ffffff;
+  --logo-text: #ffffff;
+  --logo-shadow: 0 3px 14px rgba(167, 139, 250, 0.5);
+  --win-close-bg: #fb7185;
+  --nav-marker-bg: var(--grad-accent);
+  --nav-marker-left: -12px;
+  --nav-marker-right: auto;
+  --nav-marker-top: 4px;
+  --nav-marker-bottom: 4px;
+  --nav-marker-w: 2px;
+  --nav-marker-h: auto;
+  --nav-marker-radius: 0 2px 2px 0;
+  --modal-backdrop: rgba(8, 5, 20, 0.7);
+  --scrollbar-thumb: rgba(167, 139, 250, 0.3);
+  --scrollbar-thumb-hover: rgba(196, 181, 253, 0.52);
+  --particle: rgba(233, 222, 255, 0.8);
+  --hero-title-shadow: 0 2px 26px rgba(24, 8, 48, 0.6);
+  --hero-orb-a: #8b5cf6;
+  --hero-orb-b: #f472b6;
+  --hero-orb-c: #6366f1;
+  --progress-track: rgba(233, 222, 255, 0.08);
+  --progress-inset: inset 0 1px 4px rgba(8, 5, 20, 0.5);
+}
+
+/* Warm and playful — orange pills with a lift. ---------------------------- */
+[data-theme="ember"],
+[data-preview-theme="ember"] {
+  color-scheme: dark;
+  --bg-base: #130d0a;
+  --bg-sunken: #0d0907;
+  --bg-surface: #1c130f;
+  --bg-elevated: #261a14;
+  --bg-hover: #33231a;
+  --bg-active: #402c20;
+  --text: #f8ede6;
+  --text-strong: #ffffff;
+  --text-muted: #c0a598;
+  --text-faint: #8a6f62;
+  --border: rgba(251, 146, 60, 0.12);
+  --border-strong: rgba(251, 146, 60, 0.24);
+  --accent: #fb923c;
+  --accent-hover: #fdba74;
+  --accent-soft: rgba(251, 146, 60, 0.17);
+  --accent-2: #f43f5e;
+  --accent-border: rgba(251, 146, 60, 0.32);
+  --accent-border-strong: rgba(253, 186, 116, 0.5);
+  --grad-accent: linear-gradient(120deg, #fb923c 0%, #f43f5e 100%);
+  --grad-hero: radial-gradient(1100px 500px at 12% -10%, rgba(251, 146, 60, 0.3), transparent 60%),
+               radial-gradient(850px 420px at 94% 10%, rgba(244, 63, 94, 0.22), transparent 55%),
+               radial-gradient(700px 380px at 50% 120%, rgba(251, 191, 36, 0.16), transparent 60%);
+  --success: #4ade80;
+  --success-soft: rgba(74, 222, 128, 0.14);
+  --success-border: rgba(74, 222, 128, 0.35);
+  --warning: #fbbf24;
+  --warning-soft: rgba(251, 191, 36, 0.15);
+  --warning-border: rgba(251, 191, 36, 0.42);
+  --danger: #fb7185;
+  --danger-soft: rgba(251, 113, 133, 0.15);
+  --info: #60a5fa;
+  --info-soft: rgba(96, 165, 250, 0.14);
+  --r-lg: 14px;
+  --r-md: 12px;
+  --r-sm: 10px;
+  --r-btn: 999px;
+  --r-control: 999px;
+  --shadow-sm: 0 1px 2px rgba(18, 8, 4, 0.35);
+  --shadow-md: 0 8px 26px rgba(60, 20, 6, 0.4);
+  --shadow-lg: 0 24px 60px rgba(18, 8, 4, 0.6);
+  --btn-primary-bg: var(--grad-accent);
+  --btn-primary-hover-bg: var(--grad-accent);
+  --btn-primary-border: rgba(255, 222, 199, 0.35);
+  --btn-primary-text: #ffffff;
+  --btn-primary-shadow: 0 8px 24px rgba(251, 146, 60, 0.36);
+  --btn-primary-hover-filter: brightness(1.06);
+  --btn-primary-hover-shadow: 0 12px 30px rgba(244, 63, 94, 0.42);
+  --btn-primary-hover-transform: translateY(-2px);
+  --btn-active-transform: translateY(1px);
+  --quick-hover-transform: translateY(-3px);
+  --seg-on-bg: var(--accent);
+  --seg-on-text: #2a1006;
+  --seg-on-shadow: 0 4px 14px rgba(251, 146, 60, 0.32);
+  --switch-on-bg: var(--accent);
+  --switch-knob: #ffffff;
+  --mini-text: #c0a598;
+  --mini-hover-text: #ffffff;
+  --quick-icon-hover-bg: var(--grad-accent);
+  --quick-icon-hover-text: #ffffff;
+  --badge-icon-bg: var(--grad-accent);
+  --badge-icon-text: #ffffff;
+  --logo-text: #2a1006;
+  --logo-shadow: 0 3px 14px rgba(251, 146, 60, 0.5);
+  --win-close-bg: #f43f5e;
+  --nav-marker-bg: var(--grad-accent);
+  --nav-marker-left: -12px;
+  --nav-marker-right: auto;
+  --nav-marker-top: 6px;
+  --nav-marker-bottom: 6px;
+  --nav-marker-w: 4px;
+  --nav-marker-h: auto;
+  --nav-marker-radius: 999px;
+  --modal-backdrop: rgba(14, 7, 4, 0.68);
+  --scrollbar-thumb: rgba(251, 146, 60, 0.24);
+  --scrollbar-thumb-hover: rgba(253, 186, 116, 0.44);
+  --particle: rgba(255, 237, 224, 0.78);
+  --hero-title-shadow: 0 2px 24px rgba(40, 12, 4, 0.5);
+  --hero-orb-a: #fb923c;
+  --hero-orb-b: #f43f5e;
+  --hero-orb-c: #fbbf24;
+  --progress-track: rgba(255, 240, 230, 0.09);
+  --progress-inset: inset 0 1px 3px rgba(30, 10, 4, 0.45);
+}
+
+/* Calm blue-gray — flat buttons and an underline nav marker. -------------- */
+[data-theme="slate"],
+[data-preview-theme="slate"] {
+  color-scheme: dark;
+  --bg-base: #0c1118;
+  --bg-sunken: #080d13;
+  --bg-surface: #121a24;
+  --bg-elevated: #182331;
+  --bg-hover: #202e3f;
+  --bg-active: #293a4e;
+  --text: #e2eaf3;
+  --text-strong: #ffffff;
+  --text-muted: #8fa2b7;
+  --text-faint: #5f7186;
+  --border: rgba(148, 163, 184, 0.12);
+  --border-strong: rgba(148, 163, 184, 0.22);
+  --accent: #60a5fa;
+  --accent-hover: #93c5fd;
+  --accent-soft: rgba(96, 165, 250, 0.16);
+  --accent-2: #94a3b8;
+  --accent-border: rgba(96, 165, 250, 0.3);
+  --accent-border-strong: rgba(147, 197, 253, 0.45);
+  --grad-accent: linear-gradient(120deg, #60a5fa 0%, #94a3b8 100%);
+  --grad-hero: radial-gradient(1100px 480px at 14% -10%, rgba(96, 165, 250, 0.22), transparent 60%),
+               radial-gradient(820px 410px at 92% 8%, rgba(148, 163, 184, 0.16), transparent 55%),
+               radial-gradient(680px 380px at 50% 120%, rgba(56, 189, 248, 0.14), transparent 60%);
+  --success: #34d399;
+  --success-soft: rgba(52, 211, 153, 0.14);
+  --success-border: rgba(52, 211, 153, 0.35);
+  --warning: #fbbf24;
+  --warning-soft: rgba(251, 191, 36, 0.14);
+  --warning-border: rgba(251, 191, 36, 0.4);
+  --danger: #f87171;
+  --danger-soft: rgba(248, 113, 113, 0.14);
+  --info: #93c5fd;
+  --info-soft: rgba(147, 197, 253, 0.14);
+  --r-lg: 10px;
+  --r-md: 8px;
+  --r-sm: 6px;
+  --r-btn: 4px;
+  --r-control: 4px;
+  --shadow-sm: 0 1px 2px rgba(3, 8, 15, 0.28);
+  --shadow-md: 0 8px 22px rgba(3, 8, 15, 0.34);
+  --shadow-lg: 0 24px 54px rgba(3, 8, 15, 0.5);
+  --btn-primary-bg: var(--accent);
+  --btn-primary-hover-bg: var(--accent-hover);
+  --btn-primary-border: transparent;
+  --btn-primary-text: #07131f;
+  --btn-primary-shadow: none;
+  --btn-primary-hover-filter: none;
+  --btn-primary-hover-shadow: 0 4px 14px rgba(96, 165, 250, 0.24);
+  --btn-primary-hover-transform: none;
+  --btn-active-transform: translateY(0);
+  --quick-hover-transform: translateY(-1px);
+  --seg-on-bg: var(--accent);
+  --seg-on-text: #07131f;
+  --seg-on-shadow: none;
+  --switch-on-bg: var(--accent);
+  --switch-knob: #07131f;
+  --mini-text: #8fa2b7;
+  --mini-hover-text: #ffffff;
+  --quick-icon-hover-bg: var(--accent);
+  --quick-icon-hover-text: #07131f;
+  --badge-icon-bg: var(--accent);
+  --badge-icon-text: #07131f;
+  --logo-text: #07131f;
+  --logo-shadow: 0 3px 12px rgba(96, 165, 250, 0.35);
+  --win-close-bg: #f87171;
+  --nav-marker-bg: var(--accent);
+  --nav-marker-left: 11px;
+  --nav-marker-right: 11px;
+  --nav-marker-top: auto;
+  --nav-marker-bottom: 4px;
+  --nav-marker-w: auto;
+  --nav-marker-h: 2px;
+  --nav-marker-radius: 2px;
+  --modal-backdrop: rgba(4, 8, 14, 0.66);
+  --scrollbar-thumb: rgba(148, 163, 184, 0.24);
+  --scrollbar-thumb-hover: rgba(148, 163, 184, 0.44);
+  --particle: rgba(226, 234, 243, 0.7);
+  --hero-title-shadow: 0 2px 20px rgba(3, 8, 15, 0.5);
+  --hero-orb-a: #60a5fa;
+  --hero-orb-b: #94a3b8;
+  --hero-orb-c: #38bdf8;
+  --progress-track: rgba(226, 234, 243, 0.08);
+  --progress-inset: inset 0 1px 3px rgba(3, 8, 15, 0.4);
+}
+
+/* Monochrome terminal — outline buttons, hard edges, no shadow. ----------- */
+[data-theme="mono"],
+[data-preview-theme="mono"] {
+  color-scheme: dark;
+  --bg-base: #08090b;
+  --bg-sunken: #050608;
+  --bg-surface: #101216;
+  --bg-elevated: #171a1f;
+  --bg-hover: #22262d;
+  --bg-active: #2d323a;
+  --text: #e8eaed;
+  --text-strong: #ffffff;
+  --text-muted: #9aa0a8;
+  --text-faint: #6b7179;
+  --border: rgba(255, 255, 255, 0.14);
+  --border-strong: rgba(255, 255, 255, 0.3);
+  --accent: #e8eaed;
+  --accent-hover: #ffffff;
+  --accent-soft: rgba(232, 234, 237, 0.12);
+  --accent-2: #9aa0a8;
+  --accent-border: rgba(232, 234, 237, 0.3);
+  --accent-border-strong: rgba(255, 255, 255, 0.5);
+  --grad-accent: linear-gradient(120deg, #e8eaed 0%, #9aa0a8 100%);
+  --grad-hero: radial-gradient(1100px 480px at 14% -10%, rgba(232, 234, 237, 0.12), transparent 60%),
+               radial-gradient(820px 410px at 92% 8%, rgba(154, 160, 168, 0.1), transparent 55%),
+               radial-gradient(680px 380px at 50% 120%, rgba(107, 113, 121, 0.1), transparent 60%);
+  --success: #a7f3d0;
+  --success-soft: rgba(167, 243, 208, 0.1);
+  --success-border: rgba(167, 243, 208, 0.3);
+  --warning: #fde68a;
+  --warning-soft: rgba(253, 230, 138, 0.1);
+  --warning-border: rgba(253, 230, 138, 0.3);
+  --danger: #fca5a5;
+  --danger-soft: rgba(252, 165, 165, 0.1);
+  --info: #bfdbfe;
+  --info-soft: rgba(191, 219, 254, 0.1);
+  --r-lg: 4px;
+  --r-md: 4px;
+  --r-sm: 2px;
+  --r-btn: 0px;
+  --r-control: 0px;
+  --r-pill: 2px;
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: none;
+  --btn-bg: transparent;
+  --btn-border: var(--border-strong);
+  --btn-text: var(--text);
+  --btn-hover-bg: rgba(255, 255, 255, 0.08);
+  --btn-hover-border: var(--text-strong);
+  --btn-primary-bg: transparent;
+  --btn-primary-hover-bg: rgba(255, 255, 255, 0.1);
+  --btn-primary-border: var(--text-strong);
+  --btn-primary-text: #ffffff;
+  --btn-primary-shadow: none;
+  --btn-primary-hover-filter: none;
+  --btn-primary-hover-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+  --btn-primary-hover-transform: none;
+  --btn-active-transform: translateY(0);
+  --quick-hover-transform: none;
+  --seg-on-bg: #ffffff;
+  --seg-on-text: #08090b;
+  --seg-on-shadow: none;
+  --switch-on-bg: #e8eaed;
+  --switch-knob: #08090b;
+  --mini-text: #9aa0a8;
+  --mini-hover-text: #ffffff;
+  --quick-icon-hover-bg: #ffffff;
+  --quick-icon-hover-text: #08090b;
+  --badge-icon-bg: rgba(255, 255, 255, 0.08);
+  --badge-icon-text: #ffffff;
+  --logo-text: #08090b;
+  --logo-shadow: none;
+  --win-close-bg: #ffffff;
+  --win-close-text: #08090b;
+  --nav-marker-bg: #ffffff;
+  --nav-marker-left: 0;
+  --nav-marker-right: 0;
+  --nav-marker-top: 0;
+  --nav-marker-bottom: 0;
+  --nav-marker-w: 2px;
+  --nav-marker-h: auto;
+  --nav-marker-radius: 0;
+  --modal-backdrop: rgba(0, 0, 0, 0.78);
+  --scrollbar-thumb: rgba(255, 255, 255, 0.2);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.4);
+  --particle: rgba(255, 255, 255, 0.9);
+  --hero-title-shadow: none;
+  --hero-orb-a: #e8eaed;
+  --hero-orb-b: #9aa0a8;
+  --hero-orb-c: #6b7179;
+  --progress-track: rgba(255, 255, 255, 0.12);
+  --progress-inset: inset 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+/* Frosted seasonal preset — its own icy recipe, not a recolor. ------------- */
+[data-theme="winter"],
+[data-preview-theme="winter"] {
+  color-scheme: dark;
+  --bg-base: #0a121b;
+  --bg-sunken: #070e16;
+  --bg-surface: #101d29;
+  --bg-elevated: #162735;
+  --bg-hover: #1d3243;
+  --bg-active: #294254;
+  --text: #e6f1f8;
+  --text-strong: #f7fbfe;
+  --text-muted: #94adbf;
+  --text-faint: #668093;
+  --border: rgba(190, 219, 237, 0.1);
+  --border-strong: rgba(210, 232, 245, 0.22);
+  --accent: #8fb8d8;
+  --accent-hover: #c3dced;
+  --accent-soft: rgba(143, 184, 216, 0.14);
+  --accent-2: #dbeaf3;
+  --accent-border: rgba(143, 184, 216, 0.28);
+  --accent-border-strong: rgba(219, 234, 243, 0.42);
+  --grad-accent: linear-gradient(120deg, #8fb8d8 0%, #cfe4f0 100%);
+  --grad-hero: radial-gradient(1100px 500px at 14% -12%, rgba(143, 184, 216, 0.2), transparent 60%),
+               radial-gradient(860px 430px at 92% 8%, rgba(219, 234, 243, 0.1), transparent 55%),
+               radial-gradient(700px 380px at 50% 120%, rgba(95, 135, 168, 0.12), transparent 60%);
+  --success: #7fcbb8;
+  --success-soft: rgba(127, 203, 184, 0.12);
+  --success-border: rgba(127, 203, 184, 0.3);
+  --warning: #e6d39a;
+  --warning-soft: rgba(230, 211, 154, 0.11);
+  --warning-border: rgba(230, 211, 154, 0.3);
+  --danger: #e6a3ad;
+  --danger-soft: rgba(230, 163, 173, 0.11);
+  --info: #c3dced;
+  --info-soft: rgba(195, 220, 237, 0.12);
+  --r-lg: 18px;
+  --r-md: 14px;
+  --r-sm: 10px;
+  --r-btn: 12px;
+  --r-control: 8px;
+  --shadow-sm: 0 1px 3px rgba(2, 8, 14, 0.35);
+  --shadow-md: 0 10px 30px rgba(2, 8, 14, 0.42);
+  --shadow-lg: 0 26px 68px rgba(2, 8, 14, 0.58);
+  --btn-bg: rgba(22, 39, 53, 0.76);
+  --btn-border: rgba(190, 219, 237, 0.18);
+  --btn-text: var(--text);
+  --btn-hover-bg: rgba(29, 50, 67, 0.9);
+  --btn-hover-border: rgba(219, 234, 243, 0.34);
+  --btn-active-transform: translateY(0);
+  --btn-primary-bg: linear-gradient(180deg, #a7c7dd 0%, #86b0cf 100%);
+  --btn-primary-hover-bg: linear-gradient(180deg, #bad5e8 0%, #93bad7 100%);
+  --btn-primary-border: rgba(219, 234, 243, 0.48);
+  --btn-primary-text: #07131e;
+  --btn-primary-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 6px 18px rgba(80, 130, 170, 0.2);
+  --btn-primary-hover-filter: none;
+  --btn-primary-hover-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 10px 24px rgba(80, 130, 170, 0.28);
+  --btn-primary-hover-transform: translateY(-1px);
+  --btn-ghost-bg: rgba(143, 184, 216, 0.06);
+  --btn-danger-bg: var(--danger-soft);
+  --btn-danger-border: rgba(230, 163, 173, 0.2);
+  --btn-danger-text: var(--danger);
+  --btn-warning-bg: var(--warning-soft);
+  --btn-warning-border: rgba(230, 211, 154, 0.2);
+  --btn-warning-text: var(--warning);
+  --seg-on-bg: #8fb8d8;
+  --seg-on-text: #07131e;
+  --seg-on-shadow: 0 4px 14px rgba(80, 130, 170, 0.22);
+  --switch-on-bg: #8fb8d8;
+  --switch-knob: #07131e;
+  --switch-knob-off: var(--text-muted);
+  --mini-text: var(--text-muted);
+  --mini-hover-text: #f7fbfe;
+  --quick-icon-hover-bg: var(--grad-accent);
+  --quick-icon-hover-text: #07131e;
+  --quick-hover-transform: translateY(-1px);
+  --badge-icon-bg: linear-gradient(140deg, rgba(143, 184, 216, 0.85), rgba(219, 234, 243, 0.5));
+  --badge-icon-text: #07131e;
+  --logo-text: #07131e;
+  --logo-shadow: 0 3px 14px rgba(80, 130, 170, 0.3);
+  --win-close-bg: #e6a3ad;
+  --win-close-text: #07131e;
+  --nav-marker-bg: linear-gradient(90deg, #8fb8d8, #dbeaf3);
+  --nav-marker-left: -12px;
+  --nav-marker-right: auto;
+  --nav-marker-top: 6px;
+  --nav-marker-bottom: 6px;
+  --nav-marker-w: 3px;
+  --nav-marker-h: auto;
+  --nav-marker-radius: 0 3px 3px 0;
+  --modal-backdrop: rgba(3, 9, 15, 0.74);
+  --scrollbar-thumb: rgba(190, 219, 237, 0.18);
+  --scrollbar-thumb-hover: rgba(219, 234, 243, 0.36);
+  --particle: rgba(220, 236, 246, 0.66);
+  --hero-title-shadow: 0 2px 22px rgba(2, 8, 14, 0.5);
+  --hero-orb-a: #8fb8d8;
+  --hero-orb-b: #dbeaf3;
+  --hero-orb-c: #5f87a8;
+  --progress-track: rgba(219, 234, 243, 0.08);
+  --progress-inset: inset 0 1px 3px rgba(2, 8, 14, 0.48);
+  --winter-frost: rgba(206, 229, 242, 0.08);
+  --winter-ice: rgba(219, 234, 243, 0.26);
+  --winter-glow: rgba(143, 184, 216, 0.18);
+  --winter-surface: rgba(12, 22, 32, 0.54);
+  /* Drop winter.gif/png/jpg in web/public/ to replace this bundled fallback. */
+  --winter-bg-image: url("/winter.jpg");
+}
+
+/* Layerable winter effects (only while an event is active) ---------------- */
+html[data-winter="1"] {
+  --fast: 240ms var(--ease);
+  --slow: 520ms var(--ease);
+}
+
+.winter-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: var(--winter-bg-image);
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center bottom;
+  opacity: 0;
+  transition: opacity var(--slow);
+}
+
+.winter-backdrop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(5, 12, 19, 0.14), rgba(5, 12, 19, 0.32));
+}
+
+html[data-winter="1"][data-winter-bg="1"] .winter-backdrop {
+  display: block;
+  opacity: 1;
+}
+
+.winter-snow {
+  display: none;
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--slow);
+}
+
+html[data-winter="1"] .winter-snow {
+  display: block;
+  opacity: 0.5;
+}
+
+html[data-winter="1"] .shell {
+  position: relative;
+  z-index: 1;
+  background-color: var(--bg-base);
+  transition: background-color var(--slow);
+}
+
+html[data-winter="1"][data-winter-bg="1"] .shell {
+  background-color: transparent;
+}
+
+html[data-winter="1"] .titlebar,
+html[data-winter="1"] .sidebar,
+html[data-winter="1"] .statusbar {
+  background: rgba(7, 14, 22, 0.58);
+  backdrop-filter: blur(14px) saturate(1.08);
+  -webkit-backdrop-filter: blur(14px) saturate(1.08);
+}
+
+html[data-winter="1"] .card,
+html[data-winter="1"] .mod-card,
+html[data-winter="1"] .asset-item,
+html[data-winter="1"] .hero,
+html[data-winter="1"] .update-card,
+html[data-winter="1"] .modal {
+  background:
+    linear-gradient(180deg, var(--winter-frost), transparent 52%),
+    var(--winter-surface);
+  border-color: var(--winter-ice);
+  box-shadow: inset 0 1px 0 rgba(219, 234, 243, 0.16), var(--shadow-md);
+  backdrop-filter: blur(10px) saturate(1.1);
+  -webkit-backdrop-filter: blur(10px) saturate(1.1);
+}
+
+html[data-winter="1"] .hero-bg {
+  opacity: 0.32;
+}
+
+/* Snow settles on horizontal edges instead of only falling as dots. */
+html[data-winter="1"] .btn,
+html[data-winter="1"] .quick,
+html[data-winter="1"] .card,
+html[data-winter="1"] .statusbar {
+  position: relative;
+}
+
+html[data-winter="1"] .btn::before,
+html[data-winter="1"] .quick::before,
+html[data-winter="1"] .card::before,
+html[data-winter="1"] .statusbar::before {
+  content: "";
+  position: absolute;
+  z-index: 3;
+  pointer-events: none;
+  background: radial-gradient(circle at 5px 3px, rgba(226, 241, 250, 0.62) 0 2px, transparent 2.4px) repeat-x;
+  background-size: 13px 7px;
+}
+
+html[data-winter="1"] .btn::before,
+html[data-winter="1"] .quick::before,
+html[data-winter="1"] .card::before {
+  top: -2px;
+  left: 8px;
+  right: 8px;
+  height: 6px;
+  border-radius: 8px 8px 0 0;
+  opacity: 0.42;
+}
+
+html[data-winter="1"] .statusbar::before {
+  top: -5px;
+  left: 0;
+  right: 0;
+  height: 7px;
+  opacity: 0.3;
+}
+
+.winter-mark {
+  display: none;
+  position: fixed;
+  right: 18px;
+  bottom: 44px;
+  z-index: 3;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 11px;
+  border: 1px solid var(--winter-ice);
+  border-radius: 999px;
+  background: rgba(7, 14, 22, 0.58);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: var(--accent-2);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--slow);
+}
+
+html[data-winter="1"] .winter-mark {
+  display: flex;
+  opacity: 0.5;
+}
+
+.winter-mark svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.4;
+}
+
+.winter-mark .wm-sub {
+  color: var(--text-muted);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+}
+
+html[data-winter="1"] .hero::after {
+  content: "";
+  position: absolute;
+  inset: -40% -60%;
+  background: linear-gradient(110deg, transparent 44%, rgba(219, 234, 243, 0.07) 50%, transparent 56%);
+  animation: winter-sweep 24s linear infinite;
+  pointer-events: none;
+}
+
+html[data-winter="1"] .hero-bg .orb {
+  animation-duration: 30s;
+}
+
+html[data-winter="1"] .progress .bar {
+  animation-duration: 4.2s;
+}
+
+html[data-winter="1"] .nav-item,
+html[data-winter="1"] .btn,
+html[data-winter="1"] .quick,
+html[data-winter="1"] .theme-card {
+  transition-duration: 260ms;
+}
+
+@keyframes winter-sweep {
+  from { transform: translateX(-30%); }
+  to { transform: translateX(30%); }
+}
+
+@media (max-width: 700px) {
+  .winter-mark .wm-sub { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-winter="1"] .hero::after,
+  html[data-winter="1"] .hero-bg .orb,
+  html[data-winter="1"] .progress .bar {
+    animation: none;
+  }
+  html[data-winter="1"] .winter-snow { opacity: 0.42; }
+}
+
+/* Theme switch cross-fade -------------------------------------------------- */
+html.theme-shift .shell {
+  opacity: 0.96;
+  transition: opacity 90ms var(--ease), background-color 180ms var(--ease);
+}

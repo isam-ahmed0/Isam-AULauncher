@@ -282,6 +282,10 @@
   align-items: center;
 }
 
+.home-custom > div {
+  min-width: 0;
+}
+
 .home-thumb {
   width: 160px;
   height: 100px;
@@ -320,8 +324,14 @@
 
 .home-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-top: 12px;
+}
+
+.home-actions .btn {
+  min-width: 0;
+  flex: 0 1 auto;
 }
 
 /* warning banner ----------------------------------------------------------- */
