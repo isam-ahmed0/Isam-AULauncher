@@ -1,12 +1,16 @@
 #!/usr/bin/env bash
-# Build CrewLauncher on Linux with PyInstaller (onedir).
+# Build CrewLauncher on Linux as a thin source install.
 #
-#   python3 -m venv .venv
-#   source .venv/bin/activate.fish
-#   pip install -r src/launcher/requirements.txt
 #   bash build/build_launcher_linux.sh
 #
-# Running from source (python src/launcher/main.py) is lighter still.
+# Requires Node.js/npm for the Web assets; Pillow is only needed by packaging.
+#
+# The package deliberately does NOT bundle PySide6, QtWebEngine, ICU or a
+# Python runtime: those come from the distro (or a one-time venv bootstrap on
+# first launch). Result: ~25 MB instead of ~650 MB, with all three UIs intact.
+#
+# Running straight from the checkout (`python src/launcher/main.py`) is even
+# lighter still and needs no build step at all.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -15,80 +19,19 @@ mkdir -p dist/linux
 # Web (pywebview) assets are built from the Astro project and are not committed.
 bash build/web_assets.sh
 
-EXCLUDES=(
-  # QtWebEngine/QtWebChannel are kept: pywebview's Qt backend needs them on
-  # Linux when WebKitGTK (gi) is unavailable.
-  --exclude-module PySide6.QtQuick
-  --exclude-module PySide6.QtQuickWidgets
-  --exclude-module PySide6.QtQml
-  --exclude-module PySide6.Qt3DCore
-  --exclude-module PySide6.Qt3DRender
-  --exclude-module PySide6.Qt3DAnimation
-  --exclude-module PySide6.Qt3DExtras
-  --exclude-module PySide6.Qt3DInput
-  --exclude-module PySide6.Qt3DLogic
-  --exclude-module PySide6.QtCharts
-  --exclude-module PySide6.QtDataVisualization
-  --exclude-module PySide6.QtPdf
-  --exclude-module PySide6.QtPdfWidgets
-  --exclude-module PySide6.QtDesigner
-  --exclude-module PySide6.QtTest
-  --exclude-module PySide6.QtSql
-  --exclude-module PySide6.QtBluetooth
-  --exclude-module PySide6.QtNfc
-  --exclude-module PySide6.QtPositioning
-  --exclude-module PySide6.QtSerialPort
-  --exclude-module PySide6.QtSensors
-  --exclude-module PySide6.QtHelp
-  --exclude-module PySide6.QtWebSockets
-  --exclude-module dearpygui
-)
+APP="dist/linux/CrewLauncher"
+rm -rf "$APP"
+mkdir -p "$APP/src" "$APP/release"
 
-PYTHON_BIN="python"
-if [ -f ".venv/bin/python" ]; then
-    PYTHON_BIN=".venv/bin/python"
-elif command -v python3 >/dev/null 2>&1; then
-    PYTHON_BIN="python3"
-fi
+# Launcher sources (this also carries resources/web, DOC references and the
+# requirements file used by the first-run bootstrap).
+cp -a src/launcher "$APP/src/launcher"
+find "$APP/src/launcher" -type d -name __pycache__ -prune -exec rm -rf '{}' +
 
-$PYTHON_BIN - <<'PY'
-import importlib.util
-import tkinter
-import customtkinter  # noqa: F401
+# Docs shown in the in-app help dialogs and the mod payload kept offline.
+cp -a DOC "$APP/DOC"
+cp release/bepmods.zip "$APP/release/bepmods.zip"
 
-for name in ("webview", "qtpy", "packaging"):
-    if importlib.util.find_spec(name) is None:
-        raise SystemExit(
-            f"missing {name}; pip install -r src/launcher/requirements.txt"
-        )
-PY
+install -m 755 build/pkg/thin_launcher.sh "$APP/CrewLauncher"
 
-pyinstaller --noconfirm --onedir --windowed --noupx \
-  --name CrewLauncher \
-  --distpath dist/linux \
-  --workpath build/linux-work \
-  --specpath build \
-  --icon "$PWD/src/launcher/resources/icon.ico" \
-  --add-data "$PWD/src/launcher/resources/icon.ico:resources" \
-  --add-data "$PWD/src/launcher/resources/splash.png:resources" \
-  --add-data "$PWD/src/launcher/resources/phosphor-icons:resources/phosphor-icons" \
-  --add-data "$PWD/src/launcher/resources/login:resources/login" \
-  --add-data "$PWD/src/launcher/resources/web:resources/web" \
-  --add-data "$PWD/DOC:DOC" \
-  --add-data "$PWD/release/bepmods.zip:." \
-  --hidden-import tkinter \
-  --hidden-import customtkinter \
-  --hidden-import qtpy \
-  --hidden-import webview \
-  --hidden-import webview.platforms \
-  --hidden-import webview.platforms.gtk \
-  --hidden-import webview.platforms.qt \
-  --hidden-import PySide6.QtWebEngineCore \
-  --hidden-import PySide6.QtWebEngineWidgets \
-  --hidden-import PySide6.QtWebChannel \
-  --collect-submodules customtkinter \
-  "${EXCLUDES[@]}" \
-  "$PWD/src/launcher/main.py"
-
-echo
-echo "Built: dist/linux/CrewLauncher/"
+printf 'Built thin Linux app in %s (%s)\n' "$APP" "$(du -sh "$APP" | cut -f1)"

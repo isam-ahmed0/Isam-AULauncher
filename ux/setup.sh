@@ -128,6 +128,7 @@ install_release() { # via the distro package manager
             run_root zypper --non-interactive install -y "$TMP/app.rpm" ;;
     esac
     log "CrewLauncher installed. Run it with: $APP_ID"
+    log "The package pulled in Python/Qt/webview dependencies automatically."
 }
 
 install_portable() { # --user: no sudo, tarball into ~/.local
@@ -143,6 +144,8 @@ install_portable() { # --user: no sudo, tarball into ~/.local
     ln -sf "$USER_DIR/app/$APP_BIN" "$USER_BIN"
     latest_tag > "$VERSION_FILE" || true
     log "CrewLauncher installed to $USER_DIR/app"
+    log "On first launch it uses your system Python/Qt packages, or builds a"
+    log "private venv if they are missing (needs an internet connection)."
     case ":$PATH:" in
         *":$HOME/.local/bin:"*) log "run it with: $APP_ID" ;;
         *) log "run it with: $USER_BIN   (add ~/.local/bin to PATH)" ;;
@@ -151,35 +154,23 @@ install_portable() { # --user: no sudo, tarball into ~/.local
 
 # ------------------------------------------------------------- selfbuild
 selfbuild_deps() {
+    # Thin build: only Python, npm (Web assets) and icon tooling are needed to
+    # stage the package. Qt/WebEngine are pulled in by the package itself.
     case "$PM" in
         pacman)
             run_root pacman -Sy --noconfirm --needed \
-                base-devel python python-pip \
-                mesa libglvnd fontconfig freetype2 libxkbcommon libxcb \
-                libx11 libxext libxrender libxi libsm libice \
-                libxrandr libxcursor libxfixes libxdamage libxcomposite \
-                xcb-util dbus binutils ;;
+                base-devel python python-pip nodejs npm ;;
         apt)
             run_root apt-get update
             run_root apt-get install -y --no-install-recommends \
-                build-essential python3 python3-venv python3-pip binutils \
-                libegl1 libgl1 libglvnd0 fontconfig libfontconfig1 libfreetype6 \
-                libxkbcommon0 libxkbcommon-x11-0 libxcb1 \
-                libx11-6 libxext6 libxrender6 libxi6 libsm6 libice6 \
-                libxrandr2 libxcursor1 libxfixes3 libxdamage1 libxcomposite1 \
-                libdbus-1-3 ;;
+                build-essential python3 python3-venv python3-pip nodejs npm ;;
         dnf|microdnf|yum)
             run_root "$PM" install -y \
-                gcc make python3 python3-pip python3-devel binutils rpm-build \
-                mesa-libGL mesa-libEGL libglvnd-egl libglvnd-glx mesa-dri-drivers \
-                fontconfig freetype libxkbcommon libxkbcommon-x11 \
-                libxcb libX11 libXext libXrender libXi libSM libICE \
-                libXrandr libXcursor libXfixes libXdamage libXcomposite dbus-libs ;;
+                gcc make python3 python3-pip python3-devel rpm-build nodejs npm ;;
         zypper)
             run_root zypper --non-interactive refresh
             run_root zypper --non-interactive install -y \
-                gcc make python3 python3-pip python3-devel binutils \
-                Mesa-libGL fontconfig freetype2 libxkbcommon libxcb dbus-1 ;;
+                gcc make python3 python3-pip python3-devel nodejs npm ;;
         *)
             die "--selfbuild: no known package manager to install build deps" ;;
     esac
@@ -198,7 +189,8 @@ do_selfbuild() {
     log "creating python venv"
     python3 -m venv .venv
     .venv/bin/pip install -q --upgrade pip
-    .venv/bin/pip install -q PySide6 requests pypresence pyinstaller pillow
+    # Thin build: only Pillow is required at build time (package icon generation).
+    .venv/bin/pip install -q pillow
     PATH="$PWD/.venv/bin:$PATH"
     export PATH
     case "$PM" in
@@ -206,7 +198,7 @@ do_selfbuild() {
         apt)    target=deb;    ext=deb ;;
         *)      target=rpm;    ext=rpm ;;
     esac
-    log "building launcher (PyInstaller)"
+    log "staging launcher (thin source build)"
     bash build/build_launcher_linux.sh
     log "packaging ($target)"
     bash build/build_packages_linux.sh "$target"

@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
-# Build Linux installer packages from the PyInstaller onedir build.
+# Build Linux installer packages from the thin source build.
 #
 #   bash build/build_launcher_linux.sh      # first, produces dist/linux/CrewLauncher/
 #   bash build/build_packages_linux.sh      # then, produces dist/packages/*
+#
+# The packages ship Python sources + assets only (~25 MB). Heavy runtimes
+# (PySide6, QtWebEngine, pywebview, Tk) are declared as system dependencies;
+# the launcher bootstraps a private venv once if they are not installed.
 #
 # Outputs (dist/packages/):
 #   CrewLauncher.pkg.tar.zst   Arch/CachyOS/Manjaro (pacman -U)      [internal pkg: isam-aulauncher]
@@ -54,9 +58,11 @@ mkdir -p "$STAGE" "$OUT"
 
 echo "[stage] copying app + icons + desktop entry"
 cp -a "$APP_DIR" "$STAGE/app"
-PYTHON_BIN="python"
-if ! command -v python >/dev/null 2>&1 && command -v python3 >/dev/null 2>&1; then
-    PYTHON_BIN="python3"
+PYTHON_BIN="python3"
+if [ -x "$ROOT/.venv/bin/python" ]; then
+    PYTHON_BIN="$ROOT/.venv/bin/python"   # --selfbuild installs Pillow here
+elif command -v python >/dev/null 2>&1; then
+    PYTHON_BIN="python"
 fi
 "$PYTHON_BIN" build/pkg/make_icon.py src/launcher/resources/icon.ico "$STAGE/icons"
 cp build/pkg/isam-au.desktop "$STAGE/$APP_ID.desktop"
@@ -80,8 +86,14 @@ arch=('x86_64')
 url="$HOMEPAGE"
 license=('custom')
 options=('!strip' '!debug')
-depends=('glibc' 'libglvnd' 'fontconfig' 'freetype2' 'libxcb' 'libxkbcommon' 'dbus' 'zlib')
-optdepends=('wine: run Among Us directly' 'lutris: manage and launch the game' 'xdg-utils: open folders and links')
+depends=('glibc' 'libglvnd' 'fontconfig' 'freetype2' 'libxcb' 'libxkbcommon' 'dbus' 'zlib'
+         'python' 'python-pip' 'tk' 'pyside6' 'qt6-webengine' 'qt6-svg'
+         'qt6-multimedia' 'python-pywebview' 'python-qtpy' 'python-requests'
+         'python-pypresence' 'python-packaging')
+optdepends=('webkit2gtk-4.1: WebKitGTK backend for the web interface'
+            'python-gobject: WebKitGTK backend for the web interface'
+            'wine: run Among Us directly' 'lutris: manage and launch the game'
+            'xdg-utils: open folders and links')
 source=()
 package() {
   install -d "\$pkgdir/opt/isam-aulauncher"
@@ -126,7 +138,7 @@ Version: $DEBVER-1
 Architecture: amd64
 Maintainer: $MAINTAINER
 Installed-Size: $size_kb
-Depends: libc6, libgl1, libegl1, libfontconfig1, libfreetype6, libxcb1, libxkbcommon0, libdbus-1-3, zlib1g
+Depends: libc6, libgl1, libegl1, libfontconfig1, libfreetype6, libxcb1, libxkbcommon0, libdbus-1-3, zlib1g, python3, python3-venv, python3-pip, python3-tk
 Recommends: wine, lutris, xdg-utils
 Section: games
 Priority: optional
@@ -160,7 +172,7 @@ Release: 1%{?dist}
 Summary: $DESC_SHORT
 License: Custom
 URL: $HOMEPAGE
-Requires: glibc, mesa-libGL, fontconfig, freetype, libxcb, libxkbcommon, dbus-libs, zlib
+Requires: glibc, mesa-libGL, fontconfig, freetype, libxcb, libxkbcommon, dbus-libs, zlib, python3, python3-pip, python3-tkinter
 Recommends: wine
 Recommends: lutris
 %global debug_package %{nil}

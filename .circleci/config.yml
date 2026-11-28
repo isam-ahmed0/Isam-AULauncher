@@ -37,8 +37,8 @@ parameters:
 executors:
   ubuntu:
     docker:
-      # Official image is built with --enable-shared, so PyInstaller can always
-      # find libpython. Ships git/curl/openssh-client (buildpack-deps base).
+      # Python image ships git/curl/openssh-client (buildpack-deps base).
+      # Linux builds are thin source installs: no Python runtime is bundled.
       - image: python:3.14
   linux-machine:
     machine:
@@ -77,8 +77,8 @@ jobs:
 
       - restore_cache:
           keys:
-            - pip-ubuntu-v2-{{ checksum "src/launcher/requirements.txt" }}
-            - pip-ubuntu-v2-
+            - pip-ubuntu-thin-v1-{{ checksum "src/launcher/requirements.txt" }}
+            - pip-ubuntu-thin-v1-
 
       - run:
           name: Install system dependencies
@@ -97,10 +97,11 @@ jobs:
           name: Install Python dependencies
           command: |
             python -m pip install --upgrade pip
-            python -m pip install -r src/launcher/requirements.txt pyinstaller pillow customtkinter
+            # Thin build: runtime deps are package Requires; only icons need Pillow.
+            python -m pip install pillow
 
       - save_cache:
-          key: pip-ubuntu-v2-{{ checksum "src/launcher/requirements.txt" }}
+          key: pip-ubuntu-thin-v1-{{ checksum "src/launcher/requirements.txt" }}
           paths:
             - ~/.cache/pip
 

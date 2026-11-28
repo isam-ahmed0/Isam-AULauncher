@@ -102,10 +102,14 @@ Build the launcher, then the installers:
 
 ```fish
 source .venv/bin/activate.fish
-pip install pyinstaller
-bash build/build_launcher_linux.sh     # -> dist/linux/CrewLauncher/
+pip install pillow                     # only needed to generate package icons
+bash build/build_launcher_linux.sh     # -> dist/linux/CrewLauncher/ (thin, ~25 MB)
 bash build/build_packages_linux.sh     # -> dist/packages/
 ```
+
+Linux packages do not bundle PySide6/QtWebEngine. The package manager installs
+them as dependencies; a portable `.run`/tarball install bootstraps a private
+virtualenv from `requirements.txt` on first launch if they are missing.
 
 `dist/packages/` contains:
 

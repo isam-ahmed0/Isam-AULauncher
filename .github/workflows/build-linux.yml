@@ -98,7 +98,8 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -r src/launcher/requirements.txt pyinstaller pillow
+          # Thin build: runtime deps are package Requires; only icons need Pillow.
+          python -m pip install pillow
 
       - name: Patch embedded version
         run: python3 build/set_version.py "$VERSION"

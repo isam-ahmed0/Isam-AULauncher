@@ -73,12 +73,25 @@ modules under `web/src/scripts/views/`; add a matching Astro component in
 
 All launcher builds generate the Web assets before packaging. Linux builds call
 `build/web_assets.sh`, which runs `npm ci && npm run build` and verifies the
-gitignored `src/launcher/resources/web/index.html`. Linux CI jobs install
-`src/launcher/requirements.txt` (including `pywebview` and `qtpy`) before
-packaging. CircleCI installs a supported Node.js in all three Linux jobs
-(Fedora uses NodeSource 24); AppVeyor installs Node via Chocolatey; GitHub
-Actions uses `actions/setup-node`. Linux builds keep QtWebEngine/QtWebChannel
-for pywebview's Qt backend; Windows builds exclude them and use WebView2.
+gitignored `src/launcher/resources/web/index.html`. CircleCI installs a
+supported Node.js in all three Linux jobs (Fedora uses NodeSource 24);
+AppVeyor installs Node via Chocolatey; GitHub Actions uses
+`actions/setup-node`.
+
+Linux packages are **thin** (~25 MB): `build/build_launcher_linux.sh` stages
+Python sources, `DOC/`, `bepmods.zip` and a symlink-safe launcher script; it
+does not bundle PySide6, QtWebEngine, ICU or a Python runtime. The package
+metadata declares those as system dependencies (Arch: `pyside6`,
+`qt6-webengine`, `python-pywebview`, `python-qtpy`, ...; deb/rpm: `python3`,
+`python3-venv`, `python3-tk`, ...). If they are missing at runtime, the
+launcher builds a private venv from `src/launcher/requirements.txt` once.
+Only Pillow is needed at build time (package icon generation). Windows builds
+stay self-contained PyInstaller + NSIS (~79 MB installer) and use system
+WebView2 for the Web UI.
+
+End-user installers live in `ux/`: `ux/setup.sh` (Linux: packages, `--user`,
+update, uninstall, `--selfbuild`), `ux/setup.ps1` and `ux/setup.bat`
+(Windows: downloads the NSIS installer, update, uninstall, `is-installed`).
 
 CI: Linux jobs run on CircleCI (`.circleci/config.yml`), Windows jobs on
 AppVeyor (`appveyor.yml`); both only build version tags. CircleCI also has

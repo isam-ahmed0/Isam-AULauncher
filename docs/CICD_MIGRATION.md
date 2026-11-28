@@ -160,11 +160,11 @@ through `build/ci/ubuntu_build.sh`, `arch_build.sh`, `fedora_build.sh`,
   disable Actions (repo Settings -> Actions) to stop that.
 * `.circleci-draft/config.yml` is superseded by `.circleci/config.yml` and can
   be deleted.
-* The Ubuntu job runs on the official `python:3.11` image (built with
-  `--enable-shared`, so PyInstaller always finds `libpython`; it also ships git,
-  so no checkout bootstrap is needed). A bare `ubuntu:22.04` image lacks the
-  Python shared library and fails with
-  `Python shared library ('libpython3.10.so.1.0') was not found`.
+* The Ubuntu job runs on the official `python:3.14` image (ships git, so no
+  checkout bootstrap is needed). Linux packages are thin source installs: no
+  Python runtime or Qt/WebEngine is bundled, so the PyInstaller `libpython`
+  issue no longer applies. Arch/Fedora containers declare the runtime
+  dependencies in their package metadata.
 * Python on Windows comes from the VS 2022 image (`C:\Python314-x64`), with a
   Chocolatey fallback if absent. NSIS 3.x is preinstalled; Chocolatey is only a
   fallback.

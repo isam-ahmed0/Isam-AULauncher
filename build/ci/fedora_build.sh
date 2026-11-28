@@ -28,7 +28,8 @@ ln -sf /usr/bin/python3 /usr/bin/python
 
 echo "[ci-fedora] installing Python packages"
 python3 -m pip install --upgrade pip
-python3 -m pip install -r /work/src/launcher/requirements.txt pyinstaller pillow customtkinter
+echo "[ci-fedora] thin build; runtime packages are in the RPM Requires."
+python3 -m pip install pillow
 
 echo "[ci-fedora] building launcher + RPM package"
 cd /work

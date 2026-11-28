@@ -12,11 +12,10 @@ pacman -Syu --noconfirm --needed \
   mesa libglvnd fontconfig freetype2 libxkbcommon \
   libxcb libx11 libxext libxrender libxi libsm libice \
   libxrandr libxcursor libxfixes libxdamage libxcomposite xcb-util \
-  dbus tk
+  dbus tk python-pillow
 
-echo "[ci-arch] installing Python packages"
-python -m pip install --break-system-packages --upgrade pip
-python -m pip install --break-system-packages -r /work/src/launcher/requirements.txt pyinstaller pillow customtkinter
+echo "[ci-arch] thin build; runtime Python/Qt packages are declared in the PKGBUILD."
+echo "[ci-arch] only Pillow is needed here to generate package icons."
 
 echo "[ci-arch] creating unprivileged builder (makepkg refuses to run as root)"
 id -u builder &>/dev/null || useradd -m builder
