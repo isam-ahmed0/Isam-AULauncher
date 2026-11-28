@@ -68,7 +68,7 @@ export const WEB_THEMES: WebTheme[] = [
     label: "Winter",
     mode: "dark",
     description: "Frosted ice, slow snowfall and a snowy backdrop.",
-    swatch: ["#0b1d2b", "#bfe9ff", "#7dd3fc"],
+    swatch: ["#0a121b", "#8fb8d8", "#dbeaf3"],
   },
 ];
 

@@ -32,6 +32,7 @@ import AboutView from "../components/views/About.astro";
         // authoritative source; app.ts reconciles this once the bridge is up.
         const root = document.documentElement;
         // Keep the background relative to index.html (works from file:// too).
+        // Swap web/public/winter-bg.svg for an uploaded PNG/JPG/GIF later.
         root.style.setProperty("--winter-bg-image", "url('./winter-bg.svg')");
         const legacy = { dark: "aurora", light: "aurora-light" };
         const eventThemes = { winter: "winter" };

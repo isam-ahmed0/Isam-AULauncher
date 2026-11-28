@@ -20,6 +20,7 @@ interface Flake {
   drift: number;
   phase: number;
   alpha: number;
+  kind: 0 | 1; // 0 = soft streak, 1 = six-arm crystal
 }
 
 let initialized = false;
@@ -79,18 +80,19 @@ function forcedByUrl(): boolean {
 }
 
 function seedFlakes(): void {
-  const count = Math.max(42, Math.min(110, Math.floor((width * height) / 15000)));
+  const count = Math.max(36, Math.min(78, Math.floor((width * height) / 22000)));
   flakes = [];
   for (let i = 0; i < count; i += 1) {
     const depth = Math.random();
     flakes.push({
       x: Math.random() * width,
       y: Math.random() * height,
-      r: 0.8 + depth * 2.2,
-      vy: 0.22 + depth * 0.72,
-      drift: 0.12 + depth * 0.34,
+      r: 0.7 + depth * 1.8,
+      vy: 0.12 + depth * 0.32,
+      drift: 0.06 + depth * 0.18,
       phase: Math.random() * Math.PI * 2,
-      alpha: 0.22 + depth * 0.42,
+      alpha: 0.16 + depth * 0.3,
+      kind: Math.random() < 0.18 ? 1 : 0,
     });
   }
 }
@@ -112,11 +114,45 @@ function resize(): void {
 function draw(): void {
   if (!context) return;
   context.clearRect(0, 0, width, height);
+  context.lineCap = "round";
   for (const flake of flakes) {
-    context.beginPath();
-    context.arc(flake.x, flake.y, flake.r, 0, Math.PI * 2);
-    context.fillStyle = `rgba(226, 246, 255, ${flake.alpha})`;
-    context.fill();
+    const color = `rgba(226, 241, 250, ${flake.alpha})`;
+    if (flake.kind === 0) {
+      context.strokeStyle = color;
+      context.lineWidth = Math.max(0.6, flake.r * 0.55);
+      context.beginPath();
+      context.moveTo(flake.x, flake.y - flake.r * 2.4);
+      context.lineTo(flake.x + flake.r * 0.35, flake.y + flake.r * 1.8);
+      context.stroke();
+      continue;
+    }
+
+    context.save();
+    context.translate(flake.x, flake.y);
+    context.rotate(flake.phase);
+    context.strokeStyle = color;
+    context.lineWidth = Math.max(0.5, flake.r * 0.4);
+    const arm = flake.r * 2.6;
+    for (let i = 0; i < 3; i += 1) {
+      const angle = (i * Math.PI) / 3;
+      const dx = Math.cos(angle) * arm;
+      const dy = Math.sin(angle) * arm;
+      const bx = Math.cos(angle + 0.9) * arm * 0.42;
+      const by = Math.sin(angle + 0.9) * arm * 0.42;
+      context.beginPath();
+      context.moveTo(-dx, -dy);
+      context.lineTo(dx, dy);
+      context.stroke();
+      context.beginPath();
+      context.moveTo(dx * 0.55, dy * 0.55);
+      context.lineTo(dx * 0.55 + bx, dy * 0.55 + by);
+      context.stroke();
+      context.beginPath();
+      context.moveTo(-dx * 0.55, -dy * 0.55);
+      context.lineTo(-dx * 0.55 - bx, -dy * 0.55 - by);
+      context.stroke();
+    }
+    context.restore();
   }
 }
 
@@ -128,7 +164,7 @@ function tick(now: number): void {
   const delta = Math.min(3, (now - last) / 16.67 || 1);
   last = now;
   for (const flake of flakes) {
-    flake.phase += 0.008 * delta;
+    flake.phase += (flake.kind === 1 ? 0.006 : 0.003) * delta;
     flake.y += flake.vy * delta;
     flake.x += Math.sin(flake.phase) * flake.drift * delta + 0.08 * delta;
     if (flake.y > height + 4) {

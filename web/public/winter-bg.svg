@@ -1,65 +1,56 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
   <defs>
     <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#071a2b"/>
-      <stop offset="0.45" stop-color="#123a55"/>
-      <stop offset="1" stop-color="#1d5c72"/>
+      <stop offset="0" stop-color="#060b12"/>
+      <stop offset="0.5" stop-color="#0c1723"/>
+      <stop offset="1" stop-color="#15283a"/>
     </linearGradient>
-    <radialGradient id="moonGlow" cx="0.74" cy="0.2" r="0.34">
-      <stop offset="0" stop-color="#dff7ff" stop-opacity="0.55"/>
-      <stop offset="0.45" stop-color="#8ed8f0" stop-opacity="0.18"/>
-      <stop offset="1" stop-color="#8ed8f0" stop-opacity="0"/>
+    <radialGradient id="haze" cx="0.16" cy="0.02" r="0.72">
+      <stop offset="0" stop-color="#9ec6df" stop-opacity="0.16"/>
+      <stop offset="0.55" stop-color="#6f9fbe" stop-opacity="0.06"/>
+      <stop offset="1" stop-color="#6f9fbe" stop-opacity="0"/>
     </radialGradient>
-    <linearGradient id="snowGround" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#dceef7"/>
-      <stop offset="1" stop-color="#8fb8c9"/>
+    <linearGradient id="drift" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#b6cedc" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#66879b" stop-opacity="0.14"/>
     </linearGradient>
     <linearGradient id="veil" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#06121d" stop-opacity="0.68"/>
-      <stop offset="0.52" stop-color="#06121d" stop-opacity="0.24"/>
-      <stop offset="1" stop-color="#06121d" stop-opacity="0.58"/>
+      <stop offset="0" stop-color="#040a11" stop-opacity="0.5"/>
+      <stop offset="0.5" stop-color="#040a11" stop-opacity="0.12"/>
+      <stop offset="1" stop-color="#040a11" stop-opacity="0.44"/>
     </linearGradient>
-    <g id="pine">
-      <path d="M0 0h16l-8-30 16 4-16-42 14 5L-1-110l-15 52 14-5-16 42 16-4Z" fill="#0a2533"/>
+    <g id="spark">
+      <path d="M0-8V8M-8 0H8M-5.7-5.7 5.7 5.7M5.7-5.7-5.7 5.7"
+            fill="none" stroke="#dcecf6" stroke-width="1.1" stroke-linecap="round"/>
     </g>
   </defs>
 
   <rect width="1920" height="1080" fill="url(#sky)"/>
-  <rect width="1920" height="1080" fill="url(#moonGlow)"/>
-  <circle cx="1420" cy="205" r="62" fill="#eaf9ff" opacity="0.86"/>
-  <circle cx="1404" cy="190" r="12" fill="#c6e9f5" opacity="0.45"/>
-  <circle cx="1440" cy="224" r="8" fill="#c6e9f5" opacity="0.35"/>
+  <rect width="1920" height="1080" fill="url(#haze)"/>
 
-  <g fill="#dff5ff" opacity="0.8">
-    <circle cx="180" cy="120" r="2.4"/><circle cx="360" cy="210" r="1.8"/>
-    <circle cx="520" cy="90" r="2.1"/><circle cx="690" cy="170" r="1.7"/>
-    <circle cx="860" cy="70" r="2.5"/><circle cx="1010" cy="240" r="1.6"/>
-    <circle cx="1180" cy="125" r="2.2"/><circle cx="1590" cy="100" r="1.9"/>
-    <circle cx="1740" cy="260" r="2.3"/><circle cx="1840" cy="150" r="1.7"/>
-    <circle cx="250" cy="340" r="1.8"/><circle cx="960" cy="350" r="2"/>
+  <g opacity="0.36">
+    <use href="#spark" transform="translate(260 150) scale(0.45)"/>
+    <use href="#spark" transform="translate(610 92) scale(0.3)"/>
+    <use href="#spark" transform="translate(940 208) scale(0.38)"/>
+    <use href="#spark" transform="translate(1320 118) scale(0.28)"/>
+    <use href="#spark" transform="translate(1660 190) scale(0.42)"/>
+    <use href="#spark" transform="translate(410 330) scale(0.26)"/>
+    <use href="#spark" transform="translate(1120 360) scale(0.24)"/>
+    <use href="#spark" transform="translate(1800 380) scale(0.3)"/>
   </g>
 
-  <path d="M0 760 Q240 705 470 745 T940 730 T1430 755 T1920 720 V1080 H0 Z" fill="#b6d7e4" opacity="0.5"/>
-  <path d="M0 845 Q320 790 640 835 T1280 820 T1920 845 V1080 H0 Z" fill="url(#snowGround)"/>
+  <path d="M0 700 Q260 650 520 690 T1030 675 T1510 705 T1920 660 V1080 H0 Z"
+        fill="#7fa0b5" opacity="0.1"/>
+  <path d="M0 790 Q340 725 690 780 T1360 760 T1920 800 V1080 H0 Z"
+        fill="#8fb0c4" opacity="0.16"/>
+  <path d="M0 890 Q300 840 620 880 T1260 860 T1920 900 V1080 H0 Z"
+        fill="url(#drift)"/>
 
-  <g opacity="0.92">
-    <use href="#pine" transform="translate(120 875) scale(2.4)"/>
-    <use href="#pine" transform="translate(290 905) scale(1.8)"/>
-    <use href="#pine" transform="translate(430 880) scale(2.7)"/>
-    <use href="#pine" transform="translate(620 920) scale(1.5)"/>
-    <use href="#pine" transform="translate(1510 900) scale(1.8)"/>
-    <use href="#pine" transform="translate(1680 860) scale(2.6)"/>
-    <use href="#pine" transform="translate(1850 910) scale(1.9)"/>
-  </g>
-
-  <g fill="#ffffff" opacity="0.72">
-    <circle cx="95" cy="260" r="3"/><circle cx="210" cy="520" r="2.2"/>
-    <circle cx="340" cy="390" r="2.7"/><circle cx="470" cy="620" r="2.4"/>
-    <circle cx="600" cy="300" r="3.1"/><circle cx="740" cy="500" r="2.1"/>
-    <circle cx="880" cy="410" r="2.8"/><circle cx="1030" cy="650" r="2.3"/>
-    <circle cx="1160" cy="360" r="3"/><circle cx="1300" cy="570" r="2.4"/>
-    <circle cx="1470" cy="470" r="2.7"/><circle cx="1610" cy="690" r="2.2"/>
-    <circle cx="1760" cy="420" r="3.1"/><circle cx="1870" cy="620" r="2.5"/>
+  <g opacity="0.22">
+    <use href="#spark" transform="translate(180 940) scale(0.7)"/>
+    <use href="#spark" transform="translate(760 970) scale(0.55)"/>
+    <use href="#spark" transform="translate(1370 935) scale(0.65)"/>
+    <use href="#spark" transform="translate(1810 980) scale(0.5)"/>
   </g>
 
   <rect width="1920" height="1080" fill="url(#veil)"/>
