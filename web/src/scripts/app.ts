@@ -15,7 +15,7 @@ import { initNews, loadNews } from "./views/news";
 import { initAccount, loadAccount } from "./views/account";
 import { initSettings, loadSettings } from "./views/settings";
 import { applyWebTheme, effectiveWebTheme, forcedEventName } from "./theme";
-import { WINTER_EVENT, applyWinterFx, initWinterFx } from "./winter";
+import { WINTER_EVENT, applyWinterFx, initWinterFx, useEventBackground } from "./winter";
 import { initUpdates, loadUpdates } from "./views/updates";
 import { initAbout, loadAbout } from "./views/about";
 
@@ -122,10 +122,13 @@ function applyTheme(animate = false): void {
 }
 
 function applyWinter(animate = false): void {
+  const active = eventVisualsActive();
+  const name = activeEventName();
+  if (active && name) void useEventBackground(name);
   applyWinterFx(
     store.settings.winter_fx,
     store.settings.winter_bg,
-    eventVisualsActive(),
+    active,
     animate,
   );
 }

@@ -854,14 +854,43 @@
   --winter-frost: rgba(206, 229, 242, 0.08);
   --winter-ice: rgba(219, 234, 243, 0.26);
   --winter-glow: rgba(143, 184, 216, 0.18);
-  /* Swap this file for the uploaded winter image; all uses read this token. */
-  --winter-bg-image: url("/winter-bg.svg");
+  --winter-surface: rgba(16, 29, 41, 0.78);
+  /* Drop winter.gif/png/jpg in web/public/ to replace this bundled fallback. */
+  --winter-bg-image: url("/winter.jpg");
 }
 
 /* Layerable winter effects (only while an event is active) ---------------- */
 html[data-winter="1"] {
   --fast: 240ms var(--ease);
   --slow: 520ms var(--ease);
+}
+
+.winter-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: var(--winter-bg-image);
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center bottom;
+  opacity: 0;
+  transition: opacity var(--slow);
+}
+
+.winter-backdrop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(5, 12, 19, 0.34), rgba(5, 12, 19, 0.52)),
+    radial-gradient(circle at 50% 100%, transparent 45%, rgba(5, 12, 19, 0.26) 100%);
+}
+
+html[data-winter="1"][data-winter-bg="1"] .winter-backdrop {
+  display: block;
+  opacity: 1;
 }
 
 .winter-snow {
@@ -883,17 +912,13 @@ html[data-winter="1"] .winter-snow {
 
 html[data-winter="1"] .shell {
   position: relative;
+  z-index: 1;
   background-color: var(--bg-base);
-  transition: background-image var(--slow), background-color var(--slow);
+  transition: background-color var(--slow);
 }
 
 html[data-winter="1"][data-winter-bg="1"] .shell {
-  background-image:
-    linear-gradient(180deg, rgba(5, 12, 19, 0.62), rgba(5, 12, 19, 0.84)),
-    var(--winter-bg-image);
-  background-size: cover;
-  background-position: center bottom;
-  background-attachment: fixed;
+  background-color: transparent;
 }
 
 html[data-winter="1"] .titlebar,
@@ -912,7 +937,7 @@ html[data-winter="1"] .update-card,
 html[data-winter="1"] .modal {
   background:
     linear-gradient(180deg, var(--winter-frost), transparent 52%),
-    var(--bg-surface);
+    var(--winter-surface);
   border-color: var(--winter-ice);
   box-shadow: inset 0 1px 0 rgba(219, 234, 243, 0.16), var(--shadow-md);
   backdrop-filter: blur(8px);

@@ -161,10 +161,12 @@ as Aurora, and saved `auto`/`on`/`off` choices never start snow, frost or the
 backdrop. `--event none` suppresses them for that launch without erasing the
 saved config; a normal launch restores it.
 
-The snowy backdrop is `web/public/winter-bg.svg`; the CSS scales it with
-`background-size: cover`, so it follows window resizes. To use an uploaded
-PNG/JPG/GIF, put it in `web/public/` and change both `url("/winter-bg.svg")` in
-`themes.css` and the relative URL in `App.astro` to the new filename.
+The bundled fallback backdrop is `web/public/winter.jpg`; CSS scales it with
+`background-size: cover`, so it follows window resizes. To use your own image,
+just drop it in `web/public/` named after the event, e.g. `winter.png`,
+`winter.gif` or `winter.jpg` (`<eventname>-bg.*` also works). `winter.ts`
+auto-detects `gif`, `png`, `jpg`, `jpeg`, `webp` and `svg` and overrides the
+CSS variable; no code edits are needed.
 
 For local testing, `python src/launcher/main.py --ui web --event winter`
 forces the event on regardless of the hosted file. `--event none` forces it

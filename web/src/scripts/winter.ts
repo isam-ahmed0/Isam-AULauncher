@@ -79,6 +79,40 @@ function forcedByUrl(): boolean {
   }
 }
 
+const BG_EXTENSIONS = ["gif", "png", "jpg", "jpeg", "webp", "svg"];
+let checkedBackground = "";
+
+function imageExists(url: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    const image = new Image();
+    image.onload = () => resolve(true);
+    image.onerror = () => resolve(false);
+    image.src = url;
+  });
+}
+
+/**
+ * Drop an event background in web/public/ as `<eventname>.gif|png|jpg|jpeg|
+ * webp|svg` (or `<eventname>-bg.*`) and it is picked up automatically.
+ */
+export async function useEventBackground(name: string): Promise<void> {
+  const key = name.trim().toLowerCase();
+  if (!key || checkedBackground === key) return;
+  checkedBackground = key;
+
+  const bases = [`${key}-bg`, key];
+  const root = document.documentElement;
+  for (const base of bases) {
+    for (const ext of BG_EXTENSIONS) {
+      const url = `./${base}.${ext}`;
+      if (await imageExists(url)) {
+        root.style.setProperty("--winter-bg-image", `url('${url}')`);
+        return;
+      }
+    }
+  }
+}
+
 function seedFlakes(): void {
   const count = Math.max(36, Math.min(78, Math.floor((width * height) / 22000)));
   flakes = [];
