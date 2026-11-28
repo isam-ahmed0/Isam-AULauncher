@@ -1,7 +1,14 @@
+### 29 - Nov - 2026
+- 1.0 released!
+
+### 28 - Nov - 2026
+- Themes
+- Winter event
+- Mod store and Mod store beta
+
 ### 27 - Nov - 2026 (Coming Soon)
 - A brand new GUI
-- Mod store
+- Mod store beta
 
 ### 25 - Oct - 2026
 - I have fixed already running bug
-
